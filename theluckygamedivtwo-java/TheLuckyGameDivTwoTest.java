@@ -63,4 +63,17 @@ public class TheLuckyGameDivTwoTest {
         Assert.assertEquals(expected, actual);
     }
 
+
+    @Test(timeout = 2000)
+    public void testCase4() {
+        int a = 1;
+        int b = 100;
+        int jLen = 75;
+        int bLen = 50;
+
+        int expected = 2;
+        int actual = solution.find(a, b, jLen, bLen);
+
+        Assert.assertEquals(expected, actual);
+    }
 }

@@ -3,9 +3,11 @@ import java.util.Arrays;
 public class TheLuckyGameDivTwo {
 
 	public int find(int a, int b, int jLen, int bLen) {
-		int[][] grid = new int[4750][4750];
+		short[][] grid = new short[4750][4750];
 		for (int i = 0; i < grid.length; i++) {
-			Arrays.fill(grid[i], -1);			
+			for (int j = 0; j < grid[0].length; j++) {
+				grid[i][j] =  -1;
+			}			
 		}
 		
 		for (int len = 1; len <= b-a+1; len++) {						
@@ -19,9 +21,9 @@ public class TheLuckyGameDivTwo {
 				} else {
 					if (grid[len-1][k] != -1 && grid[len-1][k+1] != -1) {
 						if (checkNum(k+len-1)) {
-							grid[len][k] = grid[len-1][k] + 1;
+							grid[len][k] = (short) (grid[len-1][k] + 1);
 						} else {
-							grid[len][k] = Math.max(grid[len-1][k], grid[len-1][k+1]);
+							grid[len][k] = (short) Math.max(grid[len-1][k], grid[len-1][k+1]);
 						}
 					}
 				}
@@ -31,37 +33,36 @@ public class TheLuckyGameDivTwo {
 		int max = 0;
 		for (int k = a; k <= b - jLen+1; k++) {
 			if (grid[jLen][k] != -1) {
-				int jTemp = grid[jLen][k];
-				int bTemp = 0;
-				for (int m = k; m <= b - bLen+1; m++) {
+				int bTemp = 1000000;
+				for (int m = k; m <= k + bLen; m++) {
 					if (grid[bLen][m] != -1) {
-						bTemp = Math.max(bTemp, grid[bLen][m]);
+						bTemp = Math.min(bTemp, grid[bLen][m]);
 					}
 				}
-				int best = Math.max(0, jTemp - bTemp);
+				int best = Math.max(0, bTemp);
 				max = Math.max(max, best);
 			}
 		}
 		
-		String str = "";
-		for (int i = 0; i < 10; i++) {
-			
-			for (int j = 4; j < 10; j++) {
-				str += grid[i][j] + "\t";
-			}
-			str += '\n';
-		}
-		System.out.println(str);
+//		String str = "";
+//		for (int i = 0; i < 30; i++) {
+//			
+//			for (int j = 0; j < 30; j++) {
+//				str += grid[i][j] + "\t";
+//			}
+//			str += '\n';
+//		}
+//		System.out.println(str);
 		
 		return max;
 	}
 
 	private boolean checkNum(int k) {
 		String num = String.valueOf(k);
-		boolean valid = false;
+		boolean valid = true;
 		for (int i = 0; i < num.length(); i++) {
-			if (num.charAt(i) == '4' || num.charAt(i) == '7') {
-				valid = true;
+			if (!(num.charAt(i) == '4' || num.charAt(i) == '7')) {
+				valid = false;
 				break;
 			}
 		}
