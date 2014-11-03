@@ -20,7 +20,7 @@ public class MafiaGameTest {
         Assert.assertEquals(expected, actual, delta);
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 200000)
     public void testCase0() {
         int N = 3;
         int[] decisions = new int[]{1, 1, 1};
@@ -31,7 +31,7 @@ public class MafiaGameTest {
         assertEquals(expected, actual);
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 200000)
     public void testCase1() {
         int N = 5;
         int[] decisions = new int[]{1, 2, 3};
@@ -53,7 +53,7 @@ public class MafiaGameTest {
         assertEquals(expected, actual);
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 200000)
     public void testCase3() {
         int N = 23;
         int[] decisions = new int[]{17, 10, 3, 14, 22, 5, 11, 10, 22, 3, 14, 5, 11, 17};
