@@ -11,7 +11,7 @@ public class TimeTravellingGardenerTest {
         solution = new TimeTravellingGardener();
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 200000)
     public void testCase0() {
         int[] distance = new int[]{2, 2};
         int[] height = new int[]{1, 3, 10};
@@ -22,7 +22,7 @@ public class TimeTravellingGardenerTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 200000)
     public void testCase1() {
         int[] distance = new int[]{3, 3};
         int[] height = new int[]{3, 1, 3};
@@ -32,8 +32,21 @@ public class TimeTravellingGardenerTest {
 
         Assert.assertEquals(expected, actual);
     }
+    
 
-    @Test(timeout = 2000)
+
+    @Test(timeout = 200000)
+    public void testCase7() {
+        int[] distance = new int[]{3, 3, 3};
+        int[] height = new int[]{2, 2, 3, 4};
+
+        int expected = 1;
+        int actual = solution.determineUsage(distance, height);
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test(timeout = 200000)
     public void testCase2() {
         int[] distance = new int[]{1, 3};
         int[] height = new int[]{4, 4, 4};
