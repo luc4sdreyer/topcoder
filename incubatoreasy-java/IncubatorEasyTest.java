@@ -31,7 +31,7 @@ public class IncubatorEasyTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase2() {
         String[] love = new String[]{"NNYNN", "NNYNN", "NNNYY", "NNNNN", "NNNNN"};
 
@@ -71,24 +71,54 @@ public class IncubatorEasyTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 20000)
     public void testCase6() {
-        String[] love = new String[]{"YNNNN", "NNNYN", "NNNNN", "YNNNN", "NYNNN"};
+        String[] love = new String[]{"YYYYYYYYYY", "YYYYYYYYYY", "YYYYYYYYYY", "YYYYYYYYYY", "YYYYYYYYYY", "YYYYYYYYYY", "YYYYYYYYYY", "YYYYYYYYYY", "YYYYYYYYYY", "YYYYYYYYYY"};
 
-        int expected = 2;
+        int expected = 0;
+        int actual = solution.maxMagicalGirls(love);
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test(timeout = 20000)
+    public void testCase7() {
+        String[] love = new String[]{"YYNNNYYYYY", "YYYYYYNNNY", "NNYYYNYYYY", "YYYYNNYYYY", "YYYYYNYYYY", "YYYYYYYYYY", "YYYYYYYYYY", "YYYYYYYYYY", "YYYYYYYYYY", "YYYYYYYYYY"};
+
+        int expected = 0;
         int actual = solution.maxMagicalGirls(love);
 
         Assert.assertEquals(expected, actual);
     }
 
     @Test(timeout = 2000)
-    public void testCase7() {
-        String[] love = new String[]{"YNNNNYN", "NYNNNYN", "NNNNYNY", "NYNNNNN", "NYYYNNN", "NNNNNNN", "NNNNNYN"};
+    public void testCase8() {
+        String[] love = new String[]{"YYNNNYYYYY", "YYYYYYNNNY", "NNYYYNYYYY", "YYYYNNYYYY", "YYNYYNYYYY", "YYYNNNYYYY", "YYYNNYYYYY", "YYYNNYYYYY", "YYYYNNYYYY", "YYNYYYYYYY"};
 
-        int expected = 2;
+        int expected = 0;
         int actual = solution.maxMagicalGirls(love);
 
         Assert.assertEquals(expected, actual);
-    }   
+    }
+
+    @Test(timeout = 200000)
+    public void testCase9() {
+        String[] love = new String[]{"NNNNNNNNNN", "NNNNNNNNNN", "NNNNNNNNNN", "NNNNNNNNNN", "NNNNNNNNNN", "NNNNNNNNNN", "NNNNNNNNNN", "NNNNNNNNNN", "NNNNNNNNNN", "NNNNNNNNNN"};
+
+        int expected = 10;
+        int actual = solution.maxMagicalGirls(love);
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test(timeout = 2000)
+    public void testCase10() {
+        String[] love = new String[]{"NNYNYNYYNN", "YNYNNYNNYY", "NNNNNNYNNN", "NNNNNYNNNY", "YNNNYYNYNN", "NNNNNYNNNN", "NNNNYNNNNY", "NNNNYNNNNN", "NNYNNNNNNN", "NNNYNYNNNY"};
+
+        int expected = 1;
+        int actual = solution.maxMagicalGirls(love);
+
+        Assert.assertEquals(expected, actual);
+    }
 
 }
