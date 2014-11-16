@@ -11,7 +11,7 @@ public class StampTest {
         solution = new Stamp();
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 200000)
     public void testCase0() {
         String desiredColor = "RRGGBB";
         int stampCost = 1;
@@ -47,7 +47,7 @@ public class StampTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 20000000)
     public void testCase3() {
         String desiredColor = "R*RR*GG";
         int stampCost = 10;
@@ -58,8 +58,19 @@ public class StampTest {
 
         Assert.assertEquals(expected, actual);
     }
+    @Test(timeout = 20000000)
+    public void testCase10() {
+        String desiredColor = "R*RR*G*";
+        int stampCost = 10;
+        int pushCost = 58;
 
-    @Test(timeout = 2000)
+        int expected = 204;
+        int actual = solution.getMinimumCost(desiredColor, stampCost, pushCost);
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test(timeout = 200000)
     public void testCase4() {
         String desiredColor = "*B**B**B*BB*G*BBB**B**B*";
         int stampCost = 5;
@@ -71,7 +82,7 @@ public class StampTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase5() {
         String desiredColor = "*R*RG*G*GR*RGG*G*GGR***RR*GG";
         int stampCost = 7;
@@ -83,16 +94,41 @@ public class StampTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000000)
     public void testCase6() {
-        String desiredColor = "RR*GG";
-        int stampCost = 1;
+        String desiredColor = "**************************************************";
+        int stampCost = 100000;
         int pushCost = 100000;
 
-        int expected = 300002;
+        int expected = 1500000;
         int actual = solution.getMinimumCost(desiredColor, stampCost, pushCost);
 
         Assert.assertEquals(expected, actual);
     }
 
+
+    @Test(timeout = 2000000)
+    public void testCase7() {
+        String desiredColor = "************************R*************************";
+        int stampCost = 100000;
+        int pushCost = 100000;
+
+        int expected = 1500000;
+        int actual = solution.getMinimumCost(desiredColor, stampCost, pushCost);
+
+        Assert.assertEquals(expected, actual);
+    }
+
+
+    @Test(timeout = 2000000)
+    public void testCase8() {
+        String desiredColor = "*************************************R************";
+        int stampCost = 100000;
+        int pushCost = 100000;
+
+        int expected = 1500000;
+        int actual = solution.getMinimumCost(desiredColor, stampCost, pushCost);
+
+        Assert.assertEquals(expected, actual);
+    }
 }
