@@ -77,4 +77,24 @@ public class SuminatorTest {
         Assert.assertEquals(expected, actual);
     }
 
+    @Test(timeout = 200000)
+    public void testCase6() {
+        int[] program = new int[]{-1, 0, 1, 2, 0};
+        Assert.assertEquals(-1, solution.findMissing(program, 10));
+        
+        program = new int[]{-1, 0, 1, 2, 0};
+        Assert.assertEquals(0, solution.findMissing(program, 3));
+        
+        program = new int[]{5, -1, 1, 2, 0};
+        Assert.assertEquals(-1, solution.findMissing(program, 4));
+        
+        program = new int[]{5, 0, -1, 2, 0};
+        Assert.assertEquals(8, solution.findMissing(program, 10));
+        
+        program = new int[]{-1};
+        Assert.assertEquals(1, solution.findMissing(program, 1));
+        
+       
+    }
+
 }
