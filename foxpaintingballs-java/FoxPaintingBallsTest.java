@@ -24,7 +24,7 @@ public class FoxPaintingBallsTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase1() {
         long R = 1L;
         long G = 2L;
@@ -37,7 +37,7 @@ public class FoxPaintingBallsTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 200000)
     public void testCase2() {
         long R = 8L;
         long G = 6L;
@@ -63,7 +63,7 @@ public class FoxPaintingBallsTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 200000)
     public void testCase4() {
         long R = 100L;
         long G = 100L;
@@ -89,7 +89,7 @@ public class FoxPaintingBallsTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase6() {
         long R = 1L;
         long G = 1L;
@@ -104,15 +104,53 @@ public class FoxPaintingBallsTest {
 
     @Test(timeout = 2000)
     public void testCase7() {
-        long R = 19330428391852493L;
-        long G = 48815737582834113L;
-        long B = 11451481019198930L;
-        int N = 3457;
+        long R = 1000000000000000000L;
+        long G = 1000000000000000000L;
+        long B = 1000000000000000000L;
+        int N = 1;
 
-        long expected = 5750952686L;
+        long expected = 3000000000000000000L;
         long actual = solution.theMax(R, G, B, N);
 
         Assert.assertEquals(expected, actual);
     }
 
+    @Test(timeout = 200000)
+    public void testCase8() {
+        long R = 1000000000000000000L;
+        long G = 1000000000000000000L;
+        long B = 1000000000000000000L;
+        int N = 1000000000-1;
+
+        long expected = 6;
+        long actual = solution.theMax(R, G, B, N);
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test(timeout = 200000)
+    public void testCase9() {
+        long R = 1000000000000000000L;
+        long G = 1000000000000000000L;
+        long B = 1000000000000000000L;
+        int N = 1000000000;
+
+        long expected = 5;
+        long actual = solution.theMax(R, G, B, N);
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test(timeout = 200000)
+    public void testCase10() {
+        long R = 1000000000000000000L;
+        long G = 1000000000000000000L;
+        long B = 3;
+        int N = 4;
+
+        long expected = 1;
+        long actual = solution.theMax(R, G, B, N);
+
+        Assert.assertEquals(expected, actual);
+    }
 }
