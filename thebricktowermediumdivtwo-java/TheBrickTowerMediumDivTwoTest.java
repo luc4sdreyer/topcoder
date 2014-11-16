@@ -11,7 +11,7 @@ public class TheBrickTowerMediumDivTwoTest {
         solution = new TheBrickTowerMediumDivTwo();
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase0() {
         int[] heights = new int[]{4, 7, 5};
 
@@ -53,9 +53,9 @@ public class TheBrickTowerMediumDivTwoTest {
 
     @Test(timeout = 2000)
     public void testCase4() {
-        int[] heights = new int[]{13, 32, 38, 25, 43, 47, 6, 13, 32, 38, 25};
+        int[] heights = new int[]{1000};
 
-        int[] expected = new int[]{0, 6, 3, 1, 2, 4, 5, 0, 6, 3, 1, 2, 4};
+        int[] expected = new int[]{0};
         int[] actual = solution.find(heights);
 
         Assert.assertArrayEquals(expected, actual);

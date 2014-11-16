@@ -1,27 +1,41 @@
-public class XorTravelingSalesman {
+import java.util.Stack;
 
-	public int maxProfit(int[] cityValues, String[] roads) {
-		int n = roads.length;
-		int[][] sp = new int[n][n];
-		for (int i = 0; i < n; i++) {
-			for (int j = 0; j < n; j++) {
-				if (roads[i].charAt(j) == 'Y') {
-					sp[i][j] = 1;
-				} else {
-					sp[i][j] = Integer.MAX_VALUE;
+public class XorTravelingSalesman {
+	
+	public static class Node {
+		int city, profit;
+		public Node(int city, int profit) {
+			this.city = city;
+			this.profit = profit;
+		}
+	}
+
+	public int maxProfit(int[] cityValues, String[] r) {
+		char[][] roads = new char[r.length][r.length];
+		for (int i = 0; i < roads.length; i++) {
+			roads[i] = r[i].toCharArray();
+		}
+		boolean[][] visited = new boolean[cityValues.length][1024]; 
+		Node top = new Node( 0, cityValues[0]);
+		Stack<Node> s = new Stack<>();
+		s.push(top);
+		int max = 0;
+		while (!s.isEmpty()) {
+			top = s.pop();
+			int city = top.city;
+			int profit = top.profit;
+			if (visited[city][profit]) {
+				continue;
+			}
+			max = Math.max(max, profit);
+			visited[city][profit] = true;
+			for (int i = 0; i < roads[city].length; i++) {
+				if (roads[city][i] == 'Y') {
+					s.push(new Node(i, profit ^ cityValues[i]));
 				}
 			}
 		}
-		for (int k = 0; k < sp.length; k++) {
-			for (int i = 0; i < sp.length; i++) {
-				for (int j = 0; j < sp.length; j++) {
-					if (sp[i][k] != Integer.MAX_VALUE && sp[k][j] != Integer.MAX_VALUE) {
-						sp[i][j] = Math.min(sp[i][j], sp[i][k] + sp[k][j]);
-					}
-				}
-			}
-		}
-		return 0;
+		return max;
 	}
 
 }
