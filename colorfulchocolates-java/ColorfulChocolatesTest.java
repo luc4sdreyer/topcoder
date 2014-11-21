@@ -95,6 +95,28 @@ public class ColorfulChocolatesTest {
 
         Assert.assertEquals(expected, actual);
     }
+    
+    @Test(timeout = 2000)
+    public void testCase8() {
+        String chocolates = "Q";
+        int maxSwaps = 2500;
+
+        int expected = 1;
+        int actual = solution.maximumSpread(chocolates, maxSwaps);
+
+        Assert.assertEquals(expected, actual);
+    }
+    
+    @Test(timeout = 2000)
+    public void testCase9() {
+        String chocolates = "AAAA";
+        int maxSwaps = 2500;
+
+        int expected = 4;
+        int actual = solution.maximumSpread(chocolates, maxSwaps);
+
+        Assert.assertEquals(expected, actual);
+    }
 
 
 }
