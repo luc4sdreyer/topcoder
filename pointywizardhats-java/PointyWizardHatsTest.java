@@ -50,7 +50,7 @@ public class PointyWizardHatsTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase3() {
         int[] topHeight = new int[]{10, 10};
         int[] topRadius = new int[]{2, 5};
@@ -110,19 +110,6 @@ public class PointyWizardHatsTest {
         int[] bottomRadius = new int[]{1, 2, 3222, 434, 5454, 23};
 
         int expected = 3;
-        int actual = solution.getNumHats(topHeight, topRadius, bottomHeight, bottomRadius);
-
-        Assert.assertEquals(expected, actual);
-    }
-
-    @Test(timeout = 200000)
-    public void testCase8() {
-        int[] topHeight = new int[]{4999};
-        int[] topRadius = new int[]{5000};
-        int[] bottomHeight = new int[]{9996};
-        int[] bottomRadius = new int[]{9998};
-
-        int expected = 1;
         int actual = solution.getNumHats(topHeight, topRadius, bottomHeight, bottomRadius);
 
         Assert.assertEquals(expected, actual);

@@ -1,6 +1,17 @@
 import java.util.Arrays;
 
 public class PointyWizardHats {
+
+	public int getNumHats(int[] topHeight, int[] topRadius, int[] bottomHeight, int[] bottomRadius) {
+		boolean[][] bpg = new boolean[topHeight.length][bottomHeight.length];
+		for (int top = 0; top < topHeight.length; top++) {
+			for (int bot = 0; bot < bottomHeight.length; bot++) {
+				bpg[top][bot] = checkCompat(topHeight, topRadius, bottomHeight, bottomRadius, top, bot);
+			}
+		}
+		return maxBPM(bpg);
+	}
+	
 	boolean bpm(boolean[][] bpGraph, int u, boolean[] seen, int[] matchR)
 	{
 		int N = bpGraph[0].length;
@@ -8,7 +19,8 @@ public class PointyWizardHats {
 		{
 			if (bpGraph[u][v] && !seen[v])
 			{
-				seen[v] = true;
+				seen[v] = true; // Mark v as visited
+
 				if (matchR[v] < 0 || bpm(bpGraph, matchR[v], seen, matchR))
 				{
 					matchR[v] = u;
@@ -27,7 +39,7 @@ public class PointyWizardHats {
 
 		Arrays.fill(matchR, -1);
 
-		int result = 0; // Count of jobs assigned to applicants
+		int result = 0; 
 		for (int u = 0; u < M; u++)
 		{
 			boolean[] seen = new boolean[N];
@@ -38,20 +50,13 @@ public class PointyWizardHats {
 		return result;
 	}
 
-	public int getNumHats(int[] topHeight, int[] topRadius, int[] bottomHeight, int[] bottomRadius) {
-		boolean[][] bpGraph = new boolean[topHeight.length][bottomHeight.length];		
-
-		for (int i = 0; i < topHeight.length; i++) { //top
-			for (int j = 0; j < bottomHeight.length; j++) { //bottom
-				int rDiff = bottomRadius[j] - topRadius[i];
-				double thetaDiff = Math.atan(bottomRadius[j] / (float)bottomHeight[j]) - Math.atan(topRadius[i] / (float)topHeight[i]);
-				int mDiff = topHeight[i]*bottomRadius[j] - bottomHeight[j]*topRadius[i];
-				if (rDiff > 0 && mDiff > 0) {
-					bpGraph[i][j] = true;					
-				}
-			}
+	public boolean checkCompat(int[] topHeight, int[] topRadius, int[] bottomHeight, int[] bottomRadius, int top, int bottom) {
+		if (bottomRadius[bottom] > topRadius[top] 
+				&& (bottomRadius[bottom]*topHeight[top] > topRadius[top]*bottomHeight[bottom])) {
+			return true;
+		} else {
+			return false;
 		}
-		return maxBPM(bpGraph);
 	}
 
 }
