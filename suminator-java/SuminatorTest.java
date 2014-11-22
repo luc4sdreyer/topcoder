@@ -11,7 +11,7 @@ public class SuminatorTest {
         solution = new Suminator();
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 2000000)
     public void testCase0() {
         int[] program = new int[]{7, -1, 0};
         int wantedResult = 10;
@@ -77,24 +77,30 @@ public class SuminatorTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase6() {
-        int[] program = new int[]{-1, 0, 1, 2, 0};
-        Assert.assertEquals(-1, solution.findMissing(program, 10));
-        
-        program = new int[]{-1, 0, 1, 2, 0};
-        Assert.assertEquals(0, solution.findMissing(program, 3));
-        
-        program = new int[]{5, -1, 1, 2, 0};
-        Assert.assertEquals(-1, solution.findMissing(program, 4));
-        
-        program = new int[]{5, 0, -1, 2, 0};
-        Assert.assertEquals(8, solution.findMissing(program, 10));
-        
-        program = new int[]{-1};
-        Assert.assertEquals(1, solution.findMissing(program, 1));
-        
-       
+        int[] program = new int[50];
+        for (int i = 0; i < program.length; i++) {
+        	program[i] = 2000000000;
+		}
+        int wantedResult = 0;
+
+        int expected = -1;
+        int actual = solution.findMissing(program, wantedResult);
+
+        Assert.assertEquals(expected, actual);
     }
 
+    @Test(timeout = 20000000)
+    public void testCase7() {
+        int[] program = new int[]{90456225, 85312801, -1, 93541849, 90015805, 0, 0, 79829127, 55845796, 0, 0, 14659918, 18832075, 7515373, 0, 60031859, 0, 0, 0, 93327133, 0, 50620889, 66619994, 66426447, 0, 0, 88287780, 13169100, 0, 0, 0, 12158979, 0};
+        int wantedResult = 849835476;
+
+        int expected = 38953352;
+        int actual = solution.findMissing(program, wantedResult);
+
+        Assert.assertEquals(expected, actual);
+    } 
+
 }
+

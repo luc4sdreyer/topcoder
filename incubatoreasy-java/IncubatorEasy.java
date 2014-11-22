@@ -1,61 +1,63 @@
 public class IncubatorEasy {
 
-	public int maxMagicalGirls(String[] l) {
-		char[][] love = new char[l.length][l.length];
-		for (int i = 0; i < love.length; i++) {
-			love[i] = l[i].toCharArray();
-		}
-		int N = love.length;
+	public int maxMagicalGirls(String[] love) {
 		
-		// floydWarshall
-		for (int k = 0; k < love.length; k++) {
-			for (int i = 0; i < love.length; i++) {
-				for (int j = 0; j < love.length; j++) {
-					if (love[i][k] == 'Y' && love[k][j] == 'Y') {
-						love[i][j] = 'Y';
+		int n = love.length;
+		boolean[][] sp = new boolean[n][n];
+
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < n; j++) {
+				if (love[i].charAt(j) == 'Y') {
+					sp[i][j] = true;
+				}
+			}
+		}
+
+		for (int k = 0; k < sp.length; k++) {
+			for (int i = 0; i < sp.length; i++) {
+				for (int j = 0; j < sp.length; j++) {
+					if (sp[i][k] == true && sp[k][j] == true) {
+						sp[i][j] = true;
 					}
 				}
 			}
 		}
 		
 		int max = 0;
-		for (int i = 0; i < (1 << N); i++) {
-			boolean[] magical = new boolean[N];
-			for (int j = 0; j < magical.length; j++) {
-				if (((i >> j) & 1) != 0) {
-					magical[j] = true;
+		int M = 1 << n;
+		for (int m = 0; m < M; m++) {
+			boolean[] magical = new boolean[n];
+			for (int i = 0; i < n; i++) {
+				if (((1 << i) & m) != 0) {
+					magical[i] = true;
 				}
 			}
-			max = Math.max(max, calc(love, magical));
+			max = Math.max(max, eval(sp, magical));
 		}
+		
 		return max;
 	}
 
-	private int calc(char[][] love, boolean[] magical) {
-		boolean[] protect = new boolean[love.length];
-		int numP = 0;
-		int N = love.length;
-		for (int i = 0; i < N; i++) {
-			if (numP == N) {
-				return 0;
-			}
+	private int eval(boolean[][] sp, boolean[] magical) {
+		int magicalUnprotected = 0;
+		boolean[] protect = new boolean[magical.length];
+		for (int i = 0; i < magical.length; i++) {
 			if (magical[i]) {
-				for (int j = 0; j < N; j++) {
-					if (love[i][j] == 'Y' && !protect[j]) {
+				for (int j = 0; j < sp[i].length; j++) {
+					if (sp[i][j]) {
 						protect[j] = true;
-						numP++;
 					}
 				}
 			}
 		}
 		
-		int numMagicUnprotected = 0;
-		for (int i = 0; i < N; i++) {
+		for (int i = 0; i < magical.length; i++) {
 			if (magical[i] && !protect[i]) {
-				numMagicUnprotected++;
+				magicalUnprotected++;
 			}
 		}
-		return numMagicUnprotected;
+		return magicalUnprotected;
+		
 	}
 
 }
