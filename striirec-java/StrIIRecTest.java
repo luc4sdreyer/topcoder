@@ -71,4 +71,16 @@ public class StrIIRecTest {
         Assert.assertEquals(expected, actual);
     }
 
+    @Test(timeout = 2000)
+    public void testCase5() {
+        int n = 9;
+        int minInv = 21;
+        String minStr = "efcdgabhi";
+
+        String expected = "efhdgabci";
+        String actual = solution.recovstr(n, minInv, minStr);
+
+        Assert.assertEquals(expected, actual);
+    }
+
 }
