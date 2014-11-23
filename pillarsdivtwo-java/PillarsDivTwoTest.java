@@ -20,7 +20,7 @@ public class PillarsDivTwoTest {
         Assert.assertEquals(expected, actual, delta);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase0() {
         int[] height = new int[]{3, 3, 3};
         int w = 2;
@@ -42,7 +42,7 @@ public class PillarsDivTwoTest {
         assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase2() {
         int[] height = new int[]{100, 2, 100, 2, 100};
         int w = 4;
@@ -64,12 +64,12 @@ public class PillarsDivTwoTest {
         assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase4() {
-        int[] height = new int[]{42, 68, 35, 1, 70, 25, 79, 59, 63, 65, 6, 46, 82, 28, 62, 92, 96, 43, 28, 37, 92, 5, 3, 54, 93, 83, 22, 17, 19, 96, 48, 27, 72, 39, 70, 13, 68, 100, 36, 95, 4, 12, 23, 34, 74, 65, 42, 12, 54, 69};
-        int w = 48;
+        int[] height = new int[]{2};
+        int w = 1;
 
-        double expected = 3851.8189701668684;
+        double expected = 0;
         double actual = solution.maximalLength(height, w);
 
         assertEquals(expected, actual);

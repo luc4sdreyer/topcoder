@@ -11,7 +11,7 @@ public class StrIIRecTest {
         solution = new StrIIRec();
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 2000000)
     public void testCase0() {
         int n = 2;
         int minInv = 1;
@@ -23,7 +23,7 @@ public class StrIIRecTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000000)
     public void testCase1() {
         int n = 9;
         int minInv = 1;
