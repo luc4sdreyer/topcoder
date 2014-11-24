@@ -1,31 +1,32 @@
 public class MonstersValley2 {
-
+	public final static int MAX = 100;
 	public int minimumPrice(int[] dread, int[] price) {
-		
-		int partyDread = 0;
-		int totalPrice = 0;
-		int step = 0;
-		
-		int p2 = minPrice(partyDread+dread[step], totalPrice+price[step], step+1, dread, price);
-		return p2;
-	}
-
-	public int minPrice(long partyDread, int totalPrice, int step, int[] dread, int[] price) {
-		int min = 0;
-		if (step == dread.length) {
-			return totalPrice;
-		}
-		if (dread[step] > partyDread) {
-			// has to bribe
-			min = minPrice(partyDread+dread[step], totalPrice+price[step], step+1, dread, price);
-		} else {
-			// try bribe
-			int p1 = minPrice(partyDread+dread[step], totalPrice+price[step], step+1, dread, price);
-			// try fight
-			int p2 = minPrice(partyDread, totalPrice, step+1, dread, price);
-			min = Math.min(p1, p2);
+		int min = MAX;
+		int N = 1 << dread.length;
+		for (int n = 0; n < N; n++) {
+			boolean[] bribe = new boolean[dread.length];
+			for (int i = 0; i < dread.length; i++) {
+				if (((1 << i) & n) != 0) {
+					bribe[i] = true;
+				}
+			}
+			min = Math.min(min, cost(bribe, dread, price));
 		}
 		return min;
+	}
+
+	private int cost(boolean[] bribe, int[] dread, int[] price) {
+		long power = 0;
+		int cost = 0;
+		for (int i = 0; i < price.length; i++) {
+			if (bribe[i]) {
+				cost += price[i];
+				power += dread[i];
+			} else if (dread[i] > power) {
+				return MAX;
+			}
+		}
+		return cost;
 	}
 
 }
