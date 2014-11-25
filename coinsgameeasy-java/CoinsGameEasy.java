@@ -1,100 +1,85 @@
-import java.util.ArrayList;
-import java.util.Collections;
-
 public class CoinsGameEasy {
-
-	public int minimalSteps(String[] board) {
-		int totalMoves = 0;
-		char[][] map = new char[board.length][board[0].length()];
-
-		for (int y = 0; y < map.length; y++) {
-			for (int x = 0; x < map[0].length; x++) {
-				map[y][x] = board[y].charAt(x);
+	public final static int[] dx = {1, 0, -1, 0};
+	public final static int[] dy = {0, 1, 0, -1};
+	public final static int BIG = 100;
+	
+	public int minimalSteps(String[] b) {
+		char[][] board = new char[b.length][b[0].length()];
+		int x1 = -1;
+		int y1 = -1;
+		int x2 = -1;
+		int y2 = -1;
+		
+		for (int i = 0; i < board.length; i++) {
+			board[i] = b[i].toCharArray();
+			for (int j = 0; j < board[0].length; j++) {
+				if (board[i][j] == 'o') {
+					if (x1 == -1) {
+						x1 = j;
+						y1 = i;
+					} else {
+						x2 = j;
+						y2 = i;						
+					}
+				}
 			}
 		}
-		ArrayList<Integer> minmoves = new ArrayList<Integer>();
-		minmoves.add(move(1,0, totalMoves+1, map));
-		minmoves.add(move(0,1, totalMoves+1, map));
-		minmoves.add(move(-1,0, totalMoves+1, map));
-		minmoves.add(move(0,-1, totalMoves+1, map));
-		int min = Collections.min(minmoves);
-		if (min > 10) {
-			min = -1;
+		int moves = dfs(board, x1,y1,x2,y2,1);
+		if (moves > 10) {
+			return -1;
+		}
+		return moves;
+	}
+
+	private int dfs(char[][] board, int x1, int y1, int x2, int y2, int moves) {
+		int min = BIG;
+		if (moves > 10) {
+			return moves;
+		}
+		for (int dir = 0; dir < 4; dir++) {
+			int newX1 = x1 + dx[dir];
+			int newY1 = y1 + dy[dir];			
+			int newX2 = x2 + dx[dir];
+			int newY2 = y2 + dy[dir];
+			boolean offBoard1 = false;
+			boolean offBoard2 = false;
+			if (newX1 < 0 || newX1 >= board[0].length || newY1 < 0 || newY1 >= board.length) {
+				offBoard1 = true;
+			}
+			if (newX2 < 0 || newX2 >= board[0].length || newY2 < 0 || newY2 >= board.length) {
+				offBoard2 = true;
+			}
+			if ((offBoard1 && !offBoard2) || (!offBoard1 && offBoard2)) {
+				min = Math.min(min, moves);
+				continue;
+			}
+			if (offBoard1 && offBoard2) {
+				// game over
+				continue;
+			}
+			boolean moved1 = true;
+			boolean moved2 = true;
+			if (board[newY1][newX1] == '#') {
+				newX1 = x1;
+				newY1 = y1;
+				moved1 = false;
+			}
+			if (board[newY2][newX2] == '#') {
+				newX2 = x2;
+				newY2 = y2;
+				moved2 = false;
+			}
+			if (!moved1 && !moved2) {
+				// nothing happened
+				continue;
+			}
+			if (newX1 == newX2 && newY1 == newY2) {
+				// game over
+				continue;				
+			}
+			min = Math.min(min, dfs(board, newX1, newY1, newX2, newY2, moves+1));
 		}
 		return min;
 	}
 
-	public int move(int xDir, int yDir, int totalMoves, char[][] map) {
-		if (totalMoves > 10) {
-			return 1000;
-		}
-		char[][] newMap = new char[map.length][map[0].length];
-		for (int y = 0; y < map.length; y++) {
-			for (int x = 0; x < map[0].length; x++) {
-				newMap[y][x] = map[y][x];
-			}
-		}
-		int offboard = 0;
-		int pos1x = -1;
-		int pos1y = -1;
-		int pos2x = -1;
-		int pos2y = -1;
-		for (int y = 0; y < newMap.length; y++) {
-			for (int x = 0; x < newMap[0].length; x++) {
-				if (newMap[y][x] == 'o' && pos1x == -1) {
-					pos1x = x;
-					pos1y = y;
-				} else if (newMap[y][x] == 'o') {
-					pos2x = x;
-					pos2y = y;					
-				}
-			}
-		}
-		
-		if (pos1y+yDir < 0 || pos1y+yDir >= newMap.length) {
-			offboard++;
-		} else if (pos1x+xDir < 0 || pos1x+xDir >= newMap[0].length) {
-			offboard++;
-		}
-		if (pos2y+yDir < 0 || pos2y+yDir >= newMap.length) {
-			offboard++;
-		} else if (pos2x+xDir < 0 || pos2x+xDir >= newMap[0].length) {
-			offboard++;
-		}
-		if (offboard == 2) {
-			return 1000;
-		} else if (offboard == 1) {
-			return totalMoves;
-		}
-		
-		//move
-		
-		int newpos1x = pos1x;
-		int newpos1y = pos1y;
-		int newpos2x = pos2x;
-		int newpos2y = pos2y;
-		if (newMap[pos1y+yDir][pos1x+xDir] != '#') {
-			newpos1y += yDir;
-			newpos1x += xDir;
-		}
-		if (newMap[pos2y+yDir][pos2x+xDir] != '#') {
-			newpos2y += yDir;
-			newpos2x += xDir;
-		}
-		newMap[pos1y][pos1x] = '.';
-		newMap[pos2y][pos2x] = '.';
-		newMap[newpos1y][newpos1x] = 'o';
-		newMap[newpos2y][newpos2x] = 'o';
-		if (newpos1x == newpos2x && newpos1y == newpos2y) {
-			return 1000;
-		}
-		
-		ArrayList<Integer> minmoves = new ArrayList<Integer>();
-		minmoves.add(move(1,0, totalMoves+1, newMap));
-		minmoves.add(move(0,1, totalMoves+1, newMap));
-		minmoves.add(move(-1,0, totalMoves+1, newMap));
-		minmoves.add(move(0,-1, totalMoves+1, newMap));
-		
-		return Collections.min(minmoves);
-	}
 }

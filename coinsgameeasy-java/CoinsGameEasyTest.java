@@ -11,8 +11,8 @@ public class CoinsGameEasyTest {
         solution = new CoinsGameEasy();
     }
 
-    @Test(timeout = 200000)
-    public void testCase0() { 
+    @Test(timeout = 2000)
+    public void testCase0() {
         String[] board = new String[]{"oo"};
 
         int expected = 1;
@@ -21,7 +21,7 @@ public class CoinsGameEasyTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase1() {
         String[] board = new String[]{".#", ".#", ".#", "o#", "o#", "##"};
 
@@ -31,7 +31,7 @@ public class CoinsGameEasyTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase2() {
         String[] board = new String[]{"..", "..", "..", "o#", "o#", "##"};
 
@@ -76,6 +76,16 @@ public class CoinsGameEasyTest {
         String[] board = new String[]{"############", ".........#o#", "############", "..........o#", "############"};
 
         int expected = -1;
+        int actual = solution.minimalSteps(board);
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test(timeout = 2000)
+    public void testCase7() {
+        String[] board = new String[]{"###########", "........#o#", "###########", ".........o#", "###########"};
+
+        int expected = 10;
         int actual = solution.minimalSteps(board);
 
         Assert.assertEquals(expected, actual);
