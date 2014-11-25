@@ -1,80 +1,73 @@
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Stack;
 
 public class ColorfulChocolates {
 
-
-	class Node {
-		public int swapsLeft, spread;
-		public String value;
-		
-		public Node(int swapsLeft, int spread, String value) {
-			this.swapsLeft = swapsLeft;
-			this.value = value;
-			this.spread = spread;
-		}		
-		
-		public String toString() {
-			return "(" + swapsLeft + ", "+ value + ")";
+	public int maximumSpread(String c, int maxSwaps) {
+		HashSet<Character> colors = new HashSet<Character>();
+		char[] chocolates = c.toCharArray();
+		for (int i = 0; i < chocolates.length; i++) {
+			colors.add(chocolates[i]);
 		}
-	}
-	
-	public int maximumSpread(String chocolates, int maxSwaps) {
-		if (chocolates.length() == 1) {
-			return 1;
-		}
-		Queue<Node> q = new LinkedList<Node>();
-		q.add(new Node(maxSwaps, 0, chocolates));
-		HashSet<String> visited = new HashSet<String>();
-		int maxSpread = 0;
-		while(!q.isEmpty()) {
-			Node top = q.poll();
-			if (visited.contains(top.value)) {
-				continue;
-			}
-			visited.add(top.value);
-			
-
-			if (top.spread > maxSpread) {
-				maxSpread = top.spread;
-			}
-			
-			for (int i = 0; i < chocolates.length(); i++) {
-				for (int j = i+1; j < chocolates.length(); j++) {
-					if (i != j && Math.abs(i-j) <= top.swapsLeft) {
-						char[] temp = top.value.toCharArray();
-						char t = temp[i];
-						temp[i] = temp[j];
-						temp[j] = t;
-						int bestSpread = 0;
-						int spread = 1;
-						char oldChar = temp[0];
-						for (int k = 1; k < chocolates.length(); k++) {
-							if (temp[k] == oldChar) {
-								spread++;
-							} else {
-								if (spread > bestSpread) {
-									bestSpread = spread;
-								}
-								spread = 1;
-								oldChar = temp[k];
-							}
-						}
-						if (bestSpread > top.spread) {
-							Node newNode = new Node(top.swapsLeft - Math.abs(i-j), bestSpread, new String(temp));
-							if (!visited.contains(newNode.value)) {
-								q.add(newNode);
-							}
-						}
+		
+		int max = 0;
+		for (char color : chocolates) {
+			for (int start = 0; start <= chocolates.length; start++) {
+				int[] cost = new int[chocolates.length];
+				int value = 0;
+				for (int i = start; i < cost.length; i++) {
+					cost[i] = value;
+					if (chocolates[i] != color) {
+						value++;
 					}
 				}
+				value = 0;
+				for (int i = start-1; i >= 0; i--) {
+					cost[i] = value;
+					if (chocolates[i] != color) {
+						value++;
+					}
+				}
+				int left = start-1;
+				int right = start;
+				int swaps = maxSwaps;
+				int spread = 0;
+				while (true) {
+					int leftVal = Integer.MAX_VALUE;
+					int rightVal = Integer.MAX_VALUE;
+					while (left >= 0 && chocolates[left] != color) {
+						left--;
+					}
+					if (left >= 0) {
+						leftVal = cost[left];
+					}
+					while (right < cost.length && chocolates[right] != color) {
+						right++;
+					}
+					if (right < cost.length) {
+						rightVal = cost[right];
+					}
+					
+					if (leftVal == rightVal && leftVal == Integer.MAX_VALUE) {
+						break;
+					}
+					
+					int best = 0;
+					if (rightVal <= leftVal) {
+						best = rightVal;
+						right++;
+					} else {
+						best = leftVal;
+						left--;
+					}
+					if (best > swaps) {
+						break;
+					}
+					spread++;
+					swaps -= best;					
+				}
+				max = Math.max(max, spread);
 			}
 		}
-		
-		return maxSpread;
-	}
+		return max;
+	} 
 }

@@ -96,39 +96,22 @@ public class HyperKnightTest {
     }
 
     @Test(timeout = 2000)
-    public void testCase10() {
+    public void testCase6() {
         int a = 2;
         int b = 1;
-        int numRows = 5;
-        int numColumns = 5;
+        int numRows = 8;
+        int numColumns = 8;
 
         Assert.assertEquals(0, solution.countCells(a, b, numRows, numColumns, 0));
         Assert.assertEquals(0, solution.countCells(a, b, numRows, numColumns, 1));
         Assert.assertEquals(4, solution.countCells(a, b, numRows, numColumns, 2));
         Assert.assertEquals(8, solution.countCells(a, b, numRows, numColumns, 3));
-        Assert.assertEquals(8, solution.countCells(a, b, numRows, numColumns, 4));
+        Assert.assertEquals(20, solution.countCells(a, b, numRows, numColumns, 4));
         Assert.assertEquals(0, solution.countCells(a, b, numRows, numColumns, 5));
-        Assert.assertEquals(4, solution.countCells(a, b, numRows, numColumns, 6));
+        Assert.assertEquals(4*4, solution.countCells(a, b, numRows, numColumns, 6));
         Assert.assertEquals(0, solution.countCells(a, b, numRows, numColumns, 7));
-        Assert.assertEquals(1, solution.countCells(a, b, numRows, numColumns, 8));
+        Assert.assertEquals(4*4, solution.countCells(a, b, numRows, numColumns, 8));
+        
     }
 
-
-    @Test(timeout = 2000)
-    public void testCase11() {
-        int a = 2;
-        int b = 1;
-        int numRows = 6;
-        int numColumns = 6;
-
-        Assert.assertEquals(0, solution.countCells(a, b, numRows, numColumns, 0));
-        Assert.assertEquals(0, solution.countCells(a, b, numRows, numColumns, 1));
-        Assert.assertEquals(4, solution.countCells(a, b, numRows, numColumns, 2));
-        Assert.assertEquals(8, solution.countCells(a, b, numRows, numColumns, 3));
-        Assert.assertEquals(12, solution.countCells(a, b, numRows, numColumns, 4));
-        Assert.assertEquals(0, solution.countCells(a, b, numRows, numColumns, 5));
-        Assert.assertEquals(8, solution.countCells(a, b, numRows, numColumns, 6));
-        Assert.assertEquals(0, solution.countCells(a, b, numRows, numColumns, 7));
-        Assert.assertEquals(4, solution.countCells(a, b, numRows, numColumns, 8));
-    }
 }

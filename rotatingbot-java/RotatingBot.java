@@ -1,149 +1,75 @@
-public class RotatingBot {
-	
-	public class Position {
-		int x, y;
-		Position(int x, int y) {
-			this.x =x;
-			this.y =y;
-		}
-	}
+import java.util.Arrays;
+import java.util.HashSet;
 
+public class RotatingBot {
+
+	public static final int EAST = 0;
+	public static final int NORTH = 1;
+	public static final int WEST = 2;
+	public static final int SOUTH = 3;
 	
 	public int minArea(int[] moves) {
-		boolean[][] board = new boolean[5000][5000];
-		Position current = new Position(2500,2500);
-		int minX = 0, minY = 0;
-		int maxX = 4999, maxY = 4999;
-		board[current.y][current.x] = true;
+		int[] dx = {1, 0, -1, 0};
+		int[] dy = {0, 1, 0, -1};
+		int direction = 0;
+		int BIG = 10000;
+		int x = BIG/2;
+		int y = BIG/2;
+		HashSet<Integer> visited = new HashSet<>();
+		int key = x + BIG*y;
+		visited.add(key);
 		for (int i = 0; i < moves.length; i++) {
-			if (i % 4 == 0) {
-				for (int j = 0; j < moves[i]; j++) {
-					current.x++;
-					if (board[current.y][current.x]) {
-						return -1;
-					}
-					board[current.y][current.x] = true;
+			for (int j = 0; j < moves[i]; j++) {
+				x += dx[direction];
+				y += dy[direction];
+				key = x + BIG*y;
+				if (visited.contains(key)) {
+					return -1;
 				}
-			} else if (i % 4 == 2) {
-				for (int j = 0; j < moves[i]; j++) {
-					current.x--;
-					if (board[current.y][current.x]) {
-						return -1;
-					}
-					board[current.y][current.x] = true;
-				}
-			} else if (i % 4 == 1) {
-				for (int j = 0; j < moves[i]; j++) {
-					current.y++;
-					if (board[current.y][current.x]) {
-						return -1;
-					}
-					board[current.y][current.x] = true;
-				}
-			} else if (i % 4 == 3) {
-				for (int j = 0; j < moves[i]; j++) {
-					current.y--;
-					if (board[current.y][current.x]) {
-						return -1;
-					}
-					board[current.y][current.x] = true;
-				}
+				visited.add(key);
 			}
+			direction = (direction+1)%4;
 		}
-		maxY = 0;
-		maxX = 0;
-		minY = 1000000;
-		minX = 1000000;
-		for (int y = 0; y < board.length; y++) {
-			for (int x = 0; x < board[0].length; x++) {
-				if (board[y][x]) {
-					if (y > maxY) {
-						maxY = y;
-					}
-					if (x > maxX) {
-						maxX = x;
-					}
-					if (y < minY) {
-						minY = y;
-					}
-					if (x < minX) {
-						minX = x;
-					}
-				}
-			}
+		int[] min = {Integer.MAX_VALUE, Integer.MAX_VALUE};
+		int[] max = {Integer.MIN_VALUE, Integer.MIN_VALUE};
+		for (int pos : visited) {
+			int tx = pos % BIG;
+			int ty = pos / BIG;
+			min[0] = Math.min(min[0], tx);
+			min[1] = Math.min(min[1], ty);
+			max[0] = Math.max(max[0], tx);
+			max[1] = Math.max(max[1], ty);
 		}
-
-		for (int y = 0; y < board.length; y++) {
-			for (int x = 0; x < board[0].length; x++) {
-				board[y][x] = false;
-				if (x < minX) {
-					board[y][x] = true;
-				}
-				if (x > maxX) {
-					board[y][x] = true;
-				}
-				if (y < minY) {
-					board[y][x] = true;
-				}
-				if (y > maxY) {
-					board[y][x] = true;
-				}
-			}
-		}
-		current = new Position(2500,2500);
-		board[current.y][current.x] = true;
-		if (!board[current.y][current.x]) {
-			return -1;
-		}
+		
+		x = BIG/2;
+		y = BIG/2;
+		visited.clear();
+		direction = 0;
+		key = x + BIG*y;
+		visited.add(key);
 		for (int i = 0; i < moves.length; i++) {
-			if (i % 4 == 0) {
-				for (int j = 0; j < moves[i]; j++) {
-					current.x++;
-					board[current.y][current.x] = true;
-					if (!board[current.y][current.x]) {
-						return -1;
-					}
-				}
-				if (!board[current.y][current.x+1] && i < moves.length-1) {
+			for (int j = 0; j < moves[i]; j++) {
+				x += dx[direction];
+				y += dy[direction];
+				key = x + BIG*y;
+				if (visited.contains(key)) {
 					return -1;
 				}
-			} else if (i % 4 == 2) {
-				for (int j = 0; j < moves[i]; j++) {
-					current.x--;
-					board[current.y][current.x] = true;
-					if (!board[current.y][current.x]) {
-						return -1;
-					}
-				}
-				if (!board[current.y][current.x-1] && i < moves.length-1) {
-					return -1;
-				}
-			} else if (i % 4 == 1) {
-				for (int j = 0; j < moves[i]; j++) {
-					current.y++;
-					board[current.y][current.x] = true;
-					if (!board[current.y][current.x]) {
-						return -1;
-					}
-				}
-				if (!board[current.y+1][current.x] && i < moves.length-1) {
-					return -1;
-				}
-			} else if (i % 4 == 3) {
-				for (int j = 0; j < moves[i]; j++) {
-					current.y--;
-					board[current.y][current.x] = true;
-					if (!board[current.y][current.x]) {
-						return -1;
-					}
-				}
-				if (!board[current.y-1][current.x] && i < moves.length-1) {
+				visited.add(key);
+			}
+			boolean last = i == moves.length -1 ? true : false;
+			if (!last) {
+				int nextX = x + dx[direction];
+				int nextY = y + dy[direction];
+				key = nextX + BIG*nextY;
+				if (!visited.contains(key) && !(nextX > max[0] || nextX < min[0] || nextY > max[1] || nextY < min[1])) {
 					return -1;
 				}
 			}
+			direction = (direction+1)%4;		
 		}
-		//System.out.println(maxY + " " + minY + " " + maxX + " " + minX);
-		return (maxY-minY+1)*(maxX-minX+1);
+		int w = max[0] - min[0]+1;
+		int h = max[1] - min[1]+1;
+		return w*h;		
 	}
-
 }

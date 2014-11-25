@@ -1,32 +1,40 @@
 public class KingdomAndTrees {
+
 	public int minLevel(int[] heights) {
-		int min = 0;
-		boolean success = false;
-		while (!success) {
-			success = true;
-			int[] modHeights = heights.clone();
-			modHeights[0] = Math.max(1, modHeights[0]-min);
-			for (int j = 1; j < modHeights.length; j++) {
-				int diff = (heights[j] + min) - modHeights[j-1];
-				if (diff > 0) {
-					modHeights[j] = Math.max(modHeights[j-1] + 1, heights[j] - min);
-				} else {
-					//enlarge min
-					min = min + Math.max(1, (-1*diff + 1)/2);
-					success = false;
-					break;
-				}
-			}
-			if (success) {
-				for (int j = 1; j < modHeights.length; j++) {
-					if (modHeights[j] <= modHeights[j-1]) {
-						success = false;
-					}
-				}
+		getPossible(heights, 0);
+		int low = 0;
+		int high = 1000000000;
+		int min = -1;
+		while (low <= high) {
+			int mid = (low + high)/2;
+			if (getPossible(heights, mid)) {
+				high = mid-1;
+				min = mid;
+			} else {
+				low = mid+1; 
 			}
 		}
 		return min;
 	}
 
+	private boolean getPossible(int[] h, long power) {
+		long[] heights = new long[h.length];
+		for (int i = 0; i < heights.length; i++) {
+			heights[i] = h[i];
+		}
+		heights[heights.length-1] += power;
+		for (int i = heights.length-2; i >= 0; i--) {
+			long maxHeight = heights[i+1]-1;
+			if (heights[i] - power <= maxHeight) {
+				heights[i] = Math.min(heights[i] + power, maxHeight);
+			} else {
+				return false;
+			}
+			if (heights[i] < 1) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 }

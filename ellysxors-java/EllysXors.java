@@ -1,15 +1,19 @@
 public class EllysXors {
-	
-	public long getXor(long L, long R) {
-		return n1Xor(L-1) ^ n1Xor(R);
+
+	public long getXor(long L, long R) {		
+		return getX(L-1) ^ getX(R);
 	}
-	
-	public long n1Xor(long n) {
-		if (n % 4 == 0) return n;
-		if (n % 4 == 1) return 1;
-		if (n % 4 == 2) return n+1;
-		return 0;
+	public long getX(long L) {
+		long a = L % 4;
+		if (a == 0) {
+			return L;
+		} else if (a == 1) {
+			return 1;
+		} else if (a == 2) {
+			return L+1;
+		} else {
+			return 0;
+		}
 	}
 
 }
-

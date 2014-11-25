@@ -4,41 +4,44 @@ public class Suminator {
 
 	public int findMissing(int[] program, int w) {
 		long wantedResult = w;
-		int varIdx = 0;
+		int idx = 0;
 		for (int i = 0; i < program.length; i++) {
 			if (program[i] == -1) {
-				varIdx = i;
+				idx = i;
 				break;
 			}
 		}
-		if (displayResult(program, varIdx, 0) == wantedResult) {
+		
+		long x0 = eval(program, idx, 0);
+		if (x0 == wantedResult) {
 			return 0;
 		}
-		if (displayResult(program, varIdx, 1) == wantedResult) {
+		long x1 = eval(program, idx, 1);
+		if (x1 == wantedResult) {
 			return 1;
 		}
-		if (displayResult(program, varIdx, 1) == displayResult(program, varIdx, 2)) {
+		
+		if (x1 == x0) {
 			return -1;
-		} else {
-			long u = displayResult(program, varIdx, 1);
-			long a = wantedResult - u;
-			if (1+a < 1) {
-				return -1;
-			}
-			if (wantedResult != displayResult(program, varIdx, 1+a)) {
-				return -1;
-			}
-			return (int) (1+a);
 		}
+		
+		for (int i = 0; i < 10; i++) {
+			if (wantedResult == eval(program, idx, i)) {
+				return i;
+			}			
+		}
+		
+		long ret = wantedResult - x0;
+		if (ret < 0) {
+			return -1;
+		}	
+		return (int) ret;
 	}
 	
-	public long displayResult(int[] p, int varIdx, long value) {
-		long[] program = new long[p.length];
-		for (int i = 0; i < program.length; i++) {
-			program[i] = p[i];
-		}
-		program[varIdx] = value;
+	public long eval(int[] p, int idx, int value) {
 		Stack<Long> s = new Stack<>();
+		int[] program = p.clone();
+		program[idx] = value;
 		for (int i = 0; i < program.length; i++) {
 			if (program[i] == 0) {
 				long a = 0;
@@ -49,16 +52,16 @@ public class Suminator {
 				if (!s.isEmpty()) {
 					b = s.pop();
 				}
-				s.push(a + b);
+				s.push(a+b);
 			} else {
 				s.push((long) program[i]);
 			}
 		}
-		long a = 0;
+		long ret = 0;
 		if (!s.isEmpty()) {
-			a = s.pop();
+			ret = ((long)s.pop());
 		}
-		return a;
+		return ret;
 	}
 
 }
