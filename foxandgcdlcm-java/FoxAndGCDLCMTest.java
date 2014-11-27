@@ -11,7 +11,7 @@ public class FoxAndGCDLCMTest {
         solution = new FoxAndGCDLCM();
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 200000)
     public void testCase0() {
         long G = 2L;
         long L = 20L;
@@ -66,9 +66,20 @@ public class FoxAndGCDLCMTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase5() {
-        long G = 1000000000000L ;
+        long G = 2L;
+        long L = 1000000000000L;
+
+        long expected = 488285346L;
+        long actual = solution.get(G, L);
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test(timeout = 2000)
+    public void testCase6() {
+        long G = 1000000000000L;
         long L = 1000000000000L;
 
         long expected = 2000000000000L;

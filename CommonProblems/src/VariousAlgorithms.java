@@ -526,6 +526,17 @@ public class VariousAlgorithms {
 			}
 		}
 	}
+	public void all_combinations2(int list[]) {
+		int N = 1 << list.length;
+		for (int n = 0; n < N; n++) {
+			boolean[] active = new boolean[list.length];
+			for (int i = 0; i < list.length; i++) {
+				if (((1 << i) & n) != 0) {
+					active[i] = true;
+				}
+			}
+		}
+	}
 
 	/*******************************************************************************************************************************
 	 * Iteration of a set/array: k combinations of a set of n, in other words: counting in base n.

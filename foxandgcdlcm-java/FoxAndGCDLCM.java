@@ -3,31 +3,29 @@ import java.math.BigInteger;
 public class FoxAndGCDLCM {
 
 	public long get(long G, long L) {
-		double AB = G;
-		AB *= L;
-		long sAB = (long) Math.sqrt(AB);
-		
-		long A = Long.MAX_VALUE/2;
-		long B = Long.MAX_VALUE/2;
-		for (long i = G; i <= sAB; i += G) {
-			if (L % i == 0) {
-				long tA = i;
-				long tB = (L/i) * G;
-				if (lcm(tA, tB) == L) {
-					if (tA + tB < A + B) {
-						A = tA;
-						B = tB;
-					}
+		long min = Long.MAX_VALUE;
+		for (long i = 1; i*i*G <= L; i++) {
+			long A = i*G;
+			if (L % A == 0) {
+				long B = L/i;
+				if (gcd(A, B) == G && (lcm(A, B) == L)) {
+					min = Math.min(min, A + B);
 				}
 			}
 		}
-		if (A == Long.MAX_VALUE/2) {
+		if (min == Long.MAX_VALUE) {
 			return -1;
 		}
-		return A+B;
+		return min;
 	}
 	
-	public long lcm(long a, long b) {
-	    return BigInteger.valueOf(b).multiply(BigInteger.valueOf(a)).divide(BigInteger.valueOf(a).gcd(BigInteger.valueOf(b))).longValue();
+	public static long gcd(long a, long b) {
+	    return BigInteger.valueOf(a).gcd(BigInteger.valueOf(b)).longValue();
 	}
+	
+	public static long lcm(long a, long b)
+	{
+		return BigInteger.valueOf(b).multiply(BigInteger.valueOf(a)).divide(BigInteger.valueOf(a).gcd(BigInteger.valueOf(b))).longValue();
+	}
+
 }
