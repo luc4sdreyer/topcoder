@@ -1,47 +1,38 @@
 public class FoxPaintingBalls {
 
-	public long theMax(long R, long G, long B, int N) {
+	public long theMax(long R, long G, long B, int N_) {
+		long N = N_;
+		long size = N*(N+1L)/2L;
 		if (N == 1) {
 			return R+G+B;
-		}
-		long size = N*(N+1L)/6L;
-		if (N % 3 != 1) {
-			long min = min(R,G,B) / size;
-			return min;
+		} else if (size % 3 == 0) {
+			return Math.min(R,Math.min(G,B))*3 / (size);
 		} else {
 			long low = 0;
-			long high = R+G+B;
-			long mid = 0;
-			long best = 0;
+			long high = (R+G+B) / size;
+			long max = 0;
 			while (low <= high) {
-				mid = (low + high)/2L;
-				if (check(mid, R, G, B, N, size)) {
-					best = mid;
-					low = mid+1L;
+				long mid = (low+high)/2;
+				if (valid(mid, size, N, R, G, B)) {
+					low = mid+1;
+					max = Math.max(max, mid);
 				} else {
-					high = mid-1L;
+					high = mid-1;
 				}
 			}
-			return best;
+			return max;
 		}
 	}
-	
-	public boolean check(long pyramids, long R, long G, long B, long N, long size) {
-		if ((R+G+B)/(1L+3L*size) >= pyramids && min(R, G, B) / size >= pyramids) {
+
+	private boolean valid(long sets, long size, long n, long r, long g, long b) {
+		long minContrib = (size/3) * sets;
+		long rR = r - minContrib;
+		long rG = g - minContrib;
+		long rB = b - minContrib;
+		if (rR >= 0 && rG >= 0 && rB >= 0 && (rR+rG+rB >= sets)) {
 			return true;
 		}
 		return false;
-	}
-	
-	
-	public long min(long a, long b, long c) {
-		return Math.min(Math.min(a, b), c);
-	}
-	public long max(long a, long b, long c) {
-		return Math.max(Math.max(a, b), c);
-	}
-	public long mid(long a, long b, long c) {
-		return Math.min(Math.max(a, b), c);
 	}
 
 }
