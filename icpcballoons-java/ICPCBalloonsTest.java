@@ -11,7 +11,7 @@ public class ICPCBalloonsTest {
         solution = new ICPCBalloons();
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 2000000)
     public void testCase0() {
         int[] balloonCount = new int[]{100};
         String balloonSize = "L";
