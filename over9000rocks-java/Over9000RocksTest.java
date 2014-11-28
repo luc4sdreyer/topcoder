@@ -22,7 +22,7 @@ public class Over9000RocksTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase1() {
         int[] lowerBound = new int[]{9000, 1, 10};
         int[] upperBound = new int[]{9000, 2, 20};
@@ -66,23 +66,16 @@ public class Over9000RocksTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
-    public void testCase6() {
-        int[] lowerBound = new int[]{177258, 439976, 996972, 281567, 782547, 998375, 491481, 707710, 146177, 889410};
-        int[] upperBound = new int[]{293261, 559909, 997946, 410135, 784021, 998581, 925665, 743314, 626775, 943659};
-
-        int expected = 7137090;
-        int actual = solution.countPossibilities(lowerBound, upperBound);
-
-        Assert.assertEquals(expected, actual);
-    }
-
     @Test(timeout = 2000)
-    public void testCase7() {
-        int[] lowerBound = new int[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-        int[] upperBound = new int[]{1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000, 1000000};
+    public void testCase5() {
+        int[] lowerBound = new int[15];
+        int[] upperBound = new int[15];
+        for (int i = 0; i < upperBound.length; i++) {
+			upperBound[i] = 1000000;
+			lowerBound[i] = 1;
+		}
 
-        int expected = 0;
+        int expected = 14991000;
         int actual = solution.countPossibilities(lowerBound, upperBound);
 
         Assert.assertEquals(expected, actual);
