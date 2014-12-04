@@ -2,14 +2,14 @@ public class TheSquareRootDilemma {
 
 	public int countPairs(int N, int M) {
 		int num = 0;
-		for (long a = 1; a <= N; a++) {
-			long r = a;
-			for (long i = 2; i*i <= a; i++) {
-				while ((r % (i*i)) == 0) {
-					r /= i*i;
+		for (int a = 1; a <= N; a++) {
+			int rem = a;
+			for (int i = 2; i*i <= a; i++) {
+				while (rem >= i*i && rem % (i*i) == 0) {
+					rem /= i*i;
 				}
 			}
-			for (long i = 1; i*i*r <= M; i++) {
+			for (int b = 1; b*b <= M/rem; b++) {
 				num++;
 			}
 		}
