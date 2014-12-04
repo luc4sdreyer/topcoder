@@ -11,7 +11,7 @@ public class RotatingBotTest {
         solution = new RotatingBot();
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase0() {
         int[] moves = new int[]{15};
 
@@ -31,7 +31,7 @@ public class RotatingBotTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase2() {
         int[] moves = new int[]{1, 1, 1, 1};
 
@@ -41,7 +41,7 @@ public class RotatingBotTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 2000000)
+    @Test(timeout = 2000)
     public void testCase3() {
         int[] moves = new int[]{9, 5, 11, 10, 11, 4, 10};
 
@@ -61,7 +61,7 @@ public class RotatingBotTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 200000)
     public void testCase5() {
         int[] moves = new int[]{8, 6, 6, 1};
 
@@ -71,7 +71,7 @@ public class RotatingBotTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 200000)
     public void testCase6() {
         int[] moves = new int[]{8, 6, 6};
 
@@ -81,7 +81,7 @@ public class RotatingBotTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 2000000)
+    @Test(timeout = 2000)
     public void testCase7() {
         int[] moves = new int[]{5, 4, 5, 3, 3};
 
@@ -91,56 +91,14 @@ public class RotatingBotTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 2000000)
+    @Test(timeout = 2000)
     public void testCase8() {
-        int[] moves = new int[]{5, 4, 5, 2, 3};
+        int[] moves = new int[]{1, 1, 2, 2, 3, 4, 10};
 
         int expected = -1;
         int actual = solution.minArea(moves);
 
         Assert.assertEquals(expected, actual);
     }
-
-    @Test(timeout = 2000000)
-    public void testCase9() {
-        int[] moves = new int[]{5, 4, 4, 3, 3};
-
-        int expected = -1;
-        int actual = solution.minArea(moves);
-
-        Assert.assertEquals(expected, actual);
-    }
-
-    @Test(timeout = 2000000)
-    public void testCase10() {
-        int[] moves = new int[]{5, 4, 5, 3, 4};
-
-        int expected = 30;
-        int actual = solution.minArea(moves);
-
-        Assert.assertEquals(expected, actual);
-    }
-
-    @Test(timeout = 2000000)
-    public void testCase11() {
-        int[] moves = new int[]{5, 4, 5, 3, 4, 1};
-
-        int expected = 30;
-        int actual = solution.minArea(moves);
-
-        Assert.assertEquals(expected, actual);
-    }
-
-    @Test(timeout = 2000000)
-    public void testCase12() {
-        int[] moves = new int[]{4, 3, 5, 4, 6, 1};
-
-        int expected = -1;
-        int actual = solution.minArea(moves);
-
-        Assert.assertEquals(expected, actual);
-    }
-    
-    
 
 }
