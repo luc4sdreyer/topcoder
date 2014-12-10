@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
@@ -397,7 +398,72 @@ public class VariousAlgorithms {
 		return -1;
 	}
 	
-
+	/*******************************************************************************************************************************
+	 * Ternary Search.
+	 * 
+	 * Find the min/max if the input function or (f(x)) has only one local minimum or maximum.
+	 * x will be accurate to 1e-500000.
+	 * 
+	 */	
+	public static double ternarySearch() {
+		double low = 0.0;
+		double high = 1e100;
+		double best = low;
+		for (int i = 0; i < 1000000; i++) {
+			double[] x = {(high-low)/3, (high-low)*2/3};
+			double[] y = {0,0};
+			for (int j = 0; j < y.length; j++) {
+				//y[j] = f(x[i]);
+			}
+			best = (y[0]+y[1])/2;
+			if (y[0] > y[1]) {
+				low = x[0];
+			} else {
+				high = x[1];
+			}
+		}
+		return best;
+	}
+	
+	/*******************************************************************************************************************************
+	 * Knapsack DP sub-problem: in how many ways can a list of values sum up to a given number?
+	 * 
+	 * For example: f([1, 2, 3, 4, 5]) = 
+	 * [1, 1, 1, 2, 2, 4, 4, 4, 5, 5, 6, 5, 5, 4, 4, 4, 2, 2, 1, 1, 1]
+	 * 
+	 * Or the binomial coefficients: f([1, 1, 1, 1, 1, 1]) =
+	 * [1, 6, 15, 20, 15, 6, 1] 
+	 */
+	public static int[] waysToSum(int[] values) {
+		Arrays.sort(values);
+		int max = 0;
+		for (int i = 0; i < values.length; i++) {
+			max += values[i];
+		}
+		int[] ways = new int[max+1];
+		ways[0] = 1;
+		for (int i = 0; i < values.length; i++) {
+			for (int sum = max; sum >= values[i]; sum--) {
+				ways[sum] += ways[sum - values[i]];
+			}
+		}
+		return ways;
+	}
+	
+	public static HashMap<Long, Long> waysToSumLong(int[] values) {
+		Arrays.sort(values);
+		HashMap<Long, Long> ways = new HashMap<>();
+		ways.put(0L, 1L);
+		for (int i = 0; i < values.length; i++) {
+			HashMap<Long, Long> newWays = new HashMap<>(ways); // shallow copy
+			for (long key: ways.keySet()) {
+				long newSum = key + values[i];
+				newWays.put(newSum, ways.get(key) + (ways.containsKey(newSum) ? ways.get(newSum) : 0));
+			}
+			ways = newWays;
+		}
+		return ways;
+	}
 
 	/*******************************************************************************************************************************
 	 * A permutation of a set of objects is an arrangement of those objects into a particular order.
