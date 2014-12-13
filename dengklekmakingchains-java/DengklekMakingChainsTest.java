@@ -11,7 +11,7 @@ public class DengklekMakingChainsTest {
         solution = new DengklekMakingChains();
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 200000)
     public void testCase0() {
         String[] chains = new String[]{".15", "7..", "402", "..3"};
 
@@ -41,7 +41,7 @@ public class DengklekMakingChainsTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 200000)
     public void testCase3() {
         String[] chains = new String[]{"16.", "9.8", ".24", "52.", "3.1", "532", "4.4", "111"};
 
@@ -51,7 +51,7 @@ public class DengklekMakingChainsTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 200000)
     public void testCase4() {
         String[] chains = new String[]{"..1", "3..", "2..", ".7."};
 
@@ -61,7 +61,7 @@ public class DengklekMakingChainsTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 2000000)
+    @Test(timeout = 200000)
     public void testCase5() {
         String[] chains = new String[]{"412", "..7", ".58", "7.8", "32.", "6..", "351", "3.9", "985", "...", ".46"};
 
