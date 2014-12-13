@@ -35,7 +35,7 @@ public class AntsMeetTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase2() {
         int[] x = new int[]{-1, -1, -1, 0, 0, 0, 1, 1, 1};
         int[] y = new int[]{-1, 0, 1, -1, 0, 1, -1, 0, 1};
@@ -66,6 +66,18 @@ public class AntsMeetTest {
         String direction = "WNSNNSSWWWEENWESNSWSWSEWWEWEWWWNWESNSSNNSNNWWWNESE";
 
         int expected = 44;
+        int actual = solution.countAnts(x, y, direction);
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test(timeout = 200000)
+    public void testCase5() {
+        int[] x = new int[]{-1000, 1000};
+        int[] y = new int[]{-1000, 1000};
+        String direction = "NW";
+
+        int expected = 0;
         int actual = solution.countAnts(x, y, direction);
 
         Assert.assertEquals(expected, actual);

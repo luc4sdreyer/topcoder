@@ -22,7 +22,7 @@ public class TheSquareRootDilemmaTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 200000)
     public void testCase1() {
         int N = 10;
         int M = 1;
@@ -51,6 +51,30 @@ public class TheSquareRootDilemmaTest {
 
         int expected = 310;
         int actual = solution.countPairs(N, M);
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test(timeout = 200000)
+    public void testCase4() {
+        int N = 77777;
+        int M = 77777;
+
+        int expected = 543345;
+        int actual = solution.countPairs(N, M);
+        
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test(timeout = 200000)
+    public void testCase5() {
+        int N = 1;
+        int M = 1;
+
+        int expected = 1;
+        int actual = solution.countPairs(N, M);
+        
 
         Assert.assertEquals(expected, actual);
     }

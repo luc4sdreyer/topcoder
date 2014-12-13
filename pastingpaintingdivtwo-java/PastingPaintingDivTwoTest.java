@@ -77,4 +77,26 @@ public class PastingPaintingDivTwoTest {
         Assert.assertEquals(expected, actual);
     }
 
+    @Test(timeout = 2000)
+    public void testCase6() {
+        String[] clipboard = new String[]{"BBB", "BBB", "BBB"};
+        int T = 5;
+
+        long expected = 29L;
+        long actual = solution.countColors(clipboard, T);
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test(timeout = 2000)
+    public void testCase7() {
+        String[] clipboard = new String[]{"BBB", "BBB", "BBB"};
+        int T = 5;
+
+        long expected = 29L;
+        long actual = solution.countColors(clipboard, T);
+
+        Assert.assertEquals(expected, actual);
+    }
+
 }
