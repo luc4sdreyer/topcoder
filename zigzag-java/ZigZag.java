@@ -1,31 +1,23 @@
 public class ZigZag {
 
 	public int longestZigZag(int[] sequence) {
-		int[] longest = new int[sequence.length];
-		int[] diff = new int[sequence.length];
-		int max = 0;
-		for (int n = 0; n < sequence.length; n++) {
-			longest[n] = 1;
-			for (int t = 0; t < n; t++) {
-				if (((diff[t] == 0 && sequence[n] != sequence[t])
-						|| (diff[t] == 1 && sequence[n] < sequence[t])
-						|| (diff[t] == 2 && sequence[n] > sequence[t]))
-						&& longest[t] + 1 > longest[n]) {
-					longest[n] = longest[t] + 1;
-					if (sequence[n] > sequence[t]) {
-						diff[n] = 1;
-					} else if (sequence[n] < sequence[t]) {
-						diff[n] = 2;
-					} else if (sequence[n] == sequence[t]) {
-						diff[n] = 3;
-					}
+		int[][] dp = new int[sequence.length][2];
+		dp[0][0] = 1;
+		dp[0][1] = 0;
+		for (int i = 1; i < sequence.length; i++) {
+			for (int j = 0; j < i; j++) {
+				if ((dp[j][1] == 0 && sequence[i] != sequence[j]) 
+						|| (sequence[i] > sequence[j] && dp[j][1] == -1)
+						|| (sequence[i] < sequence[j] && dp[j][1] == 1)) {
+					dp[i][0] = Math.max(dp[j][0] + 1, dp[i][0]);
+					dp[i][1] = sequence[i] > sequence[j] ? 1 : -1; 
 				}
 			}
-			if (longest[n] > max) {
-				max = longest[n];
-			}
+		}		
+		int max = 0;
+		for (int i = 0; i < dp.length; i++) {
+			max = Math.max(max, dp[i][0]);
 		}
-		
 		return max;
 	}
 

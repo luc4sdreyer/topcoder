@@ -11,7 +11,7 @@ public class ZigZagTest {
         solution = new ZigZag();
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 200000)
     public void testCase0() {
         int[] sequence = new int[]{1, 7, 4, 9, 2, 5};
 
@@ -71,26 +71,34 @@ public class ZigZagTest {
         Assert.assertEquals(expected, actual);
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase6() {
-        int[] sequence = new int[]{4, 4, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2};
-
-        int expected = 3;
-        int actual = solution.longestZigZag(sequence);
-
-        Assert.assertEquals(expected, actual);
-    }
-
-    @Test(timeout = 200000)
-    public void testCase7() {
-        int[] sequence = new int[]{20, 20};
+        int[] sequence = new int[]{1, 1, 1};
 
         int expected = 1;
         int actual = solution.longestZigZag(sequence);
 
         Assert.assertEquals(expected, actual);
     }
-    
-    
+
+    @Test(timeout = 2000)
+    public void testCase7() {
+        int[] sequence = new int[]{1, 1, 2};
+
+        int expected = 2;
+        int actual = solution.longestZigZag(sequence);
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @Test(timeout = 2000000)
+    public void testCase8() {
+        int[] sequence = new int[]{1, 4, 7, 2, 5};
+
+        int expected = 4;
+        int actual = solution.longestZigZag(sequence);
+
+        Assert.assertEquals(expected, actual);
+    }
 
 }
