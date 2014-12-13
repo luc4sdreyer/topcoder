@@ -11,7 +11,7 @@ public class EllysCheckersTest {
         solution = new EllysCheckers();
     }
 
-    @Test(timeout = 200000)
+    @Test(timeout = 2000)
     public void testCase0() {
         String board = ".o...";
 
@@ -19,6 +19,18 @@ public class EllysCheckersTest {
         String actual = solution.getWinner(board);
 
         Assert.assertEquals(expected, actual);
+    }
+
+    @Test(timeout = 2000000)
+    public void testCase5() {
+        Assert.assertEquals("NO",solution.getWinner ("o"));
+    	Assert.assertEquals("YES", solution.getWinner("oo..."));
+        Assert.assertEquals("YES", solution.getWinner(".oo.."));
+        Assert.assertEquals("YES", solution.getWinner("ooo.."));
+        Assert.assertEquals("NO", solution.getWinner (".ooo."));
+        Assert.assertEquals("YES", solution.getWinner("..oo."));
+        Assert.assertEquals("NO", solution.getWinner ("..o.."));
+        Assert.assertEquals("YES",solution.getWinner ("ooo..."));
     }
 
     @Test(timeout = 2000)
@@ -54,46 +66,6 @@ public class EllysCheckersTest {
     @Test(timeout = 2000)
     public void testCase4() {
         String board = ".o..o...o....o.....o";
-
-        String expected = "NO";
-        String actual = solution.getWinner(board);
-
-        Assert.assertEquals(expected, actual);
-    }
-
-    @Test(timeout = 2000)
-    public void testCase5() {
-        String board = ".o......o.oo..";
-
-        String expected = "NO";
-        String actual = solution.getWinner(board);
-
-        Assert.assertEquals(expected, actual);
-    }
-
-    @Test(timeout = 200000)
-    public void testCase6() {
-        String board = "..o..";
-
-        String expected = "NO";
-        String actual = solution.getWinner(board);
-
-        Assert.assertEquals(expected, actual);
-    }
-
-    @Test(timeout = 2000)
-    public void testCase7() {
-        String board = "..oo..";
-
-        String expected = "YES";
-        String actual = solution.getWinner(board);
-
-        Assert.assertEquals(expected, actual);
-    }
-
-    @Test(timeout = 2000)
-    public void testCase8() {
-        String board = ".o.o..";
 
         String expected = "NO";
         String actual = solution.getWinner(board);
