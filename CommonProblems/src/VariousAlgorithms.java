@@ -376,7 +376,7 @@ public class VariousAlgorithms {
 	 * 
 	 * If the input function or array (f(x) or a[x]) is monotonic, find the point where f(x) or a[x] = target
 	 * 
-	 * Speed: Logarithmic time! O(log n)
+	 * Speed: Logarithmic time! O(log n). At most 32 iterations.
 	 * Memory: O(1)
 	 * 
 	 * Think this is easy? Java's binary search contained a bug for 6 years.
@@ -397,7 +397,72 @@ public class VariousAlgorithms {
 		return -1;
 	}
 	
-
+	/*******************************************************************************************************************************
+	 * Ternary Search.
+	 * 
+	 * Find the min/max if the input function or (f(x)) has only one local minimum or maximum.
+	 * x will be accurate to 1e-500000.
+	 * 
+	 */	
+	public static double ternarySearch() {
+		double low = 0.0;
+		double high = 1e100;
+		double best = low;
+		for (int i = 0; i < 1000000; i++) {
+			double[] x = {(high-low)/3, (high-low)*2/3};
+			double[] y = {0,0};
+			for (int j = 0; j < y.length; j++) {
+				//y[j] = f(x[i]);
+			}
+			best = (y[0]+y[1])/2;
+			if (y[0] > y[1]) {
+				low = x[0];
+			} else {
+				high = x[1];
+			}
+		}
+		return best;
+	}
+	
+	/*******************************************************************************************************************************
+	 * Knapsack DP sub-problem: in how many ways can a list of values sum up to a given number?
+	 * 
+	 * For example: f([1, 2, 3, 4, 5]) = 
+	 * [1, 1, 1, 2, 2, 4, 4, 4, 5, 5, 6, 5, 5, 4, 4, 4, 2, 2, 1, 1, 1]
+	 * 
+	 * Or the binomial coefficients: f([1, 1, 1, 1, 1, 1]) =
+	 * [1, 6, 15, 20, 15, 6, 1] 
+	 */
+	public static int[] waysToSum(int[] values) {
+		//Arrays.sort(values);
+		int max = 0;
+		for (int i = 0; i < values.length; i++) {
+			max += values[i];
+		}
+		int[] ways = new int[max+1];
+		ways[0] = 1;
+		for (int i = 0; i < values.length; i++) {
+			for (int sum = max; sum >= values[i]; sum--) {
+				ways[sum] += ways[sum - values[i]];
+			}
+		}
+		return ways;
+	}
+	
+	public static HashMap<Long, Long> waysToSumLong(int[] values) {
+		//Arrays.sort(values);
+		HashMap<Long, Long> ways = new HashMap<>();
+		ways.put(0L, 1L);
+		for (int i = 0; i < values.length; i++) {
+			HashMap<Long, Long> newWays = new HashMap<>(ways); // shallow copy
+			for (long key: ways.keySet()) {
+				long newSum = key + values[i];
+				newWays.put(newSum, ways.get(key) + (ways.containsKey(newSum) ? ways.get(newSum) : 0));
+			}
+			ways = newWays;
+		}
+		return ways;
+	}
 
 	/*******************************************************************************************************************************
 	 * A permutation of a set of objects is an arrangement of those objects into a particular order.
@@ -416,12 +481,68 @@ public class VariousAlgorithms {
         return ret;
 	}
 	
+	/**
+	 * Number of permutations without repetition:  n! / (n-r)!
+	 */
+	public static long nPr(int n, int r) {
+		if (n == 0) {
+			return 1;
+		}
+		long ret = 1;
+		for (long i = n - r + 1; i <= n; i++) {
+			ret *= i;
+		}
+		return ret;
+	}
+
+	/**
+	 * Number of permutations WITH repetition:  n^r
+	 */
+	public static long nPrWithRep(int n, int r) {
+		long ret = 1;
+		for (long i = 0; i < r; i++) {
+			ret *= n;
+		}
+		return ret;
+	}
+	
+	
 	/*******************************************************************************************************************************
 	 * Ordering ignored. A poker hand can be described as a 5-combination (k = 5) of cards from a 52 card deck (n = 52).
 	 * There are 2,598,960 such combinations. Combinations just look at selected against not selected.
 	 */
 	public static BigInteger combination(int n, int k) {
         return permutation(n,k).divide(factorial(k));
+	}
+
+	/**
+	 * Number of combinations without repetition:  n! / (r! * (n - r)!)
+	 */
+	public static long nCr(int n, int r) {
+		if (n == 0) {
+			return 1;
+		}
+		long ret = 1;
+		//
+		// symmetry
+		//
+		if (n - r < r) {
+			r = n - r;
+		}
+		for (long i = n - r + 1; i <= n; i++) {
+			ret *= i;
+		}
+		for (long i = 2; i <= r; i++) {
+			ret /= i;
+		}
+		return ret;
+	}
+
+	/**
+	 * Number of combinations WITH repetition:  (n + r - 1)! / (r! * (n - 1)!)
+	 */
+	public static long nCrWithRep(int n, int r) {
+		return nCr(n + r - 1, r);
 	}
 	
 	/*******************************************************************************************************************************
@@ -506,6 +627,30 @@ public class VariousAlgorithms {
 			}
 		}
 		return false;
+	}
+	
+	public static boolean next_combination(int[] idx, int n) {
+		int k = idx.length;
+		boolean changed = false;
+		int cIdx = 0;
+		for (int i = k-1; i >= 0; i--) {
+			if ((i == k-1 && idx[i] < n) || (i < k-1 && idx[i] < idx[i+1]-1)) {
+				idx[i]++;
+				changed = true;
+				cIdx = i;
+				break;
+			}
+		}
+		if (!changed) {
+			return false;
+		}
+		for (int i = cIdx+1; i < k; i++) {
+			idx[i] = idx[i-1] + 1;
+		}
+		if (idx[k-1] > n) {
+			return false;
+		}
+		return true;
 	}
 
 	/*******************************************************************************************************************************
@@ -699,6 +844,52 @@ public class VariousAlgorithms {
 		}
 	}
 	
+	/*******************************************************************************************************************************
+	 * Calculate the right side of Pascal's triangle (aka binomial coefficients). 
+	 * Complexity: O(n^2)
+	 */
+	public int[] PascalsTriangle(int n) {
+		int lim = n;
+		int[] ptr = new int[lim+2];
+		ptr[0] = 1;
+		for (int i = 1; i <= lim; i++) {
+			int[] newPtr = new int[ptr.length];
+			for (int j = i%2; j <= i; j += 2) {
+				if (j == 0 ){
+					newPtr[j] = ptr[j+1]*2;
+				} else {
+					newPtr[j] = ptr[j+1] + ptr[j-1];
+				}
+			}
+			ptr = newPtr;
+		}
+		return ptr;
+	}
+	
+	
+	/*******************************************************************************************************************************
+	 * Very fast way to calculate a modular exponent. Cannot overflow!
+	 */
+	public static int fastModularExponent(int a, int exp, int mod) {
+		long[] results = new long[65];
+		long m = mod;
+		int power = 1;
+		long res = 1;
+		while (exp > 0) {
+			if (power == 1) {
+				results[power] = a % m;
+			} else {
+				results[power] = (results[power-1] * results[power-1]) % m;
+			}
+			if (exp % 2 == 1) {
+				res = (res * results[power]) % m;
+			}
+			exp /= 2;
+			power++;
+		}
+		return (int) (res % m);
+	}
+	
 	/**
 	 * Calculating the modulo of incredibly large numbers is easy if the divisor (the mod) is prime or if the divisor and the exponent
 	 * 
@@ -719,6 +910,8 @@ public class VariousAlgorithms {
 
 	static int ops = 1;
 	public static void main(String[] args) {
+		int res = fastModularExponent(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
+		
 		int TEST_PRIMES = 1;
 		int TEST_BPM = 2;
 		int TEST_ALL_COMBINATIONS = 3;
