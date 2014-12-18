@@ -889,24 +889,6 @@ public class VariousAlgorithms {
 		}
 		return (int) (res % m);
 	}
-	
-	/**
-	 * Calculating the modulo of incredibly large numbers is easy if the divisor (the mod) is prime or if the divisor and the exponent
-	 * 
-	 *   
-	 * Fermat's little theorem states that if p is a prime number, then for any integer a, the number a p - a is an integer multiple of p. In the notation of modular arithmetic, this is expressed as
-	 * 
-	 * 
-	 * Euler's theorem states that if n and a are coprime positive integers, then
-	 * a^f(n) = 1 (mod n)
-	 * where f(n) is Euler's totient function.
-	 * 
-	 * Chinese Remainder Theorem
-	 */
-	public int largeMod(int a, int exponent, int mod) {
-		//if (gcd(a, ))
-		return 0;
-	}
 
 	static int ops = 1;
 	public static void main(String[] args) {
