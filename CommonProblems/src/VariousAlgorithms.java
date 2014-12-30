@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Stack;
+import java.util.TreeSet;
 
 public class VariousAlgorithms {
 
@@ -770,6 +771,25 @@ public class VariousAlgorithms {
 			}
 		}
 		return primes;
+	}
+	
+	public static ArrayList<Long> getPrimeFactors(long n) {
+		ArrayList<Long> factors = new ArrayList<>();
+		long d = 2;
+		while (n > 1) {
+			while (n % d == 0) {
+				factors.add(d);
+				n /= d;
+			}
+			d++;
+			if (d*d > n) {
+				if (n > 1) {
+					factors.add(n);
+					break;
+				}
+			}
+		}
+		return factors;
 	}
 	
 	/*******************************************************************************************************************************

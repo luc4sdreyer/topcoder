@@ -1,5 +1,8 @@
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+
 import org.junit.Test;
 
 
@@ -30,6 +33,22 @@ public class VariousAlgorithmsTest {
 				assertTrue(a >= 0);
 			}		
 		}		
+	}
+	
+	@Test
+	public void testGetPrimeFactors() {
+		int limit = 1000;
+		LinkedHashSet<Integer> primes = VariousAlgorithms.getPrimes(limit);
+		for (int i = 2; i < 1000; i++) {
+			ArrayList<Long> pf = VariousAlgorithms.getPrimeFactors(i);
+			long a = 1;
+			for (int j = 0; j < pf.size(); j++) {
+				assertTrue(primes.contains((int)(long)pf.get(j)));
+				a *= pf.get(j);
+			}
+			assertEquals(i, a);
+		}
+		VariousAlgorithms.getPrimeFactors(214);
 	}
 	
 	@Test
