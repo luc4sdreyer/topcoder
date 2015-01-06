@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Stack;
+import java.util.TreeSet;
 
 public class VariousAlgorithms {
 
@@ -772,6 +773,25 @@ public class VariousAlgorithms {
 		return primes;
 	}
 	
+	public static ArrayList<Long> getPrimeFactors(long n) {
+		ArrayList<Long> factors = new ArrayList<>();
+		long d = 2;
+		while (n > 1) {
+			while (n % d == 0) {
+				factors.add(d);
+				n /= d;
+			}
+			d++;
+			if (d*d > n) {
+				if (n > 1) {
+					factors.add(n);
+					break;
+				}
+			}
+		}
+		return factors;
+	}
+	
 	/*******************************************************************************************************************************
 	 * Greatest common divisor (gcd), also known as the greatest common factor (gcf), or highest common factor (hcf),
 	 * of two or more non-zero integers, is the largest positive integer that divides the numbers without a remainder.
@@ -781,9 +801,18 @@ public class VariousAlgorithms {
 	public static int gcd(int a, int b) {
 	    return BigInteger.valueOf(a).gcd(BigInteger.valueOf(b)).intValue();
 	}
-	
+
+	/**
+	 * About twice as fast as the BigInteger method. 
+	 */
 	public static long gcd(long a, long b) {
-	    return BigInteger.valueOf(a).gcd(BigInteger.valueOf(b)).longValue();
+		long r;
+		while (b != 0) {
+			r = a % b;
+			a = b;
+			b = r;
+		}
+		return a;
 	}
 	
 	/*******************************************************************************************************************************
