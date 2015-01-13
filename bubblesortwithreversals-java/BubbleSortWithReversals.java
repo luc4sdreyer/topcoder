@@ -39,10 +39,10 @@ public class BubbleSortWithReversals {
 						
 					}
 					for (int j = 0; j < diffs.length; j++) {
-						diffs[j] 
+						//diffs[j] 
 					}
 					for (int j = i; j < i+len; j++) {
-						diff += offsets[j]
+						//diff += offsets[j]
 					}
 				}
 			}
