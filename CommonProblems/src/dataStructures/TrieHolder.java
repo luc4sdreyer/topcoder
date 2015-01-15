@@ -1,15 +1,22 @@
 package dataStructures;
 
+/**
+ * Tries are a secret weapon against XOR query problems: 
+ * https://threads-iiith.quora.com/Tutorial-on-Trie-and-example-problems
+ */
+
 public class TrieHolder {	
 	public static class TrieNode {
 		private int words;
 		private int prefixes;
 		private TrieNode[] edges;
 		private int depth;
+		private TrieNode parent;
 		
 		public TrieNode(int alphabetSize, TrieNode parent) {
 			this.edges = new TrieNode[alphabetSize];
 			this.depth = parent == null ? 0 : parent.depth + 1;
+			this.parent = parent;
 		}
 		
 		public String toString() {
@@ -50,7 +57,7 @@ public class TrieHolder {
 		
 		/**
 		 * Find the closes match of the word. Only works on binary tries! 
-		 * Typically used to find the maximum XOR in log(n) time.
+		 * Typically used to find the maximum XOR of two elements in an array in O(nlog(n))
 		 */
 		public int[] find(int[] word) {
 			int n = countWords(word);
@@ -81,17 +88,19 @@ public class TrieHolder {
 		}
 		
 		/**
-		 * Get the lexicographically next entry. (Resumed preorder search)
+		 * Get the lexicographically next entry. (Resumed in-order traversal). Returns null if there is nothing after it.
 		 */
 		public int[] getNext(int[] word) {
-			int n = countWords(word);
-			if (n > 0) {
-				return word;
-			} else {
-				int[] bestMatch = word.clone();
-				//findClosestString(root, bestMatch, 0);
-				return bestMatch;
-			}
+			int[] bestMatch = word.clone();
+			getNext(root, word, 0);
+			//findClosestString(root, bestMatch, 0);
+			return bestMatch;
+		}
+
+		private void getNext(TrieNode root, int[] word, int length) {
+			//
+			// Keep
+			//
 		}
 
 		private void addWord(TrieNode vertex, int[] word, int length) {

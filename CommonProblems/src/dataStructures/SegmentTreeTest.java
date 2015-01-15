@@ -4,10 +4,13 @@ import static org.junit.Assert.*;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Random;
 
 import org.junit.Test;
+
+import dataStructures.SegmentTreeHolder.BinaryOperation;
+import dataStructures.SegmentTreeHolder.SegmentTree;
+import dataStructures.SegmentTreeHolder.SegmentTreeE;
 
 public class SegmentTreeTest {
 	
