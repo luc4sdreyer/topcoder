@@ -1,302 +1,211 @@
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Scanner;
 import java.util.StringTokenizer;
-
 
 public class Solution {
 	public static void main(String[] args) {
-		//System.out.println(taumAndBday(System.in));
-		//System.out.println(sherlockAndAnagrams(System.in));
-		//System.out.println(aSuperHero(System.in));
-		System.out.println(swapsAndSum(System.in));
+		//detectingValidLatitudeAndLongitudePairs();
+		theCaptchaCrackerDetect();
 	}
 
-	public static String swapsAndSum(InputStream in) {
-		MyScanner scan = new MyScanner(in);
-		StringBuilder sb = new StringBuilder();
-		int n = scan.nextInt();
-		int q = scan.nextInt();
-		long[] a = new long[n];
-		int[][] queries = new int[q][3];
-		for (int i = 0; i < a.length; i++) {
-			a[i] = scan.nextInt();
+	public static char[] glyph = {'D', 'E', 'F', 'G', 'A', 'B', 'C', 'L', 'M', 'N', 'O', 'H', 'I', 'J', 'K', 'U', 'T', 'W',
+		'V', 'Q', 'P', 'S', 'R', 'Y', 'X', 'Z', '3', '2', '1', '0', '7', '6', '5', '4', '9', '8'};
+	public static long[][] signature = {
+		{7039364176855796862L, 16565955},
+		{108306156750376190L, 33293827},
+		{108306156750376446L, 787971},
+		{7041589536750246136L, 32607427},
+		{9201091997944836144L, 51218115},
+		{7032590609703079038L, 16565955},
+		{108297910480476408L, 32607363},
+		{108297910413167622L, 33293827},
+		{7041056331724987782L, 51218115},
+		{8770438585388834182L, 51234531},
+		{7039364176855799928L, 15781059},
+		{7039372423193103750L, 51218115},
+		{866383283305341180L, 33042456},
+		{3465533133221363952L, 7367778},
+		{973835119533591942L, 51168819},
+		{7039364176855895430L, 15781059},
+		{866383283305341438L, 6303768},
+		{7905747453706177926L, 51236607},
+		{2168919479300066694L, 6303804},
+		{7904055305310935160L, 49335539},
+		{108315004483865854L, 787971},
+		{6931057144638409980L, 33130176},
+		{1839667586231110910L, 51218019},
+		{866383293010087302L, 6303768},
+		{2163419985692790150L, 51218022},
+		{217020518514131198L, 33293827},
+		{6924292149534100604L, 16303808},
+		{868082073957144696L, 66849804},
+		{866383283308490800L, 33042456},
+		{7039364176806998064L, 6322278},
+		{434041037028262398L, 787974},
+		{7032871509087066232L, 15781059},
+		{6931053998574669054L, 15781059},
+		{9194323793336713408L, 25215072},
+		{6933041814766721144L, 15781058},
+		{7032801304424061048L, 15781059},
+	};
+
+	public static void theCaptchaCrackerDetect() {
+		HashMap<BitSet, Character> map = new HashMap<>();
+		for (int i = 0; i < glyph.length; i++) {
+			map.put(BitSet.valueOf(signature[i]), glyph[i]);
 		}
-		for (int i = 0; i < q; i++) {
-			for (int j = 0; j < 3; j++) {
-				queries[i][j] = scan.nextInt();
-			}
-		}
-		
-		SegmentTree st = new SegmentTree(a);
-		for (int i = 0; i < q; i++) {
-			if (queries[i][0] == 1) {
-				for (int j = queries[i][1]-1; j <= queries[i][2]-1; j+=2) {
-					long temp = st.get(j, j);
-					st.set(j, st.get(j+1, j+1));
-					st.set(j+1, temp);
-				}
-			} else {
-				sb.append(st.get(queries[i][1]-1, queries[i][2]-1));
-				sb.append("\n");
-			}
-		}
-		return sb.toString();
-	}
-
-
-	public static class SegmentTree {
-		private long[][] t;
-		private long[] a;
-		private int N;
-		private int n;
-
-		/**
-		 * A segment tree can perform a binary associative function (like sum, min, max) over an interval in O(log n) time. 
-		 * Updates are relatively slow, O(log n)
-		 */
-
-		/**
-		 * This function can be any associative binary function. For example sum, min, max, bitwise and, gcd. 
-		 */
-		protected long function(long a, long b) {
-			return a+b;
-		}
-
-		protected int IDENTITY = 0;
-
-		public SegmentTree(long[] b) {
-			n = (int) (Math.log10(b.length)/Math.log10(2))+1;
-			N = 1 << n;
-			this.a = new long[N];
-			for (int i = 0; i < b.length; i++) {
-				this.a[i] = b[i];
-			}
-			t = new long[N][n+1];
-			for (int x = 0; x < N; x++) {
-				t[x][0] = a[x];
-			}
-			for (int y = 1; y <= n; y++) {
-				for (int x = 0; x < N; x+=(1<<y)) {
-					t[x][y] = function(t[x][y-1], t[x+(1<<(y-1))][y-1]);
+		Scanner scan = new Scanner(System.in);
+		int r = scan.nextInt();
+		int c = scan.nextInt();
+		int[][][] raw = new int[r][c][3];
+		for (int j = 0; j < r; j++) {
+			for (int k = 0; k < c; k++) {
+				StringTokenizer st = new StringTokenizer(scan.next(), ",");
+				for (int m = 0; m < 3; m++) {
+					raw[j][k][m] = Integer.parseInt(st.nextToken());
 				}
 			}
 		}
 
-		public void set(int x, long v) {
-			t[x][0] = a[x] = v;
-			for (int y = 1; y <= n; y++) {
-				int xx = x-(x&((1<<y)-1));
-				t[xx][y] = function(t[xx][y-1], t[xx+(1<<(y-1))][y-1]);
+		int[] freq = new int[256];
+		boolean[][] grey = new boolean[r][c];
+		for (int j = 0; j < r; j++) {
+			for (int k = 0; k < c; k++) {
+				int sum = 0;
+				for (int m = 0; m < 3; m++) {
+					sum += raw[j][k][m];
+				}
+				if (sum/3 < 100) {
+					grey[j][k] = true;			
+				}
+				freq[sum/3]++;
 			}
 		}
 
-		/**
-		 * Get the function over the interval [a, b].
-		 */
-		public long get(int i, int j) {
-			long res = IDENTITY;
-			int h = 0; j++;
-			while (i+(1<<h) <= j) {
-				while ((i&((1<<(h+1))-1)) == 0 && i+(1<<(h+1)) <= j) h++;
-				res = function(res, t[i][h]);
-				i += (1<<h);
-			}
-			while (i < j) {
-				while (i+(1<<h) > j) h--;
-				res = function(res, t[i][h]);
-				i += (1<<h);
-			}
-			return res;
-		}
-	}
-
-	public static String aSuperHero(InputStream in) {
-		MyScanner scan = new MyScanner(in);
-		StringBuilder sb = new StringBuilder();
-		int t = scan.nextInt();
-		for (int i = 0; i < t; i++) {
-			int n = scan.nextInt();
-			int m = scan.nextInt();
-			int[][][] costReward = new int[n][m][2];
-			for (int j = 0; j < n; j++) {
-				for (int k = 0; k < m; k++) {
-					costReward[j][k][0] = scan.nextInt();
-				}
-			}
-			for (int j = 0; j < n; j++) {
-				for (int k = 0; k < m; k++) {
-					costReward[j][k][1] = scan.nextInt();
-				}
-			}
-			sb.append(aSuperHero(n, m, costReward));
-			sb.append("\n");
-		}
-		return sb.toString();
-	}
-
-	public static final int empty = 1000000;
-	public static int aSuperHero(int n, int m, int[][][] costReward) {
-		int[] dp = new int[1001];
-		//HashMap<Integer, Integer> dp = new HashMap<>();
-		for (int i = 0; i < n; i++) {
-			//int[] dpNew = dp;
-			int[] dpNew = new int[1001];
-			Arrays.fill(dpNew, empty);
-			Arrays.sort(costReward[i], new Comparator<int[]>() {
-				@Override
-				public int compare(int[] o1, int[] o2) {
-					return Integer.compare(o2[1], o1[1]);
-				}
-			});
-			if (i == 0) {
-				for (int k = 0; k < m; k++) {
-					dpNew[costReward[i][k][1]] = Math.min(dpNew[costReward[i][k][1]], costReward[i][k][0]);
-				}
-			} else {
-				for (int j = 0; j < dp.length; j++) {
-					if (dp[j] != empty) {
-						int reward = j;
-						int extra = 0;
-						for (int k = 0; k < m; k++) {
-							extra = Math.max(0, costReward[i][k][0] - reward);
-							dpNew[costReward[i][k][1]] = Math.min(dpNew[costReward[i][k][1]], dp[j] + extra);
-						}
+		char[] out = new char[5];
+		int sX = 4;
+		int sY = 11;
+		for (int m = 0; m < 5; m++) {
+			BitSet b = new BitSet();
+			int t = 0;
+			for (int y = sY; y < sY + 10; y++) {
+				for (int x = sX; x < sX + 9; x++) {
+					if (grey[y][x]) {
+						b.set(t++);
+					} else {
+						b.clear(t++);
 					}
 				}
 			}
-			int min = Integer.MAX_VALUE;
-			for (int j = dp.length-1; j >= 0; j--) {
-				if (dp[j] < min) {
-					min = dp[j];
+			if (map.containsKey(b)) {
+				out[m] = map.get(b);
+			} else {
+				System.out.println("failed");
+			}
+			sX += 9;
+		}
+		System.out.println(new String(out));
+	}
+
+	private static void theCaptchaCracker() {
+		HashMap<Character, BitSet> map = new HashMap<>();
+		for (int i = 0; i < 25; i++) {
+			Scanner scan = null;
+			try {
+				String num = i < 10 ? ("0" + i) : (i + "");
+				scan = new Scanner(new FileReader("C:/Users/Lucas/Downloads/sampleCaptchas/input/input" + num + ".txt"));
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+			int r = scan.nextInt();
+			int c = scan.nextInt();
+			int[][][] raw = new int[r][c][3];
+			for (int j = 0; j < r; j++) {
+				for (int k = 0; k < c; k++) {
+					StringTokenizer st = new StringTokenizer(scan.next(), ",");
+					for (int m = 0; m < 3; m++) {
+						raw[j][k][m] = Integer.parseInt(st.nextToken());
+					}
+				}
+			}
+
+			int[] freq = new int[256];
+			boolean[][] grey = new boolean[r][c];
+			for (int j = 0; j < r; j++) {
+				for (int k = 0; k < c; k++) {
+					int sum = 0;
+					for (int m = 0; m < 3; m++) {
+						sum += raw[j][k][m];
+					}
+					if (sum/3 < 100) {
+						grey[j][k] = true;			
+					}
+					freq[sum/3]++;
+				}
+			}
+
+			try {
+				String num = i < 10 ? ("0" + i) : (i + "");
+				scan = new Scanner(new FileReader("C:/Users/Lucas/Downloads/sampleCaptchas/output/output" + num + ".txt"));
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+			char[] out = scan.next().toCharArray();
+
+			int sX = 4;
+			int sY = 11;
+			for (int m = 0; m < 5; m++) {
+				BitSet b = new BitSet();
+				int t = 0;
+				for (int y = sY; y < sY + 10; y++) {
+					for (int x = sX; x < sX + 9; x++) {
+						if (grey[y][x]) {
+							b.set(t++);
+						} else {
+							b.clear(t++);
+						}
+					}
+				}
+				if (map.containsKey(out[m])) {
+					if (!map.get(out[m]).equals(b)) {
+						System.out.println("failed");
+					}
 				} else {
-					dp[j] = 1000000;
+					map.put(out[m], b);
 				}
-			}
-			dp = dpNew;
-			
-		}
-		int min = empty;
-		for (int i = 0; i < dp.length; i++) {
-			min = Math.min(min, dp[i]);
-		}
-		return min;
-	}
-
-	public static String sherlockAndAnagrams(InputStream in) {
-		MyScanner scan = new MyScanner(in);
-		StringBuilder sb = new StringBuilder();
-		int t = scan.nextInt();
-		for (int i = 0; i < t; i++) {
-			String s = scan.next();
-			sb.append(sherlockAndAnagrams(s.toCharArray()));
-			sb.append("\n");
-		}
-		return sb.toString();
-	}
-
-	public static long sherlockAndAnagrams(char[] s) {
-		HashSet<String> visited = new HashSet<>();
-		BigInteger num = BigInteger.ZERO;
-		for (int len = 1; len <= s.length; len++) {
-			for (int start = 0; start < s.length - len+1; start++) {
-				int pairs = 0;
-				char[] t = new char[len];
-				int xx = 0;
-				for (int i = start; i < start+len; i++) {
-					t[xx++] = s[i];
-				}
-				Arrays.sort(t);
-				String current = new String(t);
-				if (visited.contains(current)) {
-					continue;
-				}
-				visited.add(current);
-				int[] aFcount = new int[26];
-				for (int i = 0; i < t.length; i++) {
-					aFcount[t[i]-'a']++;
-				}
-				int[] bFcount = aFcount.clone();
-				for (int i = start+1; i < s.length - len+1; i++) {
-					bFcount[s[i-1]-'a']--;
-					bFcount[s[i+len-1]-'a']++;
-					if (Arrays.equals(aFcount, bFcount)) {
-						if (pairs == 0) {
-							pairs = 1;
-						}
-						pairs++;
-					}
-				}
-				BigInteger pairs2 = combination(pairs, 2);
-				num = num.add(pairs2);
+				sX += 9;
 			}
 		}
-		return num.longValue();
-	}
-	
-
-	public static BigInteger combination(int n, int k) {
-        return permutation(n,k).divide(factorial(k));
-	}	
-	
-	public static BigInteger permutation(int n, int k) {
-		BigInteger ret;
-		if (k > n) {
-			return BigInteger.ZERO;
+		for (char c: map.keySet()) {
+			System.out.println(c + ", ");
 		}
-		BigInteger d = factorial((BigInteger.valueOf(n).subtract(BigInteger.valueOf(k))).intValue());
-        ret = factorial(n).divide(d);
-        return ret;
+		for (char c: map.keySet()) {
+			System.out.println(Arrays.toString(map.get(c).toLongArray()));
+		}
 	}
-	
-	private static long fCacheSize = 1000000; // Used to speed up calls, but answers will be correct without it.
-	private static HashMap<Integer,BigInteger> fCache = new HashMap<Integer,BigInteger>();	
-	private static BigInteger factorial(int n)
-    {
-        BigInteger ret;
-        
-        if (n < 0) return BigInteger.ZERO;
-        if (n == 0) return BigInteger.ONE;
-        
-        if (null != (ret = fCache.get(n))) return ret;
-        else ret = BigInteger.ONE;
-        for (int i = n; i >= 1; i--) {
-        	if (fCache.containsKey(n)) return ret.multiply(fCache.get(n));
-        	ret = ret.multiply(BigInteger.valueOf(i));
-        }
-        
-        if (fCache.size() < fCacheSize) {
-        	fCache.put(n, ret);
-        }
-        return ret;
-    }
-	
 
-	public static String taumAndBday(InputStream in) {
-		MyScanner scan = new MyScanner(in);
-		StringBuilder sb = new StringBuilder();
+	public static void detectingValidLatitudeAndLongitudePairs() {
+		MyScanner scan = new MyScanner(System.in);
 		int t = scan.nextInt();
 		for (int i = 0; i < t; i++) {
-			int b = scan.nextInt();
-			int w = scan.nextInt();
-			int x = scan.nextInt();
-			int y = scan.nextInt();
-			int z = scan.nextInt();
-			sb.append(taumAndBday(b, w, x, y, z));
-			sb.append("\n");
+			detectingValidLatitudeAndLongitudePairs(scan.nextLine());
 		}
-		return sb.toString();
 	}
 
-	public static long taumAndBday(long b, long w, long x, long y, long z) {
-		return Math.min(x, y + z) * b + Math.min(y, x + z) * w;
+	public static void detectingValidLatitudeAndLongitudePairs(String s) {
+		if (s.matches("^([(](([+]|[-])?)((90([.][0]+)?)|([1-8][0-9]|[0-9])([.]\\d+)?), (([+]|[-])?)((180([.][0]+)?)|((1[0-7][0-9]|[1-9][0-9]|[0-9])([.]\\d+)?))[)])$")) {
+			System.out.println("Valid");
+		} else {
+			System.out.println("Invalid");
+		}
 	}
 
 	public static class MyScanner {
