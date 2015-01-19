@@ -1,3 +1,4 @@
+
 import static org.junit.Assert.assertEquals;
 
 import java.io.BufferedReader;
@@ -19,7 +20,7 @@ import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-public class Main {
+public class Jan15Long {
 	public static void main(String[] args) throws IOException {
 		//System.out.println(chefAndStones(System.in));
 		//System.out.println(qcdQueries3(System.in));

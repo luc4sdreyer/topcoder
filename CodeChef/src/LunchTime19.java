@@ -1,4 +1,4 @@
-package LTIME19;
+
 
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -15,7 +15,7 @@ import java.util.Scanner;
 import java.util.Stack;
 import java.util.TreeMap;
  
-public class Main {
+public class LunchTime19 {
 	public static void main(String[] args) {
 		//System.out.println(deliveryMan(System.in));
 		System.out.println(binomialCoefficent(System.in));

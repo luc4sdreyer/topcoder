@@ -1,4 +1,4 @@
-package Dec14;
+
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,7 +13,7 @@ import java.util.Scanner;
 import java.util.Stack;
 import java.util.TreeMap;
  
-public class Main {
+public class Dec14Long {
 	public static void main(String[] args) {
 		//System.out.println(cApple(System.in));
 		//System.out.println(xorsub(System.in));
@@ -240,17 +240,17 @@ public class Main {
 					}
 					
 					long time = System.nanoTime();
-					String res = Main.sanskar9(n, k, new ArrayList<Long>(a));
+					String res = Dec14Long.sanskar9(n, k, new ArrayList<Long>(a));
 					//String res2 = sanskar3(n, k, a);
 					String res2 = "";
 					//res2 = Main.sanskar8(n, k, b);
 					//try {
-					res2 = Main.sanskar8(n, k, new ArrayList<Long>(a));
+					res2 = Dec14Long.sanskar8(n, k, new ArrayList<Long>(a));
 					time = (System.nanoTime() - time)/1000000;
 					//if (time >= 100) {
 					if (!res.equals(res2)) {
 					//if (res.equals("yes")) {
-						Main.sanskar8(n, k, new ArrayList<Long>(a));
+						Dec14Long.sanskar8(n, k, new ArrayList<Long>(a));
 						System.out.println(n + "\t " + k + "\t" + a + ": " + res + " vs " + res2);
 						//System.out.println("   " + res + "\ttime: " + time);
 					}
@@ -278,7 +278,7 @@ public class Main {
 					ArrayList<Long> b = new ArrayList<Long>(a);
 					
 					long time = System.nanoTime();
-					String res = Main.sanskar9(n, k, b);
+					String res = Dec14Long.sanskar9(n, k, b);
 					time = (System.nanoTime() - time)/1000000;
 					if (time >= 100) {
 						System.out.println(n + "\t " + k + "\t" + a + ": " + res + " \ttime: " + time);
