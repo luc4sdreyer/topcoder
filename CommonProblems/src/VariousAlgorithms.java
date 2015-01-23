@@ -919,9 +919,68 @@ public class VariousAlgorithms {
 		return (int) (res % m);
 	}
 
+	/*******************************************************************************************************************************
+	 * Returns a remainder that doesn't change direction when the sign of n changes. For example:
+	 * negMod(2, 3) = 2
+	 * negMod(1, 3) = 1
+	 * negMod(0, 3) = 0
+	 * negMod(-1, 3) = -2
+	 * negMod(-2, 3) = -1
+	 * 
+	 * Nice for working on an circular array. 
+	 */
+	public static int negMod(int n, int mod) {
+		int a = Math.abs(n);
+		return (((a / mod + 1) * mod) + n) % mod;
+	}
+
+	/*******************************************************************************************************************************
+	 * Knuth Morris Pratt substring matching algorithm: returns a list of each starting position of a substring match.
+	 * Complexity: O(n + k)
+	 */
+	public static ArrayList<Integer> kmp(char[] s, char[] k) {
+		int[] pmt = new int[k.length + 1]; // Partial Match Table
+		Arrays.fill(pmt, -1);
+		ArrayList<Integer> matches = new ArrayList<>();
+		
+		if (k.length == 0) {
+			matches.add(0);
+			return matches;
+		}
+		
+		// Build the Partial Match Table
+		for (int i = 1; i <= k.length; i++) {
+			int pos = pmt[i - 1];
+			while (pos != -1 && k[pos] != k[i - 1]) {
+				pos = pmt[pos];
+			}
+			pmt[i] = pos + 1;
+		}
+		
+		int sp = 0;
+		int kp = 0;
+		while (sp < s.length) {
+			while (kp != -1 && (kp == k.length || k[kp] != s[sp])) {
+				kp = pmt[kp];
+			}
+			kp++;
+			sp++;
+			if (kp == k.length) {
+				matches.add(sp - k.length);
+			}
+		}
+		return matches;
+	}
+
+	public static ArrayList<Integer> kmp(String s, String k) {
+		return kmp(s.toCharArray(), k.toCharArray());
+	}
+
 	static int ops = 1;
 	public static void main(String[] args) {
 		int res = fastModularExponent(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
+		
+		System.out.println(kmp("ABCABCABDABCAB", "ABCABD"));
 		
 		int TEST_PRIMES = 1;
 		int TEST_BPM = 2;

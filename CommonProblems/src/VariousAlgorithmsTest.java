@@ -2,6 +2,7 @@ import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.Random;
 
 import org.junit.Test;
 
@@ -60,6 +61,45 @@ public class VariousAlgorithmsTest {
 		assertEquals(6, VariousAlgorithms.nCrWithRep(3, 2));
 		assertEquals(3, VariousAlgorithms.nCrWithRep(3, 1));
 		assertEquals(1, VariousAlgorithms.nCrWithRep(3, 0));
+	}
+	
+	@Test
+	public void testKmp() {
+		int tests = 10000;
+		int maxLength = 1000;
+		Random rand = new Random(0);
+		for (int i = 0; i < tests; i++) {
+			int length = rand.nextInt(maxLength) + 1;
+			char[] s = new char[length];
+			int alphabetSize = rand.nextInt(26) + 1;
+			for (int j = 0; j < s.length; j++) {
+				s[j] = (char) (rand.nextInt(alphabetSize) + 'a');
+			}
+			int subLength = rand.nextInt(length) + 1;
+			char[] k = new char[subLength];
+			for (int j = 0; j < k.length; j++) {
+				k[j] = (char) (rand.nextInt(alphabetSize) + 'a');
+			}
+			
+			ArrayList<Integer> expected = new ArrayList<>();
+			for (int m = 0; m <= s.length - k.length; m++) {
+				boolean match = true;
+				for (int n = 0; n < k.length; n++) {
+					if (s[m + n] != k[n]) {
+						match = false;
+					}
+				}
+				if (match) {
+					expected.add(m);
+				}
+			}
+			
+			ArrayList<Integer> actual = VariousAlgorithms.kmp(new String(s), new String(k));
+			if (!actual.equals(expected)) {
+				System.nanoTime();
+			}
+			assertEquals(expected, actual);
+		}
 	}
 
 }

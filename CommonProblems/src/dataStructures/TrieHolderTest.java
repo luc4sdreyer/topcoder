@@ -106,7 +106,7 @@ public class TrieHolderTest {
 					expected = Math.max(target ^ numbers[k], expected);
 				}
 				
-				long actual = Trie.toLong(trie.find(Trie.toTrieValue(1L ^ target))) ^ target;
+				long actual = Trie.toLong(trie.find(Trie.toTrieValue(~target))) ^ target;
 				
 				if (actual != expected) {
 					System.nanoTime();
@@ -115,5 +115,4 @@ public class TrieHolderTest {
 			}
 		}
 	}
-
 }

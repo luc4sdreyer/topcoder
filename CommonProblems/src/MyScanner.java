@@ -23,12 +23,33 @@ public class MyScanner {
 	String next() {
 		while (st == null || !st.hasMoreElements()) {
 			try {
-				st = new StringTokenizer(br.readLine());
+				String s = br.readLine();
+				if (s != null) {
+					st = new StringTokenizer(s);
+				} else {
+					return null;
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 		return st.nextToken();
+	}
+
+	long[] nextLongArray(int n) {
+		long[] a = new long[n];
+		for (int i = 0; i < a.length; i++) {
+			a[i] = this.nextLong();
+		}
+		return a;
+	}
+
+	int[] nextIntArray(int n) {
+		int[] a = new int[n];
+		for (int i = 0; i < a.length; i++) {
+			a[i] = this.nextInt();
+		}
+		return a;
 	}
 
 	int nextInt() {

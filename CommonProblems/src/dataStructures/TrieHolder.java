@@ -1,8 +1,12 @@
 package dataStructures;
 
+import java.util.Stack;
+
 /**
  * Tries are a secret weapon against XOR query problems: 
  * https://threads-iiith.quora.com/Tutorial-on-Trie-and-example-problems
+ * 
+ * They act like a frequency map, so inserting won't replace anything, only increase the count!
  */
 
 public class TrieHolder {	
@@ -38,26 +42,34 @@ public class TrieHolder {
 		 * Add the word to the Trie. max(word[i]) must be less than alphabetSize!
 		 */
 		public void addWord(int[] word) {
-			addWord(root, word, 0);
+			addWord(root, word);
 		}
 		
 		public void removeWord(int[] word) {
 			if (size > 0 && countWords(word) > 0) {
-				removeWord(root, word, 0);
+				removeWord(root, word);
 			}
 		}
 		
 		public int countWords(int[] word) {
-			return countWords(root, word, 0);
+			return countWords(root, word);
 		}
 		
 		public int countPrefixes(int[] prefix) {
-			return countPrefixes(root, prefix, 0);
+			return countPrefixes(root, prefix);
+		}
+		
+		/**
+		 * Find the first point where a given word is unique and return the length. 
+		 * For example: this returns the number of keypresses required for an autocompleter to match a word, assuming the word is present.
+		 */
+		public int findShortestUniqueString(int[] word) {
+			return findShortestUniqueString(root, word);
 		}
 		
 		/**
 		 * Find the closes match of the word. Only works on binary tries! 
-		 * Typically used to find the maximum XOR of two elements in an array in O(nlog(n))
+		 * Can be used to find the maximum XOR of two elements in an array in O(nlog(n))
 		 */
 		public int[] find(int[] word) {
 			int n = countWords(word);
@@ -102,28 +114,22 @@ public class TrieHolder {
 			// Keep
 			//
 		}
-
-		private void addWord(TrieNode vertex, int[] word, int length) {
-			if (length == word.length) {
-				vertex.words++;
-				size++;
-			} else {
+		
+		private void addWord(TrieNode vertex, int[] word) {
+			for (int length = 0; length < word.length; length++) {
 				vertex.prefixes++;
 				int k = word[length];
 				if (vertex.edges[k] == null) {
 					vertex.edges[k] = new TrieNode(alphabetSize, vertex);
 				}
-				addWord(vertex.edges[k], word, length + 1);
+				vertex = vertex.edges[k];
 			}
+			vertex.words++;
+			size++;
 		}
-
-		private void removeWord(TrieNode vertex, int[] word, int length) {
-			if (length == word.length) {
-				if (vertex.words > 0 && size > 0) {
-					vertex.words--;
-					size--;	
-				}
-			} else {
+		
+		private void removeWord(TrieNode vertex, int[] word) {
+			for (int length = 0; length < word.length; length++) {
 				if (vertex.prefixes > 0 && size > 0) {
 					vertex.prefixes--;
 				}
@@ -131,8 +137,24 @@ public class TrieHolder {
 				if (vertex.edges[k] == null) {
 					vertex.edges[k] = new TrieNode(alphabetSize, vertex);
 				}
-				removeWord(vertex.edges[k], word, length + 1);
+				vertex = vertex.edges[k];
 			}
+			if (vertex.words > 0 && size > 0) {
+				vertex.words--;
+				size--;	
+			}
+		}
+
+		private int findShortestUniqueString(TrieNode vertex, int[] word) {
+			for (int length = 0; length < word.length; length++) {
+				int k = word[length];
+				if (vertex.edges[k].prefixes + vertex.edges[k].words == 1) {
+					return length+1;
+				} else {
+					vertex = vertex.edges[k];
+				}
+			}
+			return word.length;
 		}
 		
 		/**
@@ -142,30 +164,28 @@ public class TrieHolder {
 			return size;
 		}
 		
-		private int countWords(TrieNode vertex, int[] word, int length) {
-			if (length == word.length) {
-				return vertex.words;
-			} else {
+		private int countWords(TrieNode vertex, int[] word) {
+			for (int length = 0; length < word.length; length++) {
 				int k = word[length];
 				if (vertex.edges[k] == null) {
 					return 0;
 				} else {
-					return countWords(vertex.edges[k], word, length + 1);
+					vertex = vertex.edges[k];
 				}
 			}
+			return vertex.words;
 		}
 		
-		private int countPrefixes(TrieNode vertex, int[] prefix, int length) {
-			if (length == prefix.length) {
-				return vertex.prefixes;
-			} else {
+		private int countPrefixes(TrieNode vertex, int[] prefix) {
+			for (int length = 0; length < prefix.length; length++) {
 				int k = prefix[length];
 				if (vertex.edges[k] == null) {
 					return 0;
 				} else {
-					return countPrefixes(vertex.edges[k], prefix, length + 1);
+					vertex = vertex.edges[k];
 				}
 			}
+			return vertex.prefixes;
 		}
 		
 		public static int[] toTrieValue(char[] str) {
@@ -205,6 +225,17 @@ public class TrieHolder {
 		
 		public static long toLong(int[] n) {
 			long ret = 0;
+			for (int i = 0; i < n.length; i++) {
+				ret |= n[i];
+				if (i < n.length-1) {
+					ret = ret << 1;
+				}
+			}
+			return ret;
+		}
+		
+		public static int toInt(int[] n) {
+			int ret = 0;
 			for (int i = 0; i < n.length; i++) {
 				ret |= n[i];
 				if (i < n.length-1) {
