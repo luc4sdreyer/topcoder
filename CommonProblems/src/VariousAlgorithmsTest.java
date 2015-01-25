@@ -1,6 +1,7 @@
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Random;
 
@@ -99,6 +100,47 @@ public class VariousAlgorithmsTest {
 				System.nanoTime();
 			}
 			assertEquals(expected, actual);
+		}
+	}
+	
+	@Test
+	public void testTernarySearch() {
+		int tests = 1000000;
+		int maxLength = 20;
+		Random rand = new Random(0);
+		for (int i = 0; i < tests; i++) {
+			int length = rand.nextInt(maxLength) + 1;
+			int mid = rand.nextInt(length);
+			int midLength = rand.nextInt(length/4 + 1);
+			int start = rand.nextInt(100) - 50;
+			int[] data = new int[length];
+			for (int j = mid; j < Math.min(mid + midLength, length); j++) {
+				data[j] = start;
+			}
+			for (int j = Math.min(mid + midLength, length); j < length; j++) {
+				if (j > 0) {
+					data[j] = data[j-1] + rand.nextInt(10)+1;
+				}
+			}
+			for (int j = mid; j >= 1; j--) {
+				data[j-1] = data[j] + rand.nextInt(10)+1;
+			}
+			
+			int expected = 0;
+			int min = Integer.MAX_VALUE;
+			for (int j = 0; j < data.length; j++) {
+				if (data[j] < min) {
+					min = data[j];
+					expected = j;
+				}
+			}
+			
+			int actual = VariousAlgorithms.ternarySearch(data);
+			if (actual != expected) {
+				System.currentTimeMillis();
+			}
+			assertEquals(expected, actual);
+			//System.out.println(Arrays.toString(data));
 		}
 	}
 

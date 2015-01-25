@@ -14,6 +14,9 @@ class Knapsack {
 	 * n = number of boxes
 	 * W = the maximum weight
 	 * 
+	 * Define M(j): the maximum value one can pack into a knapsack of capacity j.
+	 * M(j) = max(M(j-1), max[over i items](M(j - si) + vi))
+	 * 
 	 * @param boxes
 	 * @param maxW
 	 */
@@ -21,8 +24,8 @@ class Knapsack {
 		long[] bestValue = new long[maxW+1];
 		for (int w = 0; w < bestValue.length; w++) {
 			for (int i = 0; i < boxes.length; i++) {
-				if (w - boxes[i][1] >= 0 && bestValue[w - boxes[i][1]] + boxes[i][0] > bestValue[w]) {
-					bestValue[w] = bestValue[w - boxes[i][1]] + boxes[i][0];
+				if (w - boxes[i][1] >= 0) {
+					bestValue[w] = Math.max(w > 0 ? bestValue[w-1] : 0, bestValue[w - boxes[i][1]] + boxes[i][0]);
 				}
 			}
 		}

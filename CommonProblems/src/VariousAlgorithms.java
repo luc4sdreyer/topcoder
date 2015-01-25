@@ -401,7 +401,7 @@ public class VariousAlgorithms {
 	/*******************************************************************************************************************************
 	 * Ternary Search.
 	 * 
-	 * Find the min/max if the input function or (f(x)) has only one local minimum or maximum.
+	 * Find the min/max if the input function or (f(x)) has only one local minimum or maximum. Minimum in this case.
 	 * x will be accurate to 1e-500000.
 	 * 
 	 */	
@@ -410,7 +410,7 @@ public class VariousAlgorithms {
 		double high = 1e100;
 		double best = low;
 		for (int i = 0; i < 1000000; i++) {
-			double[] x = {(high-low)/3, (high-low)*2/3};
+			double[] x = {low + (high-low)/3, high - (high-low)/3};
 			double[] y = {0,0};
 			for (int j = 0; j < y.length; j++) {
 				//y[j] = f(x[i]);
@@ -423,6 +423,26 @@ public class VariousAlgorithms {
 			}
 		}
 		return best;
+	}
+	
+	/*******************************************************************************************************************************
+	 * Discrete Ternary Search.
+	 * 
+	 * If the minimum/maximum is flat, the function returns the first index.
+	 */
+	public static int ternarySearch(int[] f) {
+		int low = 0;
+		int high = f.length-1;
+	    int mid = (low + high) >> 1;
+		while(low < high) {
+		    mid = (low + high) >> 1;
+		    if(f[mid] > f[mid+1]) {
+		    	low = mid+1;
+		    } else {
+		    	high = mid;
+		    }
+		}
+		return low;
 	}
 	
 	/*******************************************************************************************************************************
@@ -917,6 +937,28 @@ public class VariousAlgorithms {
 			power++;
 		}
 		return (int) (res % m);
+	}
+	
+	public static BigInteger fastModularExponent(BigInteger a, BigInteger exp, BigInteger mod) {
+		ArrayList<BigInteger> results = new ArrayList<>();
+		BigInteger m = mod;
+		int power = 1;
+		BigInteger res = BigInteger.ONE;
+		BigInteger two = BigInteger.valueOf(2);
+		results.add(BigInteger.ZERO);
+		while (!exp.equals(BigInteger.ZERO)) {
+			if (power == 1) {
+				results.add(a.mod(m));
+			} else {
+				results.add(results.get(power-1).multiply(results.get(power-1)).mod(m));
+			}
+			if (exp.mod(two).equals(BigInteger.ONE)) {
+				res = (res.multiply(results.get(power))).mod(m);
+			}
+			exp = exp.divide(two);
+			power++;
+		}
+		return res.mod(m);
 	}
 
 	/*******************************************************************************************************************************
