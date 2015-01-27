@@ -4,12 +4,13 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Scanner;
 import java.util.Stack;
-import java.util.TreeSet;
 
 public class VariousAlgorithms {
 
@@ -1018,6 +1019,99 @@ public class VariousAlgorithms {
 		return kmp(s.toCharArray(), k.toCharArray());
 	}
 
+	/*******************************************************************************************************************************
+	 * Tree diameter, or the maximum distance between two nodes in a tree. 
+	 * 
+	 * The basic idea is:
+	 * 1. DFS from a random node
+	 * 2. Choose the node the farthest away and DFS from it.
+	 * 3. Now the farthest node is equal to the diameter. 
+	 * 
+	 * This code assumes the input as lines of triplets, indicating two vertices and the weight of their connection.
+	 * 
+	 * Complexity: O(n)
+	 */
+	public static long treeDiameter() {
+		Scanner scan = new Scanner(System.in);
+		HashMap<Integer, ArrayList<int[]>> map = new HashMap<>();
+		int n = scan.nextInt();
+		int start = -1; 
+		for (int i = 0; i < n-1; i++) {
+			int a = scan.nextInt();
+			if (start == -1) {
+				start = a;
+			}
+			int b = scan.nextInt();
+			int v = scan.nextInt();
+			
+			if (!map.containsKey(a)) {
+				map.put(a, new ArrayList<int[]>());
+			}
+			map.get(a).add(new int[]{b, v});
+			
+			if (!map.containsKey(b)) {
+				map.put(b, new ArrayList<int[]>());
+			}
+			map.get(b).add(new int[]{a, v});
+		}
+		scan.close();
+		
+		// First DFS
+		
+		long[] top = {start, 0};
+		Stack<long[]> s = new Stack<long[]>();
+		HashSet<Long> visited = new HashSet<>();
+		s.add(top);
+		long max = 0;
+		long maxIdx = 0;
+		while (!s.isEmpty()) {
+			top = s.pop();
+			if (visited.contains(top[0])) {
+				continue;
+			}
+			visited.add(top[0]);
+			if (max < top[1]) {
+				max = top[1];
+				maxIdx = top[0];
+			}
+			if (map.containsKey((int)top[0])) {
+				ArrayList<int[]> children = map.get((int)top[0]);
+				for (int i = 0; i < children.size(); i++) {
+					s.push(new long[]{children.get(i)[0], top[1] + children.get(i)[1]});
+				}
+			}
+		}
+		
+		// Second DFS
+		
+		top[0] = maxIdx;
+		top[1] = 0;
+		s = new Stack<long[]>();
+		visited = new HashSet<>();
+		s.add(top);
+		max = 0;
+		maxIdx = 0;
+		while (!s.isEmpty()) {
+			top = s.pop();
+			if (visited.contains(top[0])) {
+				continue;
+			}
+			visited.add(top[0]);
+			if (max < top[1]) {
+				max = top[1];
+				maxIdx = top[0];
+			}
+			if (map.containsKey((int)top[0])) {
+				ArrayList<int[]> children = map.get((int)top[0]);
+				for (int i = 0; i < children.size(); i++) {
+					s.push(new long[]{children.get(i)[0], top[1] + children.get(i)[1]});
+				}
+			}
+		}
+		
+		return max;
+	}
+	
 	static int ops = 1;
 	public static void main(String[] args) {
 		int res = fastModularExponent(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
