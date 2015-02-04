@@ -2,6 +2,7 @@ import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Random;
 
@@ -141,6 +142,58 @@ public class VariousAlgorithmsTest {
 			}
 			assertEquals(expected, actual);
 			//System.out.println(Arrays.toString(data));
+		}
+	}
+	
+	@Test
+	public void testLCS() {
+		int numTests = 100000;
+		int maxLength = 5;
+		int range = 4;		
+		Random rand = new Random(0);
+		
+		for (int t = 0; t < numTests; t++) {
+			char[] a = new char[rand.nextInt(maxLength) + 1];
+			for (int i = 0; i < a.length; i++) {
+				a[i] = (char) (rand.nextInt(range) + 'a');
+			}
+			char[] b = new char[rand.nextInt(maxLength) + 1];
+			for (int i = 0; i < b.length; i++) {
+				b[i] = (char) (rand.nextInt(range) + 'a');
+			}
+			
+			String exp = "";
+
+			int N = 1 << a.length;
+			for (int n = 0; n < N; n++) {
+				String s1 = "";
+				for (int i = 0; i < a.length; i++) {
+					if (((1 << i) & n) != 0) {
+						s1 += a[i];
+					}
+				}
+				
+				int M = 1 << b.length;
+				for (int m = 0; m < M; m++) {
+					String s2 = "";
+					for (int i = 0; i < b.length; i++) {
+						if (((1 << i) & m) != 0) {
+							s2 += b[i];
+						}
+					}
+					
+					if (s2.equals(s1)) {
+						exp = s1.length() > exp.length() ? s1 : exp;
+					}
+				}
+			}
+			
+			String act = VariousAlgorithms.longestCommonSubsequence(a, b);
+			if (act.length() != exp.length()) {
+				System.nanoTime();
+				VariousAlgorithms.longestCommonSubsequence(a, b);
+			}
+			assertEquals(exp.length(), act.length());
 		}
 	}
 

@@ -1171,6 +1171,66 @@ public class VariousAlgorithms {
 	}
 	
 	
+
+
+	/*******************************************************************************************************************************
+	 * Standard Topsort. 
+	 * 
+	 * A topological sort (sometimes abbreviated topsort or toposort) or topological ordering of a directed graph is a linear
+	 * ordering of its vertices such that for every directed edge uv from vertex u to vertex v, u comes before v in the ordering.
+	 * 
+	 * Returns false if the graph is not a DAG (contains a directed cycle).
+	 * 
+	 * O(n) time
+	 */		
+	@SuppressWarnings("unchecked")
+	public static boolean topSort(ArrayList<Integer> order, HashMap<Integer, ArrayList<Integer>> graphRef) {
+		
+		// Create a copy of the graph
+		HashMap<Integer, ArrayList<Integer>> graph = new HashMap<>();
+		for (Integer key: graphRef.keySet()) {
+			graph.put(key, (ArrayList<Integer>) graphRef.get(key).clone());
+		}
+		
+		// Count number of incoming edges
+		HashMap<Integer, Integer> numIncoming = new HashMap<>();
+		for (Integer key: graph.keySet()) {
+			ArrayList<Integer> children = graph.get(key);
+			for (Integer child: children) {
+				numIncoming.put(child, numIncoming.containsKey(child) ? numIncoming.get(child) + 1 : 1);
+			}
+		}
+		
+		// Select vertices with no incoming edges
+		Stack<Integer> roots = new Stack<>(); // Doesn't have to be a stack!
+		for (Integer key: graph.keySet()) {
+			if (!numIncoming.containsKey(key) || numIncoming.get(key) == 0) {
+				roots.push(key);
+			}
+		}
+		
+		// Build the ordering
+		while (!roots.isEmpty()) {
+			Integer top = roots.pop();
+			order.add(top);
+			ArrayList<Integer> children = graph.get(top);
+			for (int i = 0; i < children.size(); i++) {
+				Integer rem = children.remove(i--);
+				numIncoming.put(rem, numIncoming.get(rem) - 1);
+				if (numIncoming.get(rem) == 0) {
+					roots.push(rem);
+				}
+			}
+		}
+		
+		// Count number of edges
+		int edges = 0;
+		for (Integer key: graph.keySet()) {
+			edges += graph.get(key).size();
+		}
+		
+		return edges > 0 ? false : true;
+	}
 	
 	static int ops = 1;
 	public static void main(String[] args) {
