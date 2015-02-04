@@ -3,6 +3,7 @@
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -1031,6 +1032,7 @@ public class VariousAlgorithms {
 	 * 
 	 * Complexity: O(n)
 	 */
+	
 	public static long treeDiameter() {
 		Scanner scan = new Scanner(System.in);
 		HashMap<Integer, ArrayList<int[]>> map = new HashMap<>();
@@ -1111,6 +1113,64 @@ public class VariousAlgorithms {
 		
 		return max;
 	}
+
+	/*******************************************************************************************************************************
+	 * Longest common subsequence (LCS), a classic dynamic programming problem. O(n^2)
+	 * 
+	 */	
+	public static String longestCommonSubsequence(char[] a, char[] b) {
+		int[][] dp = new int[a.length + 1][b.length + 1];
+		int max = 0;
+		int[] best = {0, 0};
+		
+		for (int i = 1; i < dp.length; i++) {
+			for (int j = 1; j < dp[0].length; j++) {
+				if (a[i-1] == b[j-1]) {
+					dp[i][j] = dp[i-1][j-1] + 1;
+					if (dp[i][j] > max) {
+						max = dp[i][j];
+						best[0] = i;
+						best[1] = j;
+					}
+				} else {
+					dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+				}
+			}
+		}
+		int i = a.length;
+		int j = b.length;
+		ArrayList<Character> lcs = new ArrayList<>();
+		while (i >= 1 && j >= 1) {
+			if (a[i-1] == b[j-1]) {
+				lcs.add(a[i-1]);
+				i--;
+				j--;
+			} else {
+				if (i == 0 && j > 0) {
+					j--;
+				} else if (j == 0 && i > 0) {
+					i--;
+				} else if (i > 0 && j > 0) {
+					if (dp[i-1][j] > dp[i][j-1]) {
+						i--;
+					} else {
+						j--;
+					}
+				} else {
+					break;
+				}
+			}
+		}
+		
+		Collections.reverse(lcs);
+		StringBuilder sb  = new StringBuilder();
+		for (char x: lcs) {
+			sb.append(x);
+		}
+		return sb.toString();
+	}
+	
+	
 	
 	static int ops = 1;
 	public static void main(String[] args) {
