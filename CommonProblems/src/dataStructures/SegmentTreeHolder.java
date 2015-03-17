@@ -1,6 +1,7 @@
 package dataStructures;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Based on paladin8's segment tree: http://codeforces.com/blog/entry/3327
@@ -29,7 +30,7 @@ public class SegmentTreeHolder {
 		}
 
 		/**
-		 * The value of IDENTITY should be such that f(IDENTITY, x) = x, e.g. 0 for sum, +infinity for min, -infinity for max, and 0 for gcd.
+		 * The value of IDENTITY should be such that f(IDENTITY, x) = x, e.g. 0 for sum, +infinity for min, -infinity for max, and 0 for gcd.
 		 */
 		protected int IDENTITY = 0;
 
@@ -49,7 +50,7 @@ public class SegmentTreeHolder {
 					t[x][y] = function(t[x][y-1], t[x+(1<<(y-1))][y-1]);
 				}
 			}
-		}
+		} 
 
 		/**
 		 * Set position i to v. Time: O(log n)
@@ -156,12 +157,12 @@ public class SegmentTreeHolder {
 			}
 		}
 	}
-	
+
 	public static interface BinaryOperation<E> {
 		public E identity();
 		public E function(E e1, E e2);
 	}
-	
+
 	public static class SegmentTreeE<E extends BinaryOperation<E>> {
 
 		private ArrayList<ArrayList<E>> t;
@@ -235,6 +236,129 @@ public class SegmentTreeHolder {
 				res = function(res, t.get(i).get(h));
 				i += (1<<h);
 			}
+			return res;
+		}
+	}
+
+	public static class SegmentTreeVerbose {
+		private int tree[];
+		private int lazy[];
+		private int N;
+		private int MAX;
+		private int inf = Integer.MAX_VALUE;
+
+		/**
+		 * This function can be any associative binary function. For example sum, min, max, bitwise and, gcd. 
+		 */
+		protected int function(int a, int b) {
+			return Math.max(a, b);
+		}
+
+		/**
+		 * The value of IDENTITY should be such that f(IDENTITY, x) = x, e.g. 0 for sum, +infinity for min, -infinity for max, and 0 for gcd.
+		 */
+		protected int IDENTITY = 0;
+
+		public SegmentTreeVerbose(int[] a) {
+			N = 1 << (int) (Math.log10(a.length)/Math.log10(2))+1;
+			MAX = N*2;
+
+			int[] arr = new int[N];
+			for (int i = 0; i < a.length; i++) {
+				arr[i] = a[i];
+			}
+
+			tree = new int[MAX];
+			lazy = new int[MAX];	 
+			build_tree(1, 0, N-1, arr);
+			Arrays.fill(lazy, 0);
+		}
+		/**
+		 * Build and init tree
+		 */
+		private void build_tree(int node, int a, int b, int[] arr) {
+			if(a > b) return; // Out of range
+
+			if(a == b) { // Leaf node
+				tree[node] = arr[a]; // Init value
+				return;
+			}
+
+			build_tree(node*2, a, (a+b)/2, arr); // Init left child
+			build_tree(node*2+1, 1+(a+b)/2, b, arr); // Init right child
+
+			tree[node] = function(tree[node*2], tree[node*2+1]); // Init root value
+		}
+
+		/**
+		 * Increment elements within range [i, j] with value value
+		 */
+		public void update_tree(int i, int j, int value) {
+			update_tree(1, 0, N-1, i, j, value);
+		}
+
+		private void update_tree(int node, int a, int b, int i, int j, int value) {
+
+			if(lazy[node] != 0) { // This node needs to be updated
+				tree[node] += lazy[node]; // Update it
+
+				if(a != b) {
+					lazy[node*2] += lazy[node]; // Mark child as lazy
+					lazy[node*2+1] += lazy[node]; // Mark child as lazy
+				}
+
+				lazy[node] = 0; // Reset it
+			}
+
+			if(a > b || a > j || b < i) // Current segment is not within range [i, j]
+				return;
+
+			if(a >= i && b <= j) { // Segment is fully within range
+				tree[node] += value;
+
+				if(a != b) { // Not leaf node
+					lazy[node*2] += value;
+					lazy[node*2+1] += value;
+				}
+
+				return;
+			}
+
+			update_tree(node*2, a, (a+b)/2, i, j, value); // Updating left child
+			update_tree(1+node*2, 1+(a+b)/2, b, i, j, value); // Updating right child
+
+			tree[node] = function(tree[node*2], tree[node*2+1]); // Updating root with max value
+		}
+
+		/**
+		 * Query tree to get max element value within range [i, j]
+		 */
+		public int query_tree(int i, int j) {
+			return query_tree(1, 0, N-1, i, j);
+		}
+
+		private int query_tree(int node, int a, int b, int i, int j) {
+			if(a > b || a > j || b < i) return -inf; // Out of range
+
+			if(lazy[node] != 0) { // This node needs to be updated
+				tree[node] += lazy[node]; // Update it
+
+				if(a != b) {
+					lazy[node*2] += lazy[node]; // Mark child as lazy
+					lazy[node*2+1] += lazy[node]; // Mark child as lazy
+				}
+
+				lazy[node] = 0; // Reset it
+			}
+
+			if(a >= i && b <= j) // Current segment is totally within range [i, j]
+				return tree[node];
+
+			int q1 = query_tree(node*2, a, (a+b)/2, i, j); // Query left child
+			int q2 = query_tree(1+node*2, 1+(a+b)/2, b, i, j); // Query right child
+
+			int res = function(q1, q2); // Return final result
+
 			return res;
 		}
 	}

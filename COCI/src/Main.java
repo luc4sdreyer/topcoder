@@ -1,259 +1,250 @@
-
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Scanner;
-
+import java.util.StringTokenizer;
 
 public class Main {
 	public static void main(String[] args) {
-		//System.out.println(strojopis(System.in));
-		//System.out.println(dom(System.in));
-		//System.out.println(silueta(System.in));
-		System.out.println(coci(System.in));
-	}
-	
-	public static String coci(InputStream in) {
-		Scanner input = new Scanner(in);
-		int n = input.nextInt();
-		int[][] scores = new int[n][2];
-		for (int i = 0; i < n; i++) {
-			scores[i][0] = input.nextInt();
-			scores[i][1] = input.nextInt();
-		}
-		input.close();
-		return cociF(n, scores) + "";
-	}
-	
-	public static class Person implements Comparable<Person> {
-		int s1, s2, idx;
-		public Person(int s1, int s2, int idx) {
-			this.s1 =s1;
-			this.s2 =s2;
-			this.idx =idx;
-		}
-		@Override
-		public int compareTo(Person o) {
-			if (this.s1 < o.s1 && this.s2 < o.s2) {
-				return -1;
-			} else if (this.s1 > o.s1 && this.s2 > o.s2) {
-				return 1;
-			}
-			return 0;
-		}
-		@Override
-		public String toString() {
-			return "Person [s1=" + s1 + ", s2=" + s2 + ", idx=" + idx + "]";
-		}
-	} 
-
-	public static String cociF(int n, int[][] scores) {
-		int[] better = new int[n];
-		int[] worse = new int[n];
-		ArrayList<Person> people = new ArrayList<Main.Person>();
-		for (int i = 0; i < scores.length; i++) {
-			people.add(new Person(scores[i][0], scores[i][1], i));
-		}
-		Collections.sort(people);
-		for (int i = 0; i < people.size(); i++) {
-			System.out.println(people.get(i));
-		}
-		
-		
-		return null;
+		//teta(System.in);
+		//kriza(System.in);
+		acm(System.in);
 	}
 
-	public static String silueta(InputStream in) {
-		Scanner input = new Scanner(in);
-		int n = input.nextInt();
-		int[][] dims = new int[n][3];
-		for (int i = 0; i < n; i++) {
-			dims[i][0] = input.nextInt();
-			dims[i][1] = input.nextInt();
-			dims[i][2] = input.nextInt();
+	public static void acm(InputStream in) {
+		MyScanner scan = new MyScanner(in);
+		int n = scan.nextInt();
+		int[][] d = new int[3][n];
+		for (int i = 0; i < d.length; i++) {
+			d[i] = scan.nextIntArray(n);
 		}
-		input.close();
-		return siluetaF(n, dims) + "";
-	}
-
-	public static String siluetaF(int n, int[][] dims) { //x1, x2, y
-		int maxY = 0;
-		int maxX = 0;
-		int minX = Integer.MAX_VALUE;
-		for (int i = 0; i < dims.length; i++) {
-			for (int x = dims[i][0]; x <= dims[i][1]; x++) {
-				maxY = Math.max(maxY, dims[i][2]);
-				maxX = Math.max(maxX, dims[i][1]);
-				minX = Math.min(minX, dims[i][0]);
-			}
-		}
-		int[] map = new int[maxX+2];
-		for (int i = 0; i < dims.length; i++) {
-			for (int x = dims[i][0]; x < dims[i][1]; x++) {
-				map[x] = Math.max(map[x], dims[i][2]);
-			}
-		}
-		int per = 0;
-		int currentHeight = 0;
-		int oldHeight = 0;
-		char[][] paint = new char[maxY][maxX];
-		for (int i = 0; i < paint.length; i++) {
-			Arrays.fill(paint[i], '.');
-		}
-		//System.out.println(Arrays.toString(map));
-		for (int i = 1; i < map.length; i++) {
-			if (map[i] != map[i-1]) {
-				per += Math.abs(map[i] - map[i-1]);
-				oldHeight = currentHeight;				
-				currentHeight = map[i];
-				if (currentHeight > oldHeight) {
-					for (int j = oldHeight; j < currentHeight; j++) {
-						if (j-1 >= 0) {
-							paint[j-1][i] = '#';
-						}
-					}					
-				} else {
-					for (int j = currentHeight; j < oldHeight; j++) {
-						if (j-1 >= 0) {
-							paint[j-1][i-1] = '#';
-						}
-					}					
+		int[][] sum = new int[3][n];
+		for (int i = 0; i < sum.length; i++) {
+			for (int j = 0; j < sum[0].length; j++) {
+				if (j > 0) {
+					sum[i][j] = sum[i][j-1];
 				}
-			}
-			if (map[i] > 0) {
-				per++;
-				if (currentHeight-1 >= 0) {
-					paint[currentHeight-1][i] = '#';
-				}
+				sum[i][j] += d[i][j];
 			}
 		}
 		
-		StringBuilder sb = new StringBuilder();
-		sb.append(per);
-		sb.append("\n");
-		for (int i = paint.length-1; i >= 0; i--) {
-			for (int j = minX; j < paint[i].length; j++) {
-				sb.append(paint[i][j]);				
-			}
-			sb.append("\n");
-		}
-		for (int i = minX; i < maxX; i++) {
-			sb.append("*");
-		}
-		sb.append("\n");
-		
-		return sb.toString();
-	}
-
-	public static String dom(InputStream in) {
-		Scanner input = new Scanner(in);
-		int pen = input.nextInt();
-		int chan = input.nextInt();
-		int p = input.nextInt();
-		int[][] prefs = new int[pen+1][2]; //fav, hated
-		for (int i = 0; i < pen; i++) {
-			prefs[i][0] = input.nextInt();
-			prefs[i][1] = input.nextInt();
-		}
-		input.close();
-		return domF(pen, chan, p, prefs) + "";
-	}
-	
-	public static int domF(int pen, int chan, int p, int[][] prefs) {		
-		int[] res = new int[chan+1];
-		boolean[] visited = new boolean[chan+1];
-		for (int i = prefs.length-1; i >= 0; i--) {
-			res[prefs[i][1]] = prefs[i][0];
-		}
-		int currentChan = p;
-		int changes = 0;
-		while (true) {
-			if (visited[currentChan]) {
-				return -1;
-			}
-			if (res[currentChan] == 0) {
-				return changes;
-			}
-			visited[currentChan] = true;
-			currentChan = res[currentChan];
-			changes++;
-		}
-	}
-
-	public static String strojopis(InputStream in) {
-		Scanner input = new Scanner(in);
-		String s = input.next();
-		input.close();
-		return strojopisF(s);
-	}
-
-	public static String strojopisF(String s) {
-		String[] def = new String[]{
-				"1QAZ",
-				"2WSX",
-				"3EDC",
-				"4RFV5TGB",
-				"6YHN7UJM",
-				"8IK,",
-				"9OL.",
-				"0P;/-['=]",
-		};
-		
-		int[] count = new int[def.length];
-		for (int i = 0; i < s.length(); i++) {
-			char c = s.charAt(i);
-			for (int j = 0; j < def.length; j++) {
-				for (int k = 0; k < def[j].length(); k++) {
-					if (def[j].charAt(k) == c) {
-						count[j]++;
+		long min = Long.MAX_VALUE;
+		for (int p1 = 0; p1 < 3; p1++) {
+			for (int p2 = 0; p2 < 3; p2++) {
+				if (p1 != p2) {
+					for (int p3 = 0; p3 < 3; p3++) {
+						if (p3 != p2 && p3 != p1) {
+							for (int i = 0; i < n-2; i++) {
+								for (int j = i+1; j < n-1; j++) {
+									long a = sum[p1][i];
+									//long b = sum[p2][j] - (i > 0 ? sum[p2][i-1] : 0);
+									long b = sum[p2][j] - sum[p2][i];
+									long c = sum[p3][n-1] - sum[p3][j];
+									long s = a + b + c; 
+									min = Math.min(min, s);
+								}
+							}
+						}
 					}
 				}
 			}
 		}
-		String out = "";
-		for (int i = 0; i < count.length; i++) {
-			out += count[i] + "\n";
-		}
-		return out;
-	}
-
-	public static String kusac(InputStream in) {
-		Scanner input = new Scanner(in);
-		int a = input.nextInt();
-		int b = input.nextInt();
-		input.close();
-		return kusacF(a, b) + "";
-	}
-
-	public static int kusacF(int n, int m) {
 		
-		return 0;
+		System.out.println(min);
 	}
 
-	public static String trener(InputStream in) {
-		Scanner input = new Scanner(in);
-		int n = input.nextInt();
-		ArrayList<String> names = new ArrayList<String>();
+	public static void kriza(InputStream in) {
+		MyScanner scan = new MyScanner(in);
+		int n = scan.nextInt();
+		int k = scan.nextInt();
+		int[] chain = scan.nextIntArray(n);
+		
+		//kriza(n, k, chain);
+		kriza2(n, k, chain);
+	}
+
+	public static void kriza2(int n, int k, int[] chain) {
+		int[] pos = new int[n+1];
+		for (int i = 0; i < chain.length; i++) {
+			pos[chain[i]] = i;
+		}
+		
+		int partition = 0;
+		int prevPartition = 0;
+		long a = 0;
 		for (int i = 0; i < n; i++) {
-			names.add(input.next());
+			 int door = (i % n)+1;
+			 prevPartition = partition;
+			 partition = pos[door];
+			 int dist = partition - prevPartition;
+			 if (dist < 0) {
+				 dist += n;
+			 }
+			 a += dist;
 		}
-		input.close();
-		
-		char[] alpha = new char[26];
-		for (int i = 0; i < names.size(); i++) {
-			alpha[names.get(i).charAt(0)-'a']++;
+		long b = 0;
+		for (int i = 0; i < n; i++) {
+			 int door = (i % n)+1;
+			 prevPartition = partition;
+			 partition = pos[door];
+			 int dist = partition - prevPartition;
+			 if (dist < 0) {
+				 dist += n;
+			 }
+			 b += dist;
 		}
-		String valid = "";
-		for (int i = 0; i < alpha.length; i++) {
-			if (alpha[i] >= 5) {
-				valid += (char)(i+'a');
+		long total = 0;
+		if (k > 2*n) {
+			long div = k / n - 1;
+			k = k % n + n;
+			if (div > 0) {
+				total = div * b; 
 			}
 		}
-		if (valid.length() == 0) {
-			return "PREDAJA";
-		} else {
-			return valid;
+
+		partition = 0;
+		prevPartition = 0;
+		for (int i = 0; i < k; i++) {
+			 int door = (i % n)+1;
+			 prevPartition = partition;
+			 partition = pos[door];
+			 int dist = partition - prevPartition;
+			 if (dist < 0) {
+				 dist += n;
+			 }
+			 total += dist;
+		}
+		System.out.println(total);
+	}
+
+	public static void kriza(int n, int k, int[] chain) {
+		int[] pos = new int[n+1];
+		for (int i = 0; i < chain.length; i++) {
+			pos[chain[i]] = i;
+		}
+		
+		int partition = 0;
+		int prevPartition = 0;
+		long total = 0;
+		long prevTotal = 0;
+		for (int i = 0; i < k; i++) {
+			 int door = (i % n)+1;
+			 prevPartition = partition;
+			 partition = pos[door];
+			 int dist = partition - prevPartition;
+			 if (dist < 0) {
+				 dist += n;
+			 }
+			 if (i % n == 0) {
+				 //System.out.println(total - prevTotal);
+				 prevTotal = total;
+			 }
+			 total += dist;
+		}
+		System.out.println(total);
+	}
+
+	public static void teta(InputStream in) {
+		MyScanner scan = new MyScanner(in);
+		int k = scan.nextInt();
+		int[] mealPrice = scan.nextIntArray(k);
+		int menu = scan.nextInt();
+		int[] menuItems = scan.nextIntArray(4);
+		int t = scan.nextInt();
+		int[] tray = scan.nextIntArray(t);
+		
+		int[] ftray = new int[k+1];
+		for (int i = 0; i < tray.length; i++) {
+			ftray[tray[i]]++;
+		}
+		
+		int min = Integer.MAX_VALUE;
+		for (int i = 0; i <= t; i++) {
+			int cost = menu * i;
+			for (int j = 1; j < ftray.length; j++) {
+				cost += ftray[j] * mealPrice[j-1];
+			}
+			min = Math.min(min, cost);
+			for (int j = 0; j < menuItems.length; j++) {
+				if (ftray[menuItems[j]] > 0) {
+					ftray[menuItems[j]]--;
+				}
+			}
+		}
+		System.out.println(min);
+	}
+	
+	public static class MyScanner {
+		BufferedReader br;
+		StringTokenizer st;
+
+		public MyScanner(InputStream in) {
+			this.br = new BufferedReader(new InputStreamReader(in));
+		}
+
+		public void close() {
+			try {
+				this.br.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		String next() {
+			while (st == null || !st.hasMoreElements()) {
+				try {
+					String s = br.readLine();
+					if (s != null) {
+						st = new StringTokenizer(s);
+					} else {
+						return null;
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			return st.nextToken();
+		}
+
+		long[] nextLongArray(int n) {
+			long[] a = new long[n];
+			for (int i = 0; i < a.length; i++) {
+				a[i] = this.nextLong();
+			}
+			return a;
+		}
+
+		int[] nextIntArray(int n) {
+			int[] a = new int[n];
+			for (int i = 0; i < a.length; i++) {
+				a[i] = this.nextInt();
+			}
+			return a;
+		}
+
+		int nextInt() {
+			return Integer.parseInt(next());
+		}
+
+		long nextLong() {
+			return Long.parseLong(next());
+		}
+
+		double nextDouble() {
+			return Double.parseDouble(next());
+		}
+
+		String nextLine(){
+			String str = "";
+			try {
+				str = br.readLine();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return str;
 		}
 	}
 }

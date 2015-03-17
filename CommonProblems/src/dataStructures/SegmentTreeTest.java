@@ -11,6 +11,7 @@ import org.junit.Test;
 import dataStructures.SegmentTreeHolder.BinaryOperation;
 import dataStructures.SegmentTreeHolder.SegmentTree;
 import dataStructures.SegmentTreeHolder.SegmentTreeE;
+import dataStructures.SegmentTreeHolder.SegmentTreeVerbose;
 
 public class SegmentTreeTest {
 	
@@ -264,6 +265,47 @@ public class SegmentTreeTest {
 					st.search2(0, i);
 				}
 				//assertEquals(expected, actual);
+			}
+		}
+	}
+	
+	@Test
+	public void testMaxUpdate() {
+		int maxLength = 100;
+		int maxValue = 100000;
+		int numTests = 1000;
+		Random rand = new Random(0);
+		for (int j = 1; j <= numTests; j++) {
+			int len = rand.nextInt(maxLength)+1;
+			int[] a = new int[len];
+			for (int i = 0; i < len; i++) {
+				//a[i] = rand.nextInt(maxValue) - maxValue/2;
+				//a[i] = rand.nextInt(maxValue);
+			}
+			SegmentTreeVerbose st = new SegmentTreeVerbose(a);
+			
+			st.update_tree(0, a.length-1, -10);
+			int max = st.query_tree(0, a.length-1);
+			
+			for (int i = 0; i < numTests; i++) {
+				int low = rand.nextInt(len);
+				int high = rand.nextInt(len-low) + low;
+				
+				int expected = Integer.MIN_VALUE;
+				for (int k = low; k <= high; k++) {
+					expected = Math.max(expected, a[k]);
+				}
+				
+				int actual = st.query_tree(low, high);
+				
+				assertEquals(expected, actual);
+				
+				int change = rand.nextInt(maxValue) - maxValue/2;
+				
+				for (int k = low; k <= high; k++) {
+					a[k] += change;
+				}
+				st.update_tree(low, high, change);
 			}
 		}
 	}

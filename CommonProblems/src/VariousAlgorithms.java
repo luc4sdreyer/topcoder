@@ -1232,6 +1232,38 @@ public class VariousAlgorithms {
 		return edges > 0 ? false : true;
 	}
 	
+
+	/*******************************************************************************************************************************
+	 * Simple matrix multiplication. O(n^3)
+	 */	
+	public static int[][] multiplyMatrix(int[][] A, int[][] B, int mod) {
+		int[][] C = new int[A.length][B[0].length];
+		for (int i = 0; i < C.length; i++) {
+			for (int j = 0; j < C[0].length; j++) {
+				for (int k = 0; k < B.length; k++) {
+					C[i][j] = (int) ((C[i][j] + ((long)A[i][k] * B[k][j])) % mod); 
+				}
+			}
+		}
+		return C;
+	}
+	
+	/*******************************************************************************************************************************
+	 * Fast matrix exponentiation. O(m^2 * log n), where m = A.length
+	 */
+	public static int[][] fastMatrixExponent(int[][] A, long n, int mod) {
+		if (n == 1) {
+			return A;
+		} else {
+			if (n % 2 == 0) {
+				int[][] T = fastMatrixExponent(A, n/2, mod);
+				return multiplyMatrix(T, T, mod);
+			} else {
+				return multiplyMatrix(A, fastMatrixExponent(A, n-1, mod), mod);
+			}
+		}
+	}
+	
 	static int ops = 1;
 	public static void main(String[] args) {
 		int res = fastModularExponent(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
