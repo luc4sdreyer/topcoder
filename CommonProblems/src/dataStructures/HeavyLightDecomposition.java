@@ -1,241 +1,308 @@
 package dataStructures;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Random;
 import java.util.StringTokenizer;
 
 public class HeavyLightDecomposition {
-	final int root = 0;
+	public static InputReader in;
+	public static PrintWriter out;
 	
-	int N;
-	int LN;
-	ArrayList<ArrayList<Integer>> adj;
-	ArrayList<ArrayList<Integer>> costs;
-	ArrayList<ArrayList<Integer>> indexx;
+	public static class HLD {
+		ArrayList<ArrayList<Integer>> g;
+		int N;
+		int log2N;
+		int root;
+		int maxDepth = 0;
+		ArrayList<ArrayList<Integer>> cost;
+		
+		// With respect to a node
+		int[] depth;
+		int[] parent;
+		int[] subtreeSize;
+		int[] chainId;
+		int[] chainPosition;
+		boolean[] leaf;
+		int[][] ancestor; 	// ancestor[node][i] is node's 2^(i-1)'th ancestor
+		int[] nodeCost;
+		
+		// With respect to a chain
+		int[] getChainHead;
+		int[] getChainLength;
+		SegmentTreeLazySum[] tree;
+		
+		public HLD(ArrayList<ArrayList<Integer>> g, ArrayList<ArrayList<Integer>> cost, int inRoot) {
+			N = g.size();
+			log2N =  32 - Integer.numberOfLeadingZeros(N - 1);
+			this.g = g;
+			this.cost = cost;
+			this.parent = new int[N]; 	// -1 for root
+			this.depth = new int[N];	// 0 for root node
+			this.subtreeSize = new int[N];
+			this.leaf = new boolean[N];
+			this.chainId = new int[N];
+			this.chainPosition = new int[N];
+			this.nodeCost = new int[N];
+			this.getChainHead = new int[N];
+			this.getChainLength = new int[N];
+			this.ancestor = new int[N][log2N];
+			
+			this.root = inRoot;
 
-	int chainNo;
-	int ptr;
-	
-	SegmentTreeVerbose segtree;
-	
-	int[] baseArray;
-	int[] chainInd;
-	int[] chainHead;
-	int[] posInBase;
-	int[] depth;
-	int[][] pa;
-	int[] otherEnd;
-	int[] subsize;
-	int[] st;
-	int[] qt;
-	
-	public HeavyLightDecomposition(int N) {
-		super();
-		this.N = N;
-		LN = 32 - Integer.numberOfLeadingZeros(N -1);
-		chainNo = 0;
-		ptr = 0;
-		
-		adj = new ArrayList<>();
-		costs = new ArrayList<>();
-		indexx = new ArrayList<>();
-		for (int i = 0; i < N; i++) {
-			adj.add(new ArrayList<Integer>());
-			costs.add(new ArrayList<Integer>());
-			indexx.add(new ArrayList<Integer>());
-		}
-		
-		baseArray = new int[N];
-		chainInd = new int[N];
-		chainHead = new int[N];
-		posInBase = new int[N];
-		depth = new int[N];
-		pa = new int[N][N];
-		otherEnd = new int[N];
-		subsize = new int[N];
-		
-		Arrays.fill(chainHead, -1);
-		for (int i = 0; i < pa.length; i++) {
-			Arrays.fill(pa[i], -1);
-		}
-	}
-	
-	void query_tree(int cur, int s, int e, int S, int E) {
-		if(s >= E || e <= S) {
-			qt[cur] = -1;
-			return;
-		}
-		if(s >= S && e <= E) {
-			qt[cur] = st[cur];
-			return;
-		}
-		int c1 = (cur<<1), c2 = c1 | 1, m = (s+e)>>1;
-		query_tree(c1, s, m, S, E);
-		query_tree(c2, m, e, S, E);
-		qt[cur] = qt[c1] > qt[c2] ? qt[c1] : qt[c2];
-	}
-		
-	/*
-	 * LCA:
-	 * Takes two nodes u, v and returns Lowest Common Ancestor of u, v
-	 */
-	int LCA(int u, int v) {
-		if(depth[u] < depth[v]) {
-			int temp = u;
-			u = v;
-			v = temp;
-		}
-		int diff = depth[u] - depth[v];
-		for(int i=0; i<LN; i++) if( ((diff>>i)&1) != 0 ) u = pa[i][u];
-		if(u == v) return u;
-		for(int i=LN-1; i>=0; i--) if(pa[i][u] != pa[i][v]) {
-			u = pa[i][u];
-			v = pa[i][v];
-		}
-		return pa[0][u];
-	}
-	
-	/*
-	 * query_up:
-	 * It takes two nodes u and v, condition is that v is an ancestor of u
-	 * We query the chain in which u is present till chain head, then move to next chain up
-	 * We do that way till u and v are in the same chain, we query for that part of chain and break
-	 */
-
-	int query_up(int u, int v) {
-		if(u == v) return 0; // Trivial
-		int uchain, vchain = chainInd[v], ans = -1;
-		// uchain and vchain are chain numbers of u and v
-		while(true) {
-			uchain = chainInd[u];
-			if(uchain == vchain) {
-				// Both u and v are in the same chain, so we need to query from u to v, update answer and break.
-				// We break because we came from u up till v, we are done
-				if(u==v) break;
-				query_tree(1, 0, ptr, posInBase[v]+1, posInBase[u]+1);
-				// Above is call to segment tree query function
-				if(qt[1] > ans) ans = qt[1]; // Update answer
-				break;
+			// Find the node in the middle of the graph and set it as the root if no root is given. 
+			Arrays.fill(depth, -1);
+			Arrays.fill(parent, -1);
+			Queue<Integer> queue = new LinkedList<>();
+			for (int i = 0; i < N; i++) {
+				Arrays.fill(this.ancestor[i], -1);
+				if (g.get(i).size() == 1) {
+					leaf[i] = true;
+					queue.add(i);
+				}
 			}
-			query_tree(1, 0, ptr, posInBase[chainHead[uchain]], posInBase[u]+1);
-			// Above is call to segment tree query function. We do from chainHead of u till u. That is the whole chain from
-			// start till head. We then update the answer
-			if(qt[1] > ans) ans = qt[1];
-			u = chainHead[uchain]; // move u to u's chainHead
-			u = pa[0][u]; //Then move to its parent, that means we changed chains
+			BitSet visited = new BitSet();
+			if (this.root == -1) {
+				while (!queue.isEmpty()) {
+					int top = queue.poll();
+					visited.set(top);
+					this.root = top;
+					ArrayList<Integer> children = g.get(top);
+					for (int i = 0; i < children.size(); i++) {
+						int childIdx = children.get(i);
+						if (!visited.get(childIdx)) {
+							queue.add(childIdx);
+						}
+					}
+				}
+			}
+			
+			queue.clear();
+			depth[this.root] = 0;
+			queue.add(this.root);
+			
+			// Set depth and parent
+			while (!queue.isEmpty()) {
+				int top = queue.poll();
+				ArrayList<Integer> children = g.get(top);
+				for (int i = 0; i < children.size(); i++) {
+					int childIdx = children.get(i);
+					if (depth[childIdx] == -1) {
+						parent[childIdx] = top;
+						nodeCost[childIdx] = cost.get(top).get(i);
+						ancestor[childIdx][0] = top;
+						depth[childIdx] = depth[top]+1;
+						maxDepth = Math.max(maxDepth, depth[childIdx]);
+						queue.add(childIdx);
+					}
+				}
+			}
+			
+			// Set ancestor for LCA
+			for (int i = 1; i < log2N; i++) {
+				for (int j = 0; j < N; j++) {
+					if (ancestor[j][i-1] != -1) {
+						ancestor[j][i] = ancestor[ancestor[j][i-1]][i-1];
+					}
+				}
+			}
+			
+			// Set subtree size
+			Arrays.fill(subtreeSize, 1);
+			HashMap<Integer, ArrayList<Integer>> nodesPerDepth = new HashMap<>();
+			for (int i = 0; i < N; i++) {
+				if (depth[i] != -1) {
+					if (!nodesPerDepth.containsKey(depth[i])) {
+						nodesPerDepth.put(depth[i], new ArrayList<Integer>());
+					}
+					nodesPerDepth.get(depth[i]).add(i);
+				}
+			}
+			for (int i = maxDepth; i > 0; i--) {
+				ArrayList<Integer> list = nodesPerDepth.get(i);
+				for (int j = 0; j < list.size(); j++) {
+					subtreeSize[parent[list.get(j)]] += subtreeSize[list.get(j)];
+				}
+			}
+			
+			// Chain creation
+			visited.clear();
+			queue.clear();
+			queue.add(this.root);
+			int chainCounter = 0;
+			Arrays.fill(getChainHead, -1);
+			Arrays.fill(getChainLength, 0);
+			Arrays.fill(chainId, -1);
+			Arrays.fill(chainPosition, -1);
+			
+			chainId[root] = 0;
+			chainPosition[root] = 0;
+			getChainHead[chainId[root]] = root;
+			getChainLength[chainId[root]] = 1;
+			
+			while (!queue.isEmpty()) {
+				int top = queue.poll();
+				ArrayList<Integer> children = g.get(top);
+				visited.set(top);
+				
+				int specialChild = -1;
+				int maxSize = -1;
+				for (int i = 0; i < children.size(); i++) {
+					int childIdx = children.get(i);
+					if (!visited.get(childIdx) && subtreeSize[childIdx] > maxSize) {
+						maxSize = subtreeSize[childIdx];
+						specialChild = childIdx;
+					}
+				}
+				for (int i = 0; i < children.size(); i++) {
+					int childIdx = children.get(i);
+					if (!visited.get(childIdx)) {
+						if (childIdx == specialChild) {
+							chainId[childIdx] = chainId[top];
+							chainPosition[childIdx] = chainPosition[top] + 1;
+							
+						} else {
+							// Start a new chain
+							chainCounter++;
+							chainId[childIdx] = chainCounter;
+							chainPosition[childIdx] = 0;
+							getChainHead[chainCounter] = childIdx; 
+						}
+						getChainLength[chainId[childIdx]]++;
+						queue.add(childIdx);
+					}
+				}
+			}
+			
+			chainCounter++;
+			getChainLength = Arrays.copyOf(getChainLength, chainCounter);
+			getChainHead = Arrays.copyOf(getChainHead, chainCounter);
+			
+			tree = new SegmentTreeLazySum[chainCounter];
+			int[][] tempTree = new int[chainCounter][];
+			for (int i = 0; i < chainCounter; i++) {
+				tempTree[i] = new int[getChainLength[i]];
+			}
+			for (int i = 0; i < N; i++) {
+				tempTree[chainId[i]][chainPosition[i]] = nodeCost[i];
+			}
+			for (int i = 0; i < chainCounter; i++) {
+				tree[i] = new SegmentTreeLazySum(tempTree[i]);
+			}
 		}
-		return ans;
-	}
-
-	int query(int u, int v) {
-		/*
-		 * We have a query from u to v, we break it into two queries, u to LCA(u,v) and LCA(u,v) to v
+		
+		/**
+		 * https://csengerg.github.io/2015/12/24/lowest-common-ancestor.html
 		 */
-		int lca = LCA(u, v);
-		int ans = query_up(u, lca); // One part of path
-		int temp = query_up(v, lca); // another part of path
-		if(temp > ans) ans = temp; // take the maximum of both paths
-		return ans;
-	}
-
-	/*
-	 * change:
-	 * We just need to find its position in segment tree and update it
-	 */
-	void change(int i, int val) {
-		int u = otherEnd[i];
-		segtree.update_tree(posInBase[u], posInBase[u], val);
-	}
-
-	/*
-	 * Actual HL-Decomposition part
-	 * Initially all entries of chainHead[] are set to -1.
-	 * So when ever a new chain is started, chain head is correctly assigned.
-	 * As we add a new node to chain, we will note its position in the baseArray.
-	 * In the first for loop we find the child node which has maximum sub-tree size.
-	 * The following if condition is failed for leaf nodes.
-	 * When the if condition passes, we expand the chain to special child.
-	 * In the second for loop we recursively call the function on all normal nodes.
-	 * chainNo++ ensures that we are creating a new chain for each normal child.
-	 */
-	void HLD(int curNode, int cost, int prev) {
-		if(chainHead[chainNo] == -1) {
-			chainHead[chainNo] = curNode; // Assign chain head
-		}
-		chainInd[curNode] = chainNo;
-		posInBase[curNode] = ptr; // Position of this node in baseArray which we will use in Segtree
-		baseArray[ptr++] = cost;
-
-		int sc = -1, ncost = 0;
-		// Loop to find special child
-		for(int i=0; i<adj.get(curNode).size(); i++) if(adj.get(curNode).get(i) != prev) {
-			if(sc == -1 || subsize[sc] < subsize[adj.get(curNode).get(i)]) {
-				sc = adj.get(curNode).get(i);
-				ncost = costs.get(curNode).get(i);
+		public int LCA(int u, int v) {
+			// Ensure that u is deeper than v.
+			if (depth[u] < depth[v]) {
+				int temp = u;
+				u = v;
+				v = temp;
+			}
+			
+			for (int i = log2N; i >= 0; i--) {
+				// Get u on the same logarithmic height as v.
+				if (depth[u] - (1 << i) >= depth[v]) {
+					u = ancestor[u][i];
+				}
+			}
+			
+			if (u == v) {
+				return u;
+			} else {
+				// Jump to the highest node below the LCA node on both sides
+				for (int i = log2N-1; i >= 0; i--) {
+					if (ancestor[u][i] != ancestor[v][i] && ancestor[u][i] != -1) {
+						u = ancestor[u][i];
+						v = ancestor[v][i];
+					}
+				}
+				return ancestor[u][0];
 			}
 		}
-
-		if(sc != -1) {
-			// Expand the chain
-			HLD(sc, ncost, curNode);
-		}
-
-		for(int i=0; i<adj.get(curNode).size(); i++) if(adj.get(curNode).get(i) != prev) {
-			if(sc != adj.get(curNode).get(i)) {
-				// New chains at each normal node
-				chainNo++;
-				HLD(adj.get(curNode).get(i), costs.get(curNode).get(i), curNode);
+		
+		/**
+		 * Each edge has a cost, but this data structure requires vertex costs. So each vertex is given the cost of the 
+		 * edge towards its parent. This works because this is a tree, not a general graph with cycles.  
+		 */
+		public long query(int u, int v) {
+			int lca = LCA(u, v);
+			long costU = tree[0].neg_inf;
+			if (lca != u) {
+				costU = queryUp(u, lca);
 			}
-		}
-	}
-
-	/*
-	 * dfs used to set parent of a node, depth of a node, subtree size of a node
-	 */
-	void dfs(int cur, int prev, int _depth) {
-		pa[0][cur] = prev;
-		depth[cur] = _depth;
-		subsize[cur] = 1;
-		for(int i=0; i<adj.get(cur).size(); i++)
-			if(adj.get(cur).get(i) != prev) {
-				otherEnd[indexx.get(cur).get(i)] = adj.get(cur).get(i);
-				dfs(adj.get(cur).get(i), cur, _depth+1);
-				subsize[cur] += subsize[adj.get(cur).get(i)];
+			long costV = tree[0].neg_inf;
+			if (lca != v) {
+				costV = queryUp(v, lca);
 			}
+			return tree[0].function(costU, costV);
+		}
+		
+		public long queryUp(int child, int ansc) {
+			long res = tree[0].neg_inf;
+			while (true) {
+				if (chainId[child] != chainId[ansc]) {
+					res = tree[0].function(res, tree[chainId[child]].query_tree(0, chainPosition[child]));
+					child = parent[getChainHead[chainId[child]]];
+				} else {
+					res = tree[0].function(res, tree[chainId[child]].query_tree(chainPosition[ansc]+1, chainPosition[child]));
+					break;
+				}
+			}
+			return res;
+		}
+		
+		/**
+		 * Set the weight of the connection between u an v to value.
+		 */
+		public void set_tree(int u, int v, int value) {
+			int child = v;
+			if (parent[u] == v) {
+				child = u;
+			}
+			tree[chainId[child]].set_tree(chainPosition[child], chainPosition[child], value);
+		}
+		
 	}
 	
-	void initLCA() {
-		for(int i=1; i<LN; i++)
-			for(int j=0; j<N; j++)
-				if(pa[i-1][j] != -1)
-					pa[i][j] = pa[i-1][pa[i-1][j]];
-	}
+	/**
+	 * Segment tree with lazy updates. The default implementation is the max function.
+	 * 
+	 * Lazy updates are a bit of a hack, because they might be changed if the function changes.
+	 * For example with the max function a lazy parent node the update is just added, but with the sum function
+	 * the update must be multiplied by the number of children.
+	 */
 
-
-	public static class SegmentTreeVerbose {
-		private int tree[];
-		private int lazy[];
+	public static class SegmentTreeLazy {
+		protected long tree[];
+		protected long lazy_update[];
+		protected long lazy_set[];
 		private int N;
 		private int MAX;
-		private int inf = Integer.MAX_VALUE;
+		protected long neg_inf = Long.MIN_VALUE;
 
 		/**
 		 * This function can be any associative binary function. For example sum, min, max, bitwise and, gcd. 
+		 * If one of the inputs are neg_inf the function should ignore them. If both are, it should probably return neg_inf.
 		 */
-		protected int function(int a, int b) {
+		protected long function(long a, long b) {
 			return Math.max(a, b);
 		}
 
-		/**
-		 * The value of IDENTITY should be such that f(IDENTITY, x) = x, e.g. 0 for sum, +infinity for min, -infinity for max, and 0 for gcd.
-		 */
-		protected int IDENTITY = 0;
-
-		public SegmentTreeVerbose(int[] a) {
+		public SegmentTreeLazy(int[] a) {
 			N = 1 << (int) (Math.log10(a.length)/Math.log10(2))+1;
 			MAX = N*2;
 
@@ -244,26 +311,31 @@ public class HeavyLightDecomposition {
 				arr[i] = a[i];
 			}
 
-			tree = new int[MAX];
-			lazy = new int[MAX];	 
+			tree = new long[MAX];
+			lazy_update = new long[MAX];
+			lazy_set = new long[MAX];
+			Arrays.fill(lazy_set, Long.MIN_VALUE);
 			build_tree(1, 0, N-1, arr);
-			Arrays.fill(lazy, 0);
+			Arrays.fill(lazy_update, 0);
 		}
+		
 		/**
-		 * Build and init tree
+		 * Build and initialize tree
 		 */
 		private void build_tree(int node, int a, int b, int[] arr) {
-			if(a > b) return; // Out of range
+			if (a > b) {
+				return; // Out of range
+			}
 
-			if(a == b) { // Leaf node
-				tree[node] = arr[a]; // Init value
+			if (a == b) { // Leaf node
+				tree[node] = arr[a]; // Initialize value
 				return;
 			}
 
-			build_tree(node*2, a, (a+b)/2, arr); // Init left child
-			build_tree(node*2+1, 1+(a+b)/2, b, arr); // Init right child
+			build_tree(node*2, a, (a+b)/2, arr); // Initialize left child
+			build_tree(node*2+1, 1+(a+b)/2, b, arr); // Initialize right child
 
-			tree[node] = function(tree[node*2], tree[node*2+1]); // Init root value
+			tree[node] = function(tree[node*2], tree[node*2+1]); // Initialize root value
 		}
 
 		/**
@@ -273,35 +345,62 @@ public class HeavyLightDecomposition {
 			update_tree(1, 0, N-1, i, j, value);
 		}
 
-		private void update_tree(int node, int a, int b, int i, int j, int value) {
-
-			if(lazy[node] != 0) { // This node needs to be updated
-				tree[node] += lazy[node]; // Update it
-
-				if(a != b) {
-					lazy[node*2] += lazy[node]; // Mark child as lazy
-					lazy[node*2+1] += lazy[node]; // Mark child as lazy
-				}
-
-				lazy[node] = 0; // Reset it
+		protected void update_tree(int node, int a, int b, int i, int j, int value) {
+			if (lazy_update[node] != 0 || lazy_set[node] != Long.MIN_VALUE) {
+				propogate_lazy_updates(node, a, b);
+				propogate_lazy_sets(node, a, b);
+			}
+			
+			if (a > b || a > j || b < i) { // Current segment is not within range [i, j]
+				return;
 			}
 
-			if(a > b || a > j || b < i) // Current segment is not within range [i, j]
-				return;
-
-			if(a >= i && b <= j) { // Segment is fully within range
+			if (a >= i && b <= j) { // Segment is fully within range
 				tree[node] += value;
 
-				if(a != b) { // Not leaf node
-					lazy[node*2] += value;
-					lazy[node*2+1] += value;
+				if (a != b) { // Not leaf node
+					lazy_update[node*2] += value;
+					lazy_update[node*2 + 1] += value;
 				}
 
 				return;
 			}
 
 			update_tree(node*2, a, (a+b)/2, i, j, value); // Updating left child
-			update_tree(1+node*2, 1+(a+b)/2, b, i, j, value); // Updating right child
+			update_tree(1 + node*2, 1 + (a+b)/2, b, i, j, value); // Updating right child
+
+			tree[node] = function(tree[node*2], tree[node*2+1]); // Updating root with max value
+		}
+		
+		/**
+		 * Sets elements within range [i, j] to the specified value. Setting to Long.MIN_VALUE is not supported.
+		 */
+		public void set_tree(int i, int j, int value) {
+			set_tree(1, 0, N-1, i, j, value);
+		}
+
+		protected void set_tree(int node, int a, int b, int i, int j, int value) {
+			if (lazy_update[node] != 0 || lazy_set[node] != Long.MIN_VALUE) {
+				propogate_lazy_updates(node, a, b);
+				propogate_lazy_sets(node, a, b);
+			}
+
+			if (a > b || a > j || b < i) { // Current segment is not within range [i, j]
+				return;
+			}
+
+			if (a >= i && b <= j) { // Segment is fully within range
+				tree[node] = value;
+
+				if (a != b) { // Not leaf node
+					lazy_set[node*2] = value;
+					lazy_set[node*2 + 1] = value;
+				}
+				return;
+			}
+
+			set_tree(node*2, a, (a+b)/2, i, j, value); // Updating left child
+			set_tree(1 + node*2, 1 + (a+b)/2, b, i, j, value); // Updating right child
 
 			tree[node] = function(tree[node*2], tree[node*2+1]); // Updating root with max value
 		}
@@ -309,140 +408,294 @@ public class HeavyLightDecomposition {
 		/**
 		 * Query tree to get max element value within range [i, j]
 		 */
-		public int query_tree(int i, int j) {
+		public long query_tree(int i, int j) {
 			return query_tree(1, 0, N-1, i, j);
 		}
 
-		private int query_tree(int node, int a, int b, int i, int j) {
-			if(a > b || a > j || b < i) return -inf; // Out of range
-
-			if(lazy[node] != 0) { // This node needs to be updated
-				tree[node] += lazy[node]; // Update it
-
-				if(a != b) {
-					lazy[node*2] += lazy[node]; // Mark child as lazy
-					lazy[node*2+1] += lazy[node]; // Mark child as lazy
-				}
-
-				lazy[node] = 0; // Reset it
+		/**
+		 * All bounds are inclusive.
+		 * @param node The tree index
+		 * @param a Internal query's lower bound
+		 * @param b Internal query's upper bound
+		 * @param i External query's lower bound
+		 * @param j External query's upper bound
+		 */
+		protected long query_tree(int node, int a, int b, int i, int j) {
+			if (a > b || a > j || b < i) {
+				return neg_inf; // Out of range
 			}
 
-			if(a >= i && b <= j) // Current segment is totally within range [i, j]
+			if (lazy_update[node] != 0 || lazy_set[node] != Long.MIN_VALUE) {
+				propogate_lazy_updates(node, a, b);
+				propogate_lazy_sets(node, a, b);
+			}
+
+			if (a >= i && b <= j) { // Current segment is totally within range [i, j]
 				return tree[node];
+			}
 
-			int q1 = query_tree(node*2, a, (a+b)/2, i, j); // Query left child
-			int q2 = query_tree(1+node*2, 1+(a+b)/2, b, i, j); // Query right child
+			long q1 = query_tree(node*2, a, (a+b)/2, i, j); // Query left child
+			long q2 = query_tree(1+node*2, 1+(a+b)/2, b, i, j); // Query right child
 
-			int res = function(q1, q2); // Return final result
-
+			long res = function(q1, q2); // Return final result
 			return res;
+		}
+		
+		protected void propogate_lazy_updates(int node, int a, int b) {
+			if (lazy_update[node] != 0) { // This node needs to be updated
+				tree[node] += lazy_update[node]; // Update it
+
+				if (a != b) {
+					lazy_update[node*2] += lazy_update[node]; // Mark child as lazy
+					lazy_update[node*2+1] += lazy_update[node]; // Mark child as lazy
+				}
+
+				lazy_update[node] = 0; // Reset it
+			}
+		}
+		
+		protected void propogate_lazy_sets(int node, int a, int b) {
+			if (lazy_set[node] != Long.MIN_VALUE) { // This node needs to be updated
+				tree[node] = lazy_set[node]; // Update it
+
+				if (a != b) {
+					lazy_set[node*2] = lazy_set[node]; // Mark child as lazy
+					lazy_set[node*2+1] = lazy_set[node]; // Mark child as lazy
+				}
+
+				lazy_set[node] = Long.MIN_VALUE; // Reset it
+			}
+		}
+		
+		public String toString() {
+			return Arrays.toString(this.tree);
+		}
+		
+		/**
+		 * Find point b where the function over [a, b] == v, assuming the function (not the underlying array!)
+		 * is nondecreasing. Time: O(log n)^2
+		 * 
+		 * @return index of the search key. Follows Arrays.binarySearch convention:
+		 * if it is contained in the array; otherwise, (-(insertion point) - 1). The insertion point is defined as the
+		 * point at which the key would be inserted into the array: the index of the first element greater than the key,
+		 * or a.length if all elements in the array are less than the specified key. Note that this guarantees that the
+		 * return value will be >= 0 if and only if the key is found.
+		 */
+		public long search(int i, long value) {
+			int left = i;
+			int right = N-1;
+			int mid = 0;
+			long f = 0;
+			int best = -1;
+			if (value > query_tree(i, N)) {
+				return -(search(0, tree[1]) + 1) -1;
+			}
+			boolean found = false;
+			while (left <= right) {
+				mid = (left + right) / 2;
+				f = query_tree(i, mid);
+				if (f == value) {
+					found = true;
+					best = mid;
+					right = mid-1;
+				} else if (f < value) {
+					left = mid+1;
+				} else {
+					best = mid;
+					right = mid-1;
+				}
+			}
+			
+			if (found) {
+				return best;
+			} else {
+				return -best - 1;
+			}
 		}
 	}
 	
-	public static void main(String[] args) {
-		MyScanner scan = new MyScanner(System.in) ;
-		int tests = scan.nextInt();
-		for (int test = 0; test < tests; test++) {
-			int n = scan.nextInt();
-			HeavyLightDecomposition hld = new HeavyLightDecomposition(n);
-			
-			for (int i = 1; i < n; i++) {
-				int u = scan.nextInt() -1;
-				int v = scan.nextInt() -1;
-				int c = scan.nextInt();
 
-				hld.adj.get(u).add(v);
-				hld.costs.get(u).add(c);
-				hld.indexx.get(u).add(i-1);
-				hld.adj.get(v).add(u);
-				hld.costs.get(v).add(c);
-				hld.indexx.get(v).add(i-1);
-			}
-			
-			hld.dfs(hld.root, -1, 0);
-			hld.HLD(hld.root, -1, -1);
-			// mnake tree
-			hld.initLCA();
-			
-			String str = scan.nextLine();
-			if (!str.equals("DONE")) {
-				String[] line = str.split(" ");
-				int a = Integer.parseInt(line[1]);
-				int b = Integer.parseInt(line[2]);
-				if (line[0].equals("QUERY")) {
-					System.out.println(hld.query(a-1, b-1));
-				} else {
-					hld.change(a-1, b);
+	/**
+	 * Watch out for overflows. If the input is integers you should be fine.
+	 * If the input is longs just don't use range updates. 
+	 */
+	public static class SegmentTreeLazySum extends SegmentTreeLazy {
+		@Override
+		protected long function(long a, long b) {
+			return a + b;
+		}
+		
+		public SegmentTreeLazySum(int[] a) {
+			super(a);
+			this.neg_inf = 0;
+		}
+
+		@Override
+		protected void update_tree(int node, int a, int b, int i, int j, int value) {
+			if (lazy_update[node] != 0) { // This node needs to be updated
+				tree[node] += lazy_update[node]; // Update it
+
+				if (a != b) {
+					lazy_update[node*2] += lazy_update[node]/2; // Mark child as lazy
+					lazy_update[node*2+1] += lazy_update[node]/2; // Mark child as lazy
 				}
+
+				lazy_update[node] = 0; // Reset it
 			}
+
+			if (a > b || a > j || b < i) // Current segment is not within range [i, j]
+				return;
+
+			if (a >= i && b <= j) { // Segment is fully within range
+				tree[node] += value * (b - a + 1);
+
+				if (a != b) { // Not leaf node
+					lazy_update[node*2] += value * (b - a + 1)/2;
+					lazy_update[node*2 + 1] += value * (b - a + 1)/2;
+				}
+
+				return;
+			}
+
+			update_tree(node*2, a, (a+b)/2, i, j, value); // Updating left child
+			update_tree(1 + node*2, 1 + (a+b)/2, b, i, j, value); // Updating right child
+
+			tree[node] = function(tree[node*2], tree[node*2+1]); // Updating root with max value
+		}
+
+		@Override
+		protected long query_tree(int node, int a, int b, int i, int j) {
+			if (a > b || a > j || b < i) {
+				return neg_inf; // Out of range
+			}
+
+			if (lazy_update[node] != 0) { // This node needs to be updated
+				tree[node] += lazy_update[node]; // Update it
+
+				if (a != b) {
+					lazy_update[node*2] += lazy_update[node]/ 2; // Mark child as lazy
+					lazy_update[node*2+1] += lazy_update[node]/ 2; // Mark child as lazy
+				}
+
+				lazy_update[node] = 0; // Reset it
+			}
+
+			if (a >= i && b <= j) { // Current segment is totally within range [i, j]
+				return tree[node];
+			}
+
+			long q1 = query_tree(node*2, a, (a+b)/2, i, j); // Query left child
+			long q2 = query_tree(1+node*2, 1+(a+b)/2, b, i, j); // Query right child
+
+			long res = function(q1, q2); // Return final result
+			return res;
 		}
 	}
 
-
-
-	public static class MyScanner {
-		BufferedReader br;
-		StringTokenizer st;
-
-		public MyScanner(InputStream in) {
-			this.br = new BufferedReader(new InputStreamReader(in));
-		}
-
-		public void close() {
-			try {
-				this.br.close();
-			} catch (IOException e) {
-				e.printStackTrace();
+	
+	public static void HLD() {
+		Random ra = new Random(0); 
+				
+		int tests = in.nextInt();
+		for (int test = 0; test < tests; test++) {
+			int n = in.nextInt(); // vertices
+			ArrayList<ArrayList<Integer>> g = new ArrayList<>();
+			ArrayList<ArrayList<Integer>> cost = new ArrayList<>();
+			for (int i = 0; i < n; i++) {
+				g.add(new ArrayList<Integer>());
+				cost.add(new ArrayList<Integer>());
 			}
+			for (int i = 0; i < n-1; i++) {
+				int a = in.nextInt();
+				int b = in.nextInt();
+				int c = in.nextInt();
+				g.get(a).add(b);
+				g.get(b).add(a);
+				cost.get(a).add(c);
+				cost.get(b).add(c);
+			}
+			HLD hld = new HLD(g, cost, 10);
+			for (int i = 0; i < 10; i++) {
+				long res = hld.query(ra.nextInt(n), ra.nextInt(n));
+				System.out.println(res);
+			}
+			
+		}
+	}
+
+	static String intputString = 
+			"1\n" + 
+			"23\n" +
+			"0 1 1\n" +
+			"1 8 8\n" +
+			"4 8 8\n" +
+			"7 8 8\n" +
+			"7 3 7\n" +
+			"6 7 7\n" +
+			"2 3 3\n" +
+			"5 6 6\n" +
+			"6 9 9\n" +
+			"8 10 10\n" +
+			"11 12 12\n" +
+			"17 13 17\n" +
+			"12 13 13\n" +
+			"15 16 16\n" +
+			"16 17 17\n" +
+			"20 17 20\n" +
+			"13 8 13\n" +
+			"10 14 14\n" +
+			"18 14 18\n" +
+			"10 19 19\n" +
+			"10 22 22\n" +
+			"19 21 21\n"
+			;
+	
+	public static void main(String[] args) {
+		InputStream inputStream = null;
+//		inputStream = System.in;
+		inputStream = new ByteArrayInputStream(intputString.getBytes());
+		OutputStream outputStream = System.out;
+		in = new InputReader(inputStream);
+		out = new PrintWriter(outputStream, true);
+//		out = new PrintWriter(outputStream, false); // enable this for ludicrous speed
+
+		HLD();
+		
+		out.close();
+	}
+
+	public static class InputReader {
+		public BufferedReader reader;
+		public StringTokenizer tokenizer;
+
+		public InputReader(InputStream stream) {
+			reader = new BufferedReader(new InputStreamReader(stream), 32768);
+			tokenizer = null;
 		}
 
-		String next() {
-			while (st == null || !st.hasMoreElements()) {
+		public String next() {
+			while (tokenizer == null || !tokenizer.hasMoreTokens()) {
 				try {
-					st = new StringTokenizer(br.readLine());
+					tokenizer = new StringTokenizer(reader.readLine());
 				} catch (IOException e) {
-					e.printStackTrace();
+					throw new RuntimeException(e);
 				}
 			}
-			return st.nextToken();
+			return tokenizer.nextToken();
 		}
 
-		long[] nextLongArray(int n) {
+		public int nextInt() {return Integer.parseInt(next());}
+		public long nextLong() {return Long.parseLong(next());}
+		public double nextDouble() {return Double.parseDouble(next());}
+		public long[] nextLongArray(int n) {
 			long[] a = new long[n];
-			for (int i = 0; i < a.length; i++) {
-				a[i] = this.nextLong();
-			}
+			for (int i = 0; i < a.length; i++) a[i] = this.nextLong();
 			return a;
 		}
-
-		int[] nextIntArray(int n) {
+		public int[] nextIntArray(int n) {
 			int[] a = new int[n];
-			for (int i = 0; i < a.length; i++) {
-				a[i] = this.nextInt();
-			}
+			for (int i = 0; i < a.length; i++) a[i] = this.nextInt();
 			return a;
-		}
-
-		int nextInt() {
-			return Integer.parseInt(next());
-		}
-
-		long nextLong() {
-			return Long.parseLong(next());
-		}
-
-		double nextDouble() {
-			return Double.parseDouble(next());
-		}
-
-		String nextLine(){
-			String str = "";
-			try {
-				str = br.readLine();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			return str;
 		}
 	}
 }

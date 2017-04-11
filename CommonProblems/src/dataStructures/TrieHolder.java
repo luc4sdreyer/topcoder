@@ -9,7 +9,7 @@ import java.util.Stack;
  * They act like a frequency map, so inserting won't replace anything, only increase the count!
  */
 
-public class TrieHolder {	
+public class TrieHolder {
 	public static class TrieNode {
 		private int words;
 		private int prefixes;
@@ -97,6 +97,57 @@ public class TrieHolder {
 				}
 			}
 			return;
+		}
+		
+
+		
+		/**
+		 * Determine if this word with exactly one spelling mistake (one character different) exists in the trie.
+		 */
+		public boolean findSingleMistake(int[] s) {
+			SearchNode top = new SearchNode(root, 0, 0);
+			Stack<SearchNode> stack = new Stack<>();
+			stack.add(top);
+			
+			while (!stack.isEmpty()) {
+				top = stack.pop();
+
+				if (top.miss > 1) {
+					continue;
+				}
+				
+				if (top.idx == s.length) {
+					if (top.miss == 1 && top.n.words > 0) {
+						return true;
+					} else {
+						continue;
+					}
+				}
+				
+				for (int j = 0; j < top.n.edges.length; j++) {
+					if (top.n.edges[j] != null) {
+						int mymiss = top.miss;
+						if (s[top.idx] != j) {
+							mymiss++;
+						}
+						stack.add(new SearchNode(top.n.edges[j], top.idx+1, mymiss));
+					}
+				}
+			}
+			
+			return false;
+		}
+		
+		public static class SearchNode {
+			TrieNode n;
+			int idx;
+			int miss;
+			public SearchNode(TrieNode n, int idx, int miss) {
+				super();
+				this.n = n;
+				this.idx = idx;
+				this.miss = miss;
+			}
 		}
 		
 		/**

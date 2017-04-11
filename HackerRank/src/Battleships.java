@@ -5,18 +5,36 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 import java.util.StringTokenizer;
 
 public class Battleships {
 	public static void main(String[] args) {
-		//battleShips(System.in);
-		//test();
-		//testGame(new Random());
-		//selectMap(new Random());
+//		battleShips(System.in);
+		battleShips2(System.in);
+//		test();
+//		for (int i = 0; i < 10; i++) {
+//			testGame(new Random());	
+//		}
+//		selectMap(new Random());
 	}
-
-	//public static final int[] ships = {5, 4, 3, 2, 2, 1, 1};
+	
+	public static final int[] ships = {5, 4, 3, 2, 2, 1, 1};
+//	public static final int[] ships = {5, 4, 3, 2, 2};
+	public static final int[] dx = {1, 0, -1, 0};
+	public static final int[] dy = {0, 1, 0, -1};
+	
+	public static final List<int[]> demoPosition = Arrays.asList(new int[][]{
+		{0, 4}, {0, 5}, {0, 6}, {0, 7}, {0, 8},
+		{4, 1}, {4, 2}, {4, 3}, {4, 4},  
+		{4, 6}, {4, 7},
+		{7, 3}, {8, 3},
+		{7, 7}, {8, 7}, {9, 7},
+	});
+	
+	public static final boolean debug = false;
+	
 	public static class GameData {
 		boolean[][] grid = new boolean[10][10];
 		int[][] pos = new int[ships.length][4];
@@ -35,58 +53,61 @@ public class Battleships {
 			return new GameData(this.grid.clone(), this.pos.clone(), this.hits.clone());
 		}
 	}
-	public static final int[] ships = {5, 4, 3, 2, 2, 1, 1};
 
 	public static boolean[][] testGame(Random rand) {
-		int numGames = 1000;
+		int numGames = 10000;
 		int length = 0;
+		double score = 0;
 		ArrayList<Pair<Integer, GameData>> time = new ArrayList<>();
 		for (int k = 0; k < numGames; k++) {
 			GameData data = new GameData();
 			placeShips(rand, data);
 			int moves = playGame(data, rand);
 			length += moves;
+			score += (100 - moves) / 5.0;
 			time.add(new Pair<Integer, GameData>(moves, data));
 		}
 		System.out.println("avg length: " + length/((double)numGames));
-		Collections.sort(time);
-		Collections.reverse(time);
-		while (time.size() > 100) {
-			time.remove(time.size()-1);
-		}
-
-		for (int j = 0; j < time.size(); j++) {
-			time.get(j).first = 0;
-		}
-		for (int i = 0; i < 100; i++) {
-			Random rand2 = new Random(rand.nextLong());
-			for (int j = 0; j < time.size(); j++) {
-				GameData data = time.get(j).second;
-				data.hits = new int[ships.length];
-				int moves = playGame(data, rand2);
-				time.get(j).first += moves; 
-			}
-		}
-		
-		Collections.sort(time);
-		Collections.reverse(time);
-		for (int i = 0; i < 1; i++) {
-			GameData data = time.get(i).second;
-			boolean[][] g = data.grid;
-			System.out.println(time.get(i).first);
-			for (int j = 0; j < g.length; j++) {
-				for (int k = 0; k < g[0].length; k++) {
-					System.out.print(g[j][k] ? "{}" : "  ");
-				}
-				System.out.println("|");
-			}
-			System.out.println();
-		}
+		System.out.println("avg score : " + 5*score/((double)numGames));
+		System.out.println();
+//		Collections.sort(time);
+//		Collections.reverse(time);
+//		while (time.size() > 100) {
+//			time.remove(time.size()-1);
+//		}
+//
+//		for (int j = 0; j < time.size(); j++) {
+//			time.get(j).first = 0;
+//		}
+//		for (int i = 0; i < 100; i++) {
+//			Random rand2 = new Random(rand.nextLong());
+//			for (int j = 0; j < time.size(); j++) {
+//				GameData data = time.get(j).second;
+//				data.hits = new int[ships.length];
+//				int moves = playGame(data, rand2);
+//				time.get(j).first += moves; 
+//			}
+//		}
+//		
+//		Collections.sort(time);
+//		Collections.reverse(time);
+//		for (int i = 0; i < 1; i++) {
+//			GameData data = time.get(i).second;
+//			boolean[][] g = data.grid;
+//			System.out.println(time.get(i).first);
+//			for (int j = 0; j < g.length; j++) {
+//				for (int k = 0; k < g[0].length; k++) {
+//					System.out.print(g[j][k] ? "{}" : "  ");
+//				}
+//				System.out.println("|");
+//			}
+//			System.out.println();
+//		}
 		return time.get(0).second.grid;
 	}
 	
 	public static GameData selectMap(Random rand) {
-		int numGames = 1000;
+		int numGames = 500;
 		int length = 0;
 		ArrayList<Pair<Integer, GameData>> time = new ArrayList<>();
 		for (int k = 0; k < numGames; k++) {
@@ -102,19 +123,6 @@ public class Battleships {
 		//System.out.println("avg length: " + length/((double)numGames));
 		Collections.sort(time);
 		Collections.reverse(time);
-		
-//		for (int i = 0; i < 1; i++) {
-//			GameData data = time.get(i).second;
-//			boolean[][] g = data.grid;
-//			System.out.println(time.get(i).first);
-//			for (int j = 0; j < g.length; j++) {
-//				for (int k = 0; k < g[0].length; k++) {
-//					System.out.print(g[j][k] ? "{}" : "  ");
-//				}
-//				System.out.println("|");
-//			}
-//			System.out.println();
-//		}
 		return time.get(0).second;
 	}
 
@@ -129,7 +137,17 @@ public class Battleships {
 		int sunk = 0;
 		int moves = 0;
 		while (true) {
-			int[] move = getMove(map, rand);
+			if (debug) {
+				for (int y = 0; y < map.length; y++) {
+					for (int x = 0; x < map[0].length; x++) {
+						System.out.print(map[y][x] == '-' ? ' ' : map[y][x]);
+					}
+					System.out.println("|");
+				}
+				System.out.println("---------/\n");
+			}
+			
+			int[] move = getMove(map, rand, false, new ArrayList<int[]>());
 			//int[] move = getMoveRandom(map, rand);
 			if (grid[move[1]][move[0]]) {
 				map[move[1]][move[0]] = 'h';
@@ -156,11 +174,39 @@ public class Battleships {
 		}
 		return moves;
 	}
-
-	public static final int[] dx = {1, 0, -1, 0};
-	public static final int[] dy = {0, 1, 0, -1};
 	
-	public static int[] getMove(char[][] map, Random rand) {
+	public static int[] getMove(final char[][] map, Random rand, boolean possibleDemo, ArrayList<int[]> prevHits) {
+		// Might be playing against the know set of moves!
+		// Try the demo moves and the previous game's hits.
+		for (int j = 0; j < 2; j++) {
+			final List<int[]> moveList = j == 0 ? demoPosition : prevHits;
+			if (possibleDemo || j == 1) {
+				boolean valid = true;
+				for (int i = 0; i < moveList.size(); i++) {
+					int px = moveList.get(i)[0];
+					int py = moveList.get(i)[1];
+					if (map[py][px] == 'm') {
+						valid = false;
+						break;
+					}
+				}
+				if (valid) {
+					int[] next = null;
+					for (int i = 0; i < moveList.size(); i++) {
+						int px = moveList.get(i)[0];
+						int py = moveList.get(i)[1];
+						if (map[py][px] == '-') {
+							next = new int[]{px, py};
+							break;
+						}
+					}
+					if (next != null) {
+						return next;
+					}
+				}
+			}
+		}
+		
 		int hits = 0;
 		for (int y = 0; y < map.length; y++) {
 			for (int x = 0; x < map.length; x++) {
@@ -170,6 +216,8 @@ public class Battleships {
 			}
 		}
 		
+		// Busy attacking a known ship, hit around it until the
+		// orientation is known and then hit along that axis.
 		if (hits > 0) {
 			for (int y = 0; y < map.length; y++) {
 				for (int x = 0; x < map.length; x++) {
@@ -192,35 +240,92 @@ public class Battleships {
 			for (int y = 0; y < map.length; y++) {
 				for (int x = 0; x < map.length; x++) {
 					if (map[y][x] == 'h') {
+						ArrayList<int[]> possible = new ArrayList<>();
 						for (int dir = 0; dir < 4; dir++) {
-							int py = y + dy[dir];
-							int px = x + dx[dir];
+							final int py = y + dy[dir];
+							final int px = x + dx[dir];
 							if (px >= 0 && px < map.length && py >= 0 && py < map.length && map[py][px] == '-') {
-								return new int[]{px, py};
+								possible.add(new int[]{px, py});
 							}
+						}
+						//return possible.get(rand.nextInt(possible.size()));
+						if (rand.nextBoolean()) {
+							return possible.get(0);
+						} else {
+							return possible.get(possible.size()-1);
 						}
 					}
 				}
 			}
 		}
-		
+
+		// Hit every odd square to find the destroyers. Prefer cells with more unknown neighbors.
 		ArrayList<int[]> possible = new ArrayList<>();
-		for (int y = 0; y < map.length; y++) {
-			for (int x = 0; x < map.length; x++) {
-				if ((x + y) % 2 == 0 && map[y][x] == '-') {
-					possible.add(new int[]{x, y});
+		for (int hitSubs = 0; hitSubs < 2; hitSubs++) {
+			for (int nn = 4; nn >= 0; nn--) {
+				int preferOpposite = 1;
+				if (nn == 2) {
+					preferOpposite = 2;
 				}
-			}
-		}
-		if (possible.isEmpty()) {
-			for (int y = 0; y < map.length; y++) {
-				for (int x = 0; x < map.length; x++) {
-					if (map[y][x] == '-') {
-						possible.add(new int[]{x, y});
+				for (int po = preferOpposite-1; po >= 0; po--) {
+					if (po == 1) {
+						boolean[] neigh = new boolean[4];
+						for (int y = 0; y < map.length; y++) {
+							for (int x = 0; x < map.length; x++) {
+								if (((x + y) % 2 == 0 || hitSubs == 1) && map[y][x] == '-') {
+									neigh = new boolean[4];
+									
+									for (int dir = 0; dir < 4; dir++) {
+										final int py = y + dy[dir];
+										final int px = x + dx[dir];
+										if (px >= 0 && px < map.length && py >= 0 && py < map.length && map[py][px] == '-') {
+											neigh[dir] = true;
+										}
+									}
+									if ((neigh[0] && neigh[2] && !neigh[1] && !neigh[3]) || (!neigh[0] && !neigh[2] && neigh[1] && neigh[3])) {
+										possible.add(new int[]{x, y});
+									}
+								}
+							}
+						}
+					} else {
+						for (int y = 0; y < map.length; y++) {
+							for (int x = 0; x < map.length; x++) {
+								if (((x + y) % 2 == 0 || hitSubs == 1) && map[y][x] == '-') {
+									int openNeighbors = 0;
+									for (int dir = 0; dir < 4; dir++) {
+										final int py = y + dy[dir];
+										final int px = x + dx[dir];
+										if (px >= 0 && px < map.length && py >= 0 && py < map.length && map[py][px] == '-') {
+											openNeighbors++;
+										}
+									}
+									if (openNeighbors == nn) {
+										possible.add(new int[]{x, y});
+									}
+								}
+							}
+						}
+					}
+					if (possible.size() > 0) {
+						nn = -1;
+						hitSubs = 2;
+						break;
 					}
 				}
 			}
 		}
+		
+		// Submarines have been removed, so hitting every odd cell will finish the game.
+//		if (possible.isEmpty()) {
+//			for (int y = 0; y < map.length; y++) {
+//				for (int x = 0; x < map.length; x++) {
+//					if (map[y][x] == '-') {
+//						possible.add(new int[]{x, y});
+//					}
+//				}
+//			}
+//		}
 		return possible.get(rand.nextInt(possible.size()));
 	}
 
@@ -244,8 +349,41 @@ public class Battleships {
 		}
 	}
 
-	public static void battleShips(InputStream in) {
+	public static void battleShips2(InputStream in) {
 		Random rand = new Random();
+		MyScanner scan = new MyScanner(in);
+		String s = scan.nextLine();
+		ArrayList<int[]> hits = new ArrayList<>();
+		ArrayList<int[]> prevHits = new ArrayList<>();
+		
+		while (s != null) {
+			if (s.equals("INIT")) {
+				prevHits = hits;
+				hits.clear();
+				System.out.println(selectMap(rand).desc);
+			} else if (s.equals("10")) {
+				char[][] map = new char[10][10];
+				for (int i = 0; i < map.length; i++) {
+					map[i] = scan.nextLine().toCharArray();
+				}
+				int[] move = getMove(map, rand, true, prevHits);
+				for (int y = 0; y < map.length; y++) {
+					for (int x = 0; x < map[0].length; x++) {
+						if (map[y][x] == 'h' || map[y][x] == 'd') {
+							hits.add(new int[]{x, y});
+						}
+					}
+				}
+				System.out.println(move[1] + " " + move[0]);
+			}
+			s = scan.nextLine();
+		}
+		
+		scan.close();
+	}
+
+	public static void battleShips(InputStream in) {
+		Random rand = new Random(16);
 		MyScanner scan = new MyScanner(in);
 		String s = scan.nextLine();
 		while (s != null) {
@@ -256,7 +394,7 @@ public class Battleships {
 				for (int i = 0; i < map.length; i++) {
 					map[i] = scan.nextLine().toCharArray();
 				}
-				int[] move = getMove(map, rand);
+				int[] move = getMove(map, rand, true, new ArrayList<int[]>());
 				System.out.println(move[1] + " " + move[0]);
 			}
 			s = scan.nextLine();
@@ -287,6 +425,15 @@ public class Battleships {
 					for (int x = px; x < px + width; x++) {
 						if (data.grid[y][x]) {
 							canPlace = false;
+						} else {
+							for (int dir = 0; dir < 4; dir++) {
+								final int ny = y + dy[dir];
+								final int nx = x + dx[dir];
+								if (!(nx >= 0 && nx < 10 && ny >= 0 && ny < 10 && !data.grid[ny][nx])) {
+									canPlace = false;
+									break;
+								}
+							}
 						}
 					}
 				}

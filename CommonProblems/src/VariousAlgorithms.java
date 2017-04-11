@@ -1,359 +1,98 @@
-
-
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Random;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.Stack;
+
+import dataStructures.Pair;
 
 public class VariousAlgorithms {
 
-
-	/*******************************************************************************************************************************
-	 * DEPTH First Search in an array (DFS)
-	 * 
-	 * The depth first search is well geared towards problems where we want to find any
-	 * solution to the problem (not necessarily the shortest path), or to visit all of
-	 * the nodes in the graph. 
-	 */
-
-	public boolean[][] bitmap = new boolean[600][400];
-
-	private class NodeDfs {
-		public int x, y;
-		public NodeDfs (int x, int y) {
-			this.x = x;this.y = y;
-		}
-	}
-
-	int doFill(int x, int y) {
-		int result = 0;
-
-		// Declare stack of nodes
-		Stack<NodeDfs> s = new Stack<NodeDfs>();
-		s.push(new NodeDfs(x, y));
-
-		while (s.empty() == false) {
-			NodeDfs top = s.pop();
-
-			if (top.x < 0 || top.x > bitmap.length) continue;
-			if (top.y < 0 || top.y > bitmap[0].length) continue;
-			if (bitmap[top.x][top.y]) continue;
-
-			bitmap[top.x][top.y] = true; // Record visit
-
-			result++;
-
-			// visit every adjacent node
-			s.push(new NodeDfs(top.x + 1, top.y));
-			s.push(new NodeDfs(top.x - 1, top.y));
-			s.push(new NodeDfs(top.x, top.y + 1));
-			s.push(new NodeDfs(top.x, top.y - 1));
-		}
-		return result;
-	}
-
-	/*******************************************************************************************************************************
-	 * BREADTH First Search in an array (BFS)
-	 * 
-	 * It has the extremely useful property that if all of the edges in a graph are
-	 * unweighted (or the same weight) then the first time a node is visited is the
-	 * shortest path to that node from the source node.
-	 */
-
-	private int targetX;
-	private int targetY;
-
-	class Node implements Comparable<Node> {
-		public int cost, x, y;
-
-		public Node(int cost) {
-			this.cost = cost;
-		}
-
-		public Node(int cost, int x, int y) {
-			this.cost = cost;
-			this.x = x;
-			this.y = y;
-		}		
-
-		public String toString() {
-			return "(" + x + ", "+ y + ": " + cost + ")";
-		}
-
-		@Override
-		public int compareTo(Node o) {
-			Node next = (Node)o;
-			if (cost < next.cost) return -1;
-			if (cost > next.cost) return 1;
-			if (y < next.y) return -1;
-			if (y > next.y) return 1;
-			if (x < next.x) return -1;
-			if (x > next.x) return 1;
-			return 0;
-		}
-	}
-
-	public Node bfs(int x, int y) {
-		// Declare stack of nodes
-		Queue<Node> q = new LinkedList<Node>();
-		q.add(new Node(x, y, (int)0));
-
-		while (q.size() != 0) {
-			Node top = q.poll();
-
-			if (top.x < 0 || top.x >= bitmap.length) continue;
-			if (top.y < 0 || top.y >= bitmap[0].length) continue;
-			if(bitmap[top.x][top.y]) continue;
-			bitmap[top.x][top.y] = true;
-			if ((top.x == this.targetX) && (top.y ==this.targetY)) {
-				return top;
-			}
-
-			// visit every adjacent node
-			q.add(new Node((int)(top.x + 1), top.y, (int)(top.cost+1)));
-			q.add(new Node((int)(top.x - 1), top.y, (int)(top.cost+1)));
-			q.add(new Node(top.x, (int)(top.y + 1), (int)(top.cost+1)));
-			q.add(new Node(top.x, (int)(top.y - 1), (int)(top.cost+1)));
-		}
-		return null;
-	}
-
-	/*******************************************************************************************************************************
-	 * Dijkstra's algorithm (Uniform cost search)
-	 * 
-	 * A lot like a breath first search, except it can be used in a weighted graph.
-	 * The first time a node is visited is the shortest path to that node from the source node.
-	 * Uses a Priority Queue (Heap, get best node in O(log n))
-	 */
-	public Node dijkstra() {
-		PriorityQueue<Node> q = new PriorityQueue<Node>();
-
-		while (q.size() != 0) {
-			Node top = q.poll();
-
-			if (top.x < 0 || top.x >= bitmap.length) continue;
-			if (top.y < 0 || top.y >= bitmap[0].length) continue;
-			if(bitmap[top.x][top.y]) continue;
-			bitmap[top.x][top.y] = true;
-			if ((top.x == this.targetX) && (top.y ==this.targetY)) {
-				return top;
-			}
-
-			// visit every adjacent node
-			q.add(new Node((int)(top.x + 1), top.y, (int)(top.cost+1)));
-			q.add(new Node((int)(top.x - 1), top.y, (int)(top.cost+1)));
-			q.add(new Node(top.x, (int)(top.y + 1), (int)(top.cost+1)));
-			q.add(new Node(top.x, (int)(top.y - 1), (int)(top.cost+1)));
-		}
-		return null;
-	}
-
-	/*******************************************************************************************************************************
-	 * Floyd Warshall All-Pairs Shortest Path algorithm
-	 * 
-	 * For when the graph is represented by an adjacency matrix. It runs in O(n^3) time, where n is the number of vertices in the
-	 * graph. However, in comparison to Dijkstra, which only gives us the shortest path from one source to the targets,
-	 * Floyd-Warshall gives us the shortest paths from all source to all target nodes.
-	 * 
-	 * This algorithm assumes that there are no negative cycles in the graph.
-	 */
-	public void floydWarshall(int[][] graph) {
-		int N = graph.length;
-
-		int[][] shortestPaths = new int[N][N];
-		for (int k = 0; k < shortestPaths.length; k++) {
-			for (int i = 0; i < shortestPaths.length; i++) {
-				for (int j = 0; j < shortestPaths.length; j++) {
-					shortestPaths[i][j] = Math.min(shortestPaths[i][j], shortestPaths[i][k] + shortestPaths[k][j]);
-				}
-			}
-		}
-	}
-
-	public void floydWarshall(String[] data) {
-		int n = data.length;
-		int[][] sp = new int[n][n];
-
-		for (int i = 0; i < n; i++) {
-			for (int j = 0; j < n; j++) {
-				if (data[i].charAt(j) == 'Y') {
-					sp[i][j] = 1;
-				} else {
-					sp[i][j] = Integer.MAX_VALUE;
-				}
-			}
-		}
-
-		for (int k = 0; k < sp.length; k++) {
-			for (int i = 0; i < sp.length; i++) {
-				for (int j = 0; j < sp.length; j++) {
-					if (sp[i][k] != Integer.MAX_VALUE && sp[k][j] != Integer.MAX_VALUE) {
-						sp[i][j] = Math.min(sp[i][j], sp[i][k] + sp[k][j]);
-					}
-				}
-			}
-		}
-	}
-
-	public static class ListNode {
-		public int node;
-		public int weight;
-		public ListNode(int node, int weight) {
-			this.node = node;
-			this.weight = weight;
-		}
-		public String toString() {
-			return "[n: " + this.node + ", w: " + this.weight + "]";
-		}
+	public static int clearBit(int x, int i) {
+		return (x & ~(1 << i));
 	}
 	
-	/*******************************************************************************************************************************
-	 * Bellman Ford shortest path algorithm
-	 * 
-	 * Dijkstra and Bellman Ford are both single source shortest path algorithms. That is, given the source, find the shortest
-	 * path to all other nodes in the graph starting from this source node. But Dijkstra is O(m*log(n)) and Bellman Ford is O(m*n).
-	 * BUT unlike Dijkstra, Bellman Ford works when the edge costs are negative! This algorithm can also detect the presence of
-	 * negative cycles in the graph if there are any.
-	 */
-	public static int bellmanFord(ArrayList<ArrayList<ListNode>> list) {
-//		for (int i = 0; i < N; i++) {
-//			list.add(new ArrayList<ListNode>());
-//		}
-//		for (int i = 0; i < s.length; i++) {;
-//			ListNode temp = new ListNode(t[i]-1, weight[i]);
-//			list.get(s[i]-1).add(temp);
-//		}
-		int N = list.size();
-		int[] d = new int[N];
-		Arrays.fill(d, Integer.MAX_VALUE);
-		d[0] = 0;
-		boolean updated = false;
-		for (int n = 0; n < N-1; n++) { // yes, NOT n!! at most n-1 edges on the shortest path
-			updated = false;
-			for (int i = 0; i < list.size(); i++) {
-				for (int j = 0; j < list.get(i).size(); j++) {
-					if (d[list.get(i).get(j).node] > d[i] + list.get(i).get(j).weight) {
-						d[list.get(i).get(j).node] = d[i] + list.get(i).get(j).weight;
-						updated = true;
-					}
-				}
-			}
-			if (!updated) {
-				break;
-			}
-		}
-
-		for (int i = 0; i < list.size(); i++) {
-			for (int j = 0; j < list.get(i).size(); j++) {
-				if (d[list.get(i).get(j).node] > d[i] + list.get(i).get(j).weight) {
-					// Negative cycle!!
-					d[list.get(i).get(j).node] = Integer.MAX_VALUE;
-				}
-			}
-		}
-		return d[N-1];
+	public static int setBit(int x, int i) {
+		return (x | (1 << i));
+	}
+	
+	public static boolean getBit(int x, int i) {
+		return (x & (1 << i)) != 0;
 	}
 
 	/*******************************************************************************************************************************
-	 * Maximum Bipartite Matching (simple, unweighted)
+	 * Disjoint-set data structure, also called a union–find data structure or merge–find set, is a data structure that keeps track
+	 * of a set of elements partitioned into a number of disjoint (non-overlapping) subsets. It supports two useful operations:
 	 * 
-	 * Example problem: There are M job applicants and N jobs. Each applicant has a subset of jobs that he/she is interested in.
-	 * Each job opening can only accept one applicant and a job applicant can be appointed for only one job. Find an assignment of
-	 * jobs to applicants in such that as many applicants as possible get jobs.
-	 * 
-	 * Algorithm is O(n^3)
+	 *  - Find: Determine which subset a particular element is in. Find typically returns an item from this set that serves as its
+	 *    "representative"; by comparing the result of two Find operations, one can determine whether two elements are in the same
+	 *    subset.
+	 *  - Union: Join two subsets into a single subset.
+	 *  
+	 *  All operations are constant, by utilising path compression plus rank heuristics.
 	 */
-	// A DFS based recursive function that returns true if a
-	// matching for vertex u is possible
-	boolean bpm(boolean[][] bpGraph, int u, boolean[] seen, int[] matchR)
-	{
-		int N = bpGraph[0].length;
-		// Try every job one by one
-		for (int v = 0; v < N; v++)
-		{
-			// If applicant u is interested in job v and v is
-			// not visited
-			if (bpGraph[u][v] && !seen[v])
-			{
-				seen[v] = true; // Mark v as visited
-
-				// If job 'v' is not assigned to an applicant OR
-				// previously assigned applicant for job v (which is matchR[v]) 
-				// has an alternate job available. 
-				// Since v is marked as visited in the above line, matchR[v] 
-				// in the following recursive call will not get job 'v' again
-				if (matchR[v] < 0 || bpm(bpGraph, matchR[v], seen, matchR))
-				{
-					matchR[v] = u;
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	// Returns maximum number of matching from M to N
-	int maxBPM(boolean[][] bpGraph)
-	{
-		int M = bpGraph.length;
-		int N = bpGraph[0].length;
-		// An array to keep track of the applicants assigned to
-		// jobs. The value of matchR[i] is the applicant number
-		// assigned to job i, the value -1 indicates nobody is
-		// assigned.
-		int[] matchR = new int[N];
-
-		// Initially all jobs are available
-		Arrays.fill(matchR, -1);
-
-		int result = 0; // Count of jobs assigned to applicants
-		for (int u = 0; u < M; u++)
-		{
-			// Mark all jobs as not seen for next applicant.
-			boolean[] seen = new boolean[N];
-
-			// Find if the applicant 'u' can get a job
-			if (bpm(bpGraph, u, seen, matchR))
-				result++;
-		}
-		return result;
-	}
-
-	public void maxBpmTest() {
-		//	    boolean bpGraph[][] = { {false, true, true, false, false, false},
-		//	                        {true, false, false, true, false, false},
-		//	                        {false, false, true, false, false, false},
-		//	                        {false, false, true, true, false, false},
-		//	                        {false, false, false, false, false, false},
-		//	                        {false, false, false, false, false, true}
-		//	                      };
+	public static class DisjointSet {
+		int[] parent;
+		int[] rank;
+		int[] size;
+		int maxSize = 0;
 		
-//		boolean bpGraph[][] = {
-//				{true, true, true},
-//				{true, true, true},
-//				{true, true, true}
-//		};
-		int n = 1000;
-		boolean[][] bpGraph = new boolean[n][n];
-		for (int i = 0; i < bpGraph.length; i++) {
-			for (int j = 0; j < bpGraph.length; j++) {
-				if (Math.random() < 0.51) {
-					bpGraph[i][j] = true;
+		public DisjointSet(int size) {
+			parent = new int[size];
+			rank = new int[size];
+			this.size = new int[size];
+			
+			// This is not needed, it just clarifies the state to external observers.
+			Arrays.fill(parent, -1);  
+			Arrays.fill(rank, -1);
+		}
+		
+		public void make_set(int v) {
+			parent[v] = v;
+			rank[v] = 0;
+			size[v] = 1;
+			maxSize = Math.max(maxSize, 1); 
+		}
+		 
+		public int find_set(int v) {
+			if (v == parent[v]) {
+				return v;
+			}	
+			return parent[v] = find_set (parent[v]);
+		}
+		 
+		public void union_sets(int a, int b) {
+			a = find_set(a);
+			b = find_set(b);
+			if (a != b) {
+				if (rank[a] < rank[b]) {
+					int temp = a;
+					a = b;
+					b = temp;
 				}
+				size[a] += size[b];
+				size[b] = 0;
+				maxSize = Math.max(maxSize, size[a]); 
+				
+				parent[b] = a;
+				if (rank[a] == rank[b]) {
+					++rank[a];
+				}	
 			}
 		}
-
-		System.out.println("Maximum number of applicants that can get job is: " + maxBPM(bpGraph));
 	}
-	
+
 	/*******************************************************************************************************************************
 	 * Maximum slice problem: Find the maximum sum of a subsequence of integers. 
 	 * 
@@ -398,6 +137,27 @@ public class VariousAlgorithms {
 			}
 		}
 		return -1;
+	}
+	
+	/*******************************************************************************************************************************
+	 * Binary Search with repeated values
+	 */	
+	public static int binarySearchWithDuplicates(int[] a, int target) {
+		int low = 0;
+		int high = a.length-1;
+		int lastValid = -1;
+		while (low <= high) {
+			int mid = (low + high) >>> 1;
+			if (a[mid] < target) {
+				low = mid + 1;
+			} else if (a[mid] > target) {
+				high = mid - 1;
+			} else {
+				low = mid + 1;
+				lastValid = mid;
+			}
+		}
+		return lastValid;
 	}
 	
 	/*******************************************************************************************************************************
@@ -451,7 +211,7 @@ public class VariousAlgorithms {
 	 * Knapsack DP sub-problem: in how many ways can a list of values sum up to a given number?
 	 * 
 	 * For example: f([1, 2, 3, 4, 5]) = 
-	 * [1, 1, 1, 2, 2, 4, 4, 4, 5, 5, 6, 5, 5, 4, 4, 4, 2, 2, 1, 1, 1]
+	 * [1, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 1]
 	 * 
 	 * Or the binomial coefficients: f([1, 1, 1, 1, 1, 1]) =
 	 * [1, 6, 15, 20, 15, 6, 1] 
@@ -597,35 +357,8 @@ public class VariousAlgorithms {
 	/*******************************************************************************************************************************
 	 * Iteration of a set/array: Permutations
 	 * Rearranges the elements into the lexicographically next greater permutation of elements. 
-	 */
-	public boolean next_permutation(char str[]) {
-		char temp;
-		int a,b,l;
-		for(int x = str.length-2, y = 0; x >= 0; x--) {
-			if (str[x+1] > str[x]) {
-				for(y = str.length-1; str[y] <= str[x]; y--);
-				if (x != y) {
-					temp = str[x];
-					str[x] = str[y];
-					str[y] = temp;
-				}
-				l = (str.length-x)/2;
-				for(y = 1; y <= l; y++) {
-					a = x+y;
-					b = str.length-y;
-					if (a != b) {
-						temp = str[a];
-						str[a] = str[b];
-						str[b] = temp;
-					}
-				}
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	public boolean next_permutation(int str[]) {
+	 */	
+	public static boolean next_permutation(int str[]) {
 		int temp;
 		int a,b,l;
 		for(int x = str.length-2, y = 0; x >= 0; x--) {
@@ -675,6 +408,56 @@ public class VariousAlgorithms {
 		}
 		return true;
 	}
+	
+	public static boolean next_combination_with_rep(int[] list, int base) {
+		int i = list.length - 1;
+		list[i]++;
+		int carryEndIdx = -1;
+		int carryEnd = -1;
+		
+		if (list[i] == base) {
+			boolean carry = true;
+			while (carry) {
+				if (i == 0) {
+					return false;
+				}
+				
+				carry = false;
+				list[i] = 0;
+				list[--i]++;
+
+				carryEndIdx = i;
+				carryEnd = list[carryEndIdx];
+				
+				if (list[i] == base) {
+					carry = true;
+				}
+			}
+			
+			for (int j = carryEndIdx; j < list.length; j++) {
+				list[j] = carryEnd;
+			}
+		}
+		
+		return true;
+	}
+	
+	/*******************************************************************************************************************************
+	 * Get the nth permutation (0-indexed). Length of str is limited to 20 because 21! > 2^63
+	 * @param <T>
+	 */
+	public static <T> void nth_permutation(ArrayList<T> str, long n) {
+		long a = 1L;
+		for (int i = 2; i < str.size(); i++) {
+			a *= i;
+		}
+		for (int i = 0; i < str.size()-1; i++) {
+			int idx = (int) (n / a);
+			n %= a;
+			a /= str.size() - i - 1; 
+			str.add(i, str.remove(i+idx));
+		}
+	}
 
 	/*******************************************************************************************************************************
 	 * Iteration of a set/array: All combinations of a set.
@@ -695,10 +478,11 @@ public class VariousAlgorithms {
 		}
 	}
 	public void all_combinations2(int list[]) {
-		int N = 1 << list.length;
+		int len = list.length;
+		int N = 1 << len;
 		for (int n = 0; n < N; n++) {
-			boolean[] active = new boolean[list.length];
-			for (int i = 0; i < list.length; i++) {
+			boolean[] active = new boolean[len];
+			for (int i = 0; i < len; i++) {
 				if (((1 << i) & n) != 0) {
 					active[i] = true;
 				}
@@ -708,6 +492,7 @@ public class VariousAlgorithms {
 
 	/*******************************************************************************************************************************
 	 * Iteration of a set/array: k combinations of a set of n, in other words: counting in base n.
+	 * A.K.A. permutations with repetition
 	 * This method counts from right to left to match integer counting.
 	 *  
 	 * Speed: O((n^k)*n), or a list of 9 elements in base 9 in 0.3 seconds.
@@ -740,7 +525,7 @@ public class VariousAlgorithms {
 	/*******************************************************************************************************************************
 	 * Very fast prime function. Gets all primes up to and equal to limit.
 	 * 
-	 * Speed: About 1 second to run getPrimes(10^6)
+	 * Speed: About 1 second to run getPrimes(71M)
 	 * 
 	 * Memory use is O(n), speed is O(n), both better than a normal Sieve of Eratosthenes.
 	 *  
@@ -750,22 +535,25 @@ public class VariousAlgorithms {
 	 * harmonic series (1, 1/2, 1/3, ... 1/n) that sums to 23 for n < 2^32. Therefore the sum of this
 	 * subset will be smaller than 23*n, and therefore the time complexity is O(n). 
 	 */
-	public static LinkedHashSet<Integer> getPrimes(long limit) {
-		LinkedHashSet<Integer> primes = new LinkedHashSet<Integer>();
-		LinkedHashSet<Integer> notPrimes = new LinkedHashSet<Integer>();
-		boolean prime = true;
-		for (int i = 2; i <= limit; i++) {
-			prime = true;
-			if (notPrimes.contains(i)) {
-				prime = false;
+	public static BitSet getPrimes(int limit) {
+		BitSet notPrimes = new BitSet(limit+1);
+		BitSet primes = new BitSet(limit+1);
+		
+		for (int i = notPrimes.nextClearBit(2); i >= 0 && i <= limit; i = notPrimes.nextClearBit(i+1)) {
+			primes.set(i);
+			for (int j = 2*i; j <= limit; j+=i) {
+				notPrimes.set(j);
 			}
-			if (prime) {
-				primes.add(i);
-				for (int j = 2; j*i <= limit; j++) {
-					notPrimes.add(j*i);
-					ops++;
-				}
-			}
+		}
+		return primes;
+	}
+	
+	public static HashSet<Integer> getPrimesSet(int limit) {
+		HashSet<Integer> primes = new HashSet<Integer>((int) (limit/10));
+		BitSet p = getPrimes(limit);
+		
+		for (int i = p.nextSetBit(0); i >= 0 && i <= limit; i = p.nextSetBit(i+1)) {
+			primes.add(i);
 		}
 		return primes;
 	}
@@ -836,7 +624,7 @@ public class VariousAlgorithms {
 		}
 		return a;
 	}
-	
+
 	/*******************************************************************************************************************************
 	 * The least common multiple (also called the lowest common multiple or smallest common multiple) of two integers a and b,
 	 * is the smallest positive integer that is a multiple of both a and b. Remember that gcm(a, b) * lcm(a, b) = a*b
@@ -846,9 +634,8 @@ public class VariousAlgorithms {
 		return BigInteger.valueOf(b).multiply(BigInteger.valueOf(a)).divide(BigInteger.valueOf(a).gcd(BigInteger.valueOf(b))).intValue();
 	}
 	
-	public static long lcm(long a, long b)
-	{
-		return BigInteger.valueOf(b).multiply(BigInteger.valueOf(a)).divide(BigInteger.valueOf(a).gcd(BigInteger.valueOf(b))).longValue();
+	public static long lcm(long a, long b) {
+		return a * b / gcd(a, b);
 	}
 	
 	/*******************************************************************************************************************************
@@ -881,6 +668,17 @@ public class VariousAlgorithms {
 	}
 	
 	/*******************************************************************************************************************************
+	 * Modular "division" = modular multiplicative inverse
+	 * 
+	 * To get a/b % m take the the modular multiplicative inverse of b and then multiply with a.
+	 * 
+	 * Speed: about 20 us for f(10^9)
+	 */
+	public static int modularMultiplicativeInverse(int b, int mod) {
+		return fastModularExponent(b, eulerTotientFunction(mod) - 1, mod) % mod;
+	}
+	
+	/*******************************************************************************************************************************
 	 * Goldbach's conjecture is one of the oldest and best-known unsolved problems in number theory and in all of mathematics:
 	 * 
 	 * Every even integer greater than 2 can be expressed as the sum of two primes.
@@ -896,7 +694,7 @@ public class VariousAlgorithms {
 	}
 	
 	/*******************************************************************************************************************************
-	 * Calculate the right side of Pascal's triangle (aka binomial coefficients). 
+	 * Calculate the right side of Pascal's triangle (a.k.a. binomial coefficients). With zeros representing the "gaps" 
 	 * Complexity: O(n^2)
 	 */
 	public int[] PascalsTriangle(int n) {
@@ -917,6 +715,19 @@ public class VariousAlgorithms {
 		return ptr;
 	}
 	
+	/*******************************************************************************************************************************
+	 * Calculate a full row of Pascal's triangle (a.k.a. binomial coefficients). 
+	 * Complexity: O(n)
+	 * The long type will overflow at n = 63
+	 */
+	public static long[] PascalsTriangleFast(long n) {
+		long[] ptr = new long[(int) n+1];
+		ptr[0] = 1;
+		for (int i = 1; i < ptr.length; i++) {
+			ptr[i] = ptr[i-1] * (n + 1 - i) / i;
+		}
+		return ptr;
+	}
 	
 	/*******************************************************************************************************************************
 	 * Very fast way to calculate a modular exponent. Cannot overflow!
@@ -1021,100 +832,6 @@ public class VariousAlgorithms {
 	}
 
 	/*******************************************************************************************************************************
-	 * Tree diameter, or the maximum distance between two nodes in a tree. 
-	 * 
-	 * The basic idea is:
-	 * 1. DFS from a random node
-	 * 2. Choose the node the farthest away and DFS from it.
-	 * 3. Now the farthest node is equal to the diameter. 
-	 * 
-	 * This code assumes the input as lines of triplets, indicating two vertices and the weight of their connection.
-	 * 
-	 * Complexity: O(n)
-	 */
-	
-	public static long treeDiameter() {
-		Scanner scan = new Scanner(System.in);
-		HashMap<Integer, ArrayList<int[]>> map = new HashMap<>();
-		int n = scan.nextInt();
-		int start = -1; 
-		for (int i = 0; i < n-1; i++) {
-			int a = scan.nextInt();
-			if (start == -1) {
-				start = a;
-			}
-			int b = scan.nextInt();
-			int v = scan.nextInt();
-			
-			if (!map.containsKey(a)) {
-				map.put(a, new ArrayList<int[]>());
-			}
-			map.get(a).add(new int[]{b, v});
-			
-			if (!map.containsKey(b)) {
-				map.put(b, new ArrayList<int[]>());
-			}
-			map.get(b).add(new int[]{a, v});
-		}
-		scan.close();
-		
-		// First DFS
-		
-		long[] top = {start, 0};
-		Stack<long[]> s = new Stack<long[]>();
-		HashSet<Long> visited = new HashSet<>();
-		s.add(top);
-		long max = 0;
-		long maxIdx = 0;
-		while (!s.isEmpty()) {
-			top = s.pop();
-			if (visited.contains(top[0])) {
-				continue;
-			}
-			visited.add(top[0]);
-			if (max < top[1]) {
-				max = top[1];
-				maxIdx = top[0];
-			}
-			if (map.containsKey((int)top[0])) {
-				ArrayList<int[]> children = map.get((int)top[0]);
-				for (int i = 0; i < children.size(); i++) {
-					s.push(new long[]{children.get(i)[0], top[1] + children.get(i)[1]});
-				}
-			}
-		}
-		
-		// Second DFS
-		
-		top[0] = maxIdx;
-		top[1] = 0;
-		s = new Stack<long[]>();
-		visited = new HashSet<>();
-		s.add(top);
-		max = 0;
-		maxIdx = 0;
-		while (!s.isEmpty()) {
-			top = s.pop();
-			if (visited.contains(top[0])) {
-				continue;
-			}
-			visited.add(top[0]);
-			if (max < top[1]) {
-				max = top[1];
-				maxIdx = top[0];
-			}
-			if (map.containsKey((int)top[0])) {
-				ArrayList<int[]> children = map.get((int)top[0]);
-				for (int i = 0; i < children.size(); i++) {
-					s.push(new long[]{children.get(i)[0], top[1] + children.get(i)[1]});
-				}
-			}
-		}
-		
-		return max;
-	}
-
-	/*******************************************************************************************************************************
 	 * Longest common subsequence (LCS), a classic dynamic programming problem. O(n^2)
 	 * 
 	 */	
@@ -1170,69 +887,6 @@ public class VariousAlgorithms {
 		return sb.toString();
 	}
 	
-	
-
-
-	/*******************************************************************************************************************************
-	 * Standard Topsort. 
-	 * 
-	 * A topological sort (sometimes abbreviated topsort or toposort) or topological ordering of a directed graph is a linear
-	 * ordering of its vertices such that for every directed edge uv from vertex u to vertex v, u comes before v in the ordering.
-	 * 
-	 * Returns false if the graph is not a DAG (contains a directed cycle).
-	 * 
-	 * O(n) time
-	 */		
-	@SuppressWarnings("unchecked")
-	public static boolean topSort(ArrayList<Integer> order, HashMap<Integer, ArrayList<Integer>> graphRef) {
-		
-		// Create a copy of the graph
-		HashMap<Integer, ArrayList<Integer>> graph = new HashMap<>();
-		for (Integer key: graphRef.keySet()) {
-			graph.put(key, (ArrayList<Integer>) graphRef.get(key).clone());
-		}
-		
-		// Count number of incoming edges
-		HashMap<Integer, Integer> numIncoming = new HashMap<>();
-		for (Integer key: graph.keySet()) {
-			ArrayList<Integer> children = graph.get(key);
-			for (Integer child: children) {
-				numIncoming.put(child, numIncoming.containsKey(child) ? numIncoming.get(child) + 1 : 1);
-			}
-		}
-		
-		// Select vertices with no incoming edges
-		Stack<Integer> roots = new Stack<>(); // Doesn't have to be a stack!
-		for (Integer key: graph.keySet()) {
-			if (!numIncoming.containsKey(key) || numIncoming.get(key) == 0) {
-				roots.push(key);
-			}
-		}
-		
-		// Build the ordering
-		while (!roots.isEmpty()) {
-			Integer top = roots.pop();
-			order.add(top);
-			ArrayList<Integer> children = graph.get(top);
-			for (int i = 0; i < children.size(); i++) {
-				Integer rem = children.remove(i--);
-				numIncoming.put(rem, numIncoming.get(rem) - 1);
-				if (numIncoming.get(rem) == 0) {
-					roots.push(rem);
-				}
-			}
-		}
-		
-		// Count number of edges
-		int edges = 0;
-		for (Integer key: graph.keySet()) {
-			edges += graph.get(key).size();
-		}
-		
-		return edges > 0 ? false : true;
-	}
-	
-
 	/*******************************************************************************************************************************
 	 * Simple matrix multiplication. O(n^3)
 	 */	
@@ -1264,11 +918,257 @@ public class VariousAlgorithms {
 		}
 	}
 	
+
+	/*******************************************************************************************************************************
+	 * Geometry: Convex hull with the Graham scan. O(n * log(n))
+	 * Based on http://www.geeksforgeeks.org/convex-hull-set-2-graham-scan/
+	 */
+
+	public static class Point {
+		long x;
+		long y;
+		public Point(int x, int y) {
+			this.x = x;
+			this.y = y;
+		}
+	}
+	
+	public static class GrahamScan {
+		public static Point p0;
+
+		public static Point nextToTop(Stack<Point> S) {
+			Point p = S.peek();
+			S.pop();
+			Point res = S.peek();
+			S.push(p);
+			return res;
+		}
+
+		public static long distSq(Point p1, Point p2) {
+			return (p1.x - p2.x)*(p1.x - p2.x) + (p1.y - p2.y)*(p1.y - p2.y);
+		}
+
+		public static int orientation(Point p, Point q, Point r) {
+			long val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+
+			if (val == 0) return 0;  // co-linear
+			return (val > 0)? 1: 2;  // clock or counter clock wise
+		}
+
+		// Returns list of hull points in the list hull. 
+		public GrahamScan(Point[] points, ArrayList<Point> hull) {
+			// Find the bottommost point
+			int n = points.length;
+			long ymin = points[0].y;
+			int min = 0;
+			for (int i = 1; i < n; i++) {
+				long y = points[i].y;
+				
+				if ((y < ymin) || (ymin == y && points[i].x < points[min].x)) {
+					ymin = points[i].y;
+					min = i;
+				}
+			}
+
+			// Place the bottom-most point at first position
+			Point temp = points[0];
+			points[0] = points[min];
+			points[min] = temp;
+
+			p0 = points[0];
+			Arrays.sort(points, new Comparator<Point>() {
+				@Override
+				public int compare(Point p1, Point p2) {
+					int o = orientation(p0, p1, p2);
+					if (o == 0) {
+						return (distSq(p0, p2) >= distSq(p0, p1))? -1 : 1;
+					} else {
+						return (o == 2)? -1: 1;
+					}
+				}
+			});
+
+			int m = 1; // Initialize size of modified array
+			for (int i = 1; i < n; i++) {
+				// Keep removing i while angle of i and i+1 is same
+				// with respect to p0
+				while (i < n-1 && orientation(p0, points[i], points[i+1]) == 0) {
+					i++;
+				}
+				points[m] = points[i];
+				m++;  // Update size of modified array
+			}
+
+			if (m < 3) {
+				return;
+			}
+
+			Stack<Point> S = new Stack<>();
+			S.push(points[0]);
+			S.push(points[1]);
+			S.push(points[2]);
+
+			// Process remaining n-3 points
+			for (int i = 3; i < m; i++) {
+				while (orientation(nextToTop(S), S.peek(), points[i]) != 2) {
+					S.pop();
+				}	
+				S.push(points[i]);
+			}
+			
+			// Could just return the stack here.
+			while (!S.empty()) {
+				Point p = S.peek();
+				hull.add(p);
+				S.pop();
+			}
+		}
+	}
+	
+	/*******************************************************************************************************************************
+	 * Geometry: Calculate the area of any polygon in O(n).
+	 * Positive overlaps are counted twice while negative overlaps are subtracted. (Green's Theorem)
+	 * Based on http://alienryderflex.com/polygon_area/
+	 */
+	
+	public static double polyArea(ArrayList<Point> list) {
+		double area = 0;
+		for (int j = 0; j < list.size(); j++) {
+			long x1 = list.get(j).x;
+			long x2 = list.get((j+1) % list.size()).x;
+			long y1 = list.get(j).y;
+			long y2 = list.get((j+1) % list.size()).y;
+			area += x1*y2-x2*y1;
+		}
+		return 0.5 * Math.abs(area);
+	}
+	
+	/*******************************************************************************************************************************
+	 * Geometry: check if 3 points are collinear
+	 */
+	public static boolean collinear(long x1, long y1, long x2, long y2, long x3, long y3) {
+		return (x2-x1) * (y3-y1) == (x3 - x1) * (y2 - y1);
+	} 
+
+	/*******************************************************************************************************************************
+	 * Just a HashMap wrapper to make counting easier
+	 */
+	
+	@SuppressWarnings("serial")
+	public static class Counter<T> extends HashMap<T, Integer> {
+		public void add(T key) {
+			Integer i = this.get(key);
+			this.put(key, i == null ? 1 : i + 1);
+		}
+		public void add(T key, int count) {
+			Integer i = this.get(key);
+			this.put(key, i == null ? count : i + count);
+		}
+	}
+
+	/*******************************************************************************************************************************
+	 * Based on Python's DefaultDict: for normal defaults
+	 */
+
+	@SuppressWarnings("serial")
+	public static class DefaultDict<K, V> extends HashMap<K, V> {
+		private V defaultValue;  
+	    public DefaultDict(V defaultValue) {
+	        this.defaultValue = defaultValue;    
+	    }
+	
+	    @SuppressWarnings("unchecked")
+		@Override
+	    public V get(Object key) {
+	        V returnValue = super.get(key);
+	        if (returnValue == null) {
+	            try {
+	                returnValue = this.defaultValue;
+	            } catch (Exception e) {
+	                throw new RuntimeException(e);
+	            }
+	            this.put((K) key, returnValue);
+	        }
+	        return returnValue;
+	    }    
+	}
+
+	/*******************************************************************************************************************************
+	 * Based on Python's DefaultDict: for default objects
+	 */
+
+	@SuppressWarnings("serial")
+	public static class DefaultDict2<K, V> extends HashMap<K, V> {
+	    Class<V> klass;
+	    public DefaultDict2(Class<V> klass) {
+	        this.klass = klass;    
+	    }
+	
+	    @SuppressWarnings("unchecked")
+		@Override
+	    public V get(Object key) {
+	        V returnValue = super.get(key);
+	        if (returnValue == null) {
+	            try {
+	                returnValue = klass.newInstance();
+	            } catch (Exception e) {
+	                throw new RuntimeException(e);
+	            }
+	            this.put((K) key, returnValue);
+	        }
+	        return returnValue;
+	    }    
+	}
+	
+	/*******************************************************************************************************************************
+	 * Shuffle an array
+	 */
+	public static void shuffle(int[] a, Random rand) {
+        for (int i = a.length; i > 1; i--) {
+        	int r = rand.nextInt(i);
+        	int temp = a[i-1];
+        	a[i-1] = a[r];
+        	a[r] = temp;
+        }
+	}
+	
+	/*******************************************************************************************************************************
+	 * Simple and fast Pair class
+	 */
+	
+	public static class Pair<A extends Comparable<A>, B extends Comparable<B>> implements Comparable<Pair<A, B>> {
+		public A a;
+		public B b;
+		public Pair(A a, B b) {
+			this.a = a;
+			this.b = b;
+		}
+		public int hashCode() {
+			return a.hashCode() * 13 + b.hashCode();
+		}
+		public boolean equals(Object other) {
+			if (other instanceof Pair) {
+				@SuppressWarnings("unchecked")
+				Pair<A, B> op = (Pair<A, B>) other;
+				return ((this.a == op.a || this.a.equals(op.a)) && (this.b == op.b || this.b.equals(op.b)));
+			}
+			return false;
+		}
+		public String toString() { 
+			return "(" + a + ", " + b + ")"; 
+		}
+		@Override
+		public int compareTo(Pair<A, B> o) {
+			int compareFirst = this.a.compareTo(o.a);
+			return compareFirst != 0 ? compareFirst : this.b.compareTo(o.b);
+		}
+	}
+	
+	/*******************************************************************************************************************************/
+	
+	
 	static int ops = 1;
 	public static void main(String[] args) {
-		int res = fastModularExponent(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
-		
-		System.out.println(kmp("ABCABCABDABCAB", "ABCABD"));
 		
 		int TEST_PRIMES = 1;
 		int TEST_BPM = 2;
@@ -1276,8 +1176,10 @@ public class VariousAlgorithms {
 		int TEST_MAXIMUM_SLICE = 4;
 		int TEST_BINARY_SEARCH = 5;
 		int TEST_NEXT_NUMBER = 6;
+		int TEST_PRIMES_2 = 7;
+		int TEST_NEXT_PER_COM = 8;
 		
-		int testType = TEST_NEXT_NUMBER;
+		int testType = TEST_NEXT_PER_COM;
 		
 		long start = System.currentTimeMillis();
 		if (testType == TEST_PRIMES) {
@@ -1286,7 +1188,7 @@ public class VariousAlgorithms {
 			for (int i = 0; i < 20; i++) {
 				t = System.currentTimeMillis();
 				long bound = 23 * n;
-				getPrimes(n);
+				getPrimes((int) n);
 				System.out.printf("n: %-10d ops: %-10d bound: %-10d bound extra: %-15f CPU cycles per op: %-10d\n",
 						n, ops, bound, (bound/(double)ops), (System.currentTimeMillis() - t) * 3000000L / ops);
 				n *= 2;
@@ -1296,7 +1198,7 @@ public class VariousAlgorithms {
 			n = 20000;
 			t = System.currentTimeMillis();
 			for (int i = 0; i < 1000; i++) {
-				getPrimes(n);
+				getPrimes((int) n);
 			}
 			System.out.println("getPrimes(" + n + "): " + (System.currentTimeMillis() - t)/(float)1000 + " ms");
 			
@@ -1305,12 +1207,16 @@ public class VariousAlgorithms {
 				getPrimesSlow((int) n);
 			}
 			System.out.println("getPrimesSlow(" + n + "): " + (System.currentTimeMillis() - t)/(float)10 + " ms");
-		} else if (testType == TEST_BPM) {
-			for (int i = 0; i < 5; i++) {			
-				long time = System.currentTimeMillis();
-				(new VariousAlgorithms()).maxBpmTest();
-				System.out.println("Total time: " + (System.currentTimeMillis() - time));
-			}		
+		} else if (testType == TEST_PRIMES_2) {
+			ArrayList<Long> times = new ArrayList<>();
+			for (int i = 0; i < 10; i++) {
+				long n = 71000000;
+				long t = System.currentTimeMillis();
+				getPrimes((int) n);
+				times.add((System.currentTimeMillis() - t));
+				System.out.println("getPrimes("+n+") \t" + times.get(times.size()-1));
+			}
+			System.out.println("Fastest time: " + Collections.min(times));
 		} else if (testType == TEST_ALL_COMBINATIONS) {
 			for (int i = 0; i < 5; i++) {			
 				long time = System.currentTimeMillis();
@@ -1336,6 +1242,36 @@ public class VariousAlgorithms {
 			while (next_number(a, 9)) {
 				//System.out.println("" + c[a[0]] + c[a[1]] + c[a[2]] + c[a[3]] + c[a[4]]);
 			}
+		} else if (testType == TEST_NEXT_PER_COM) {
+			int[] a = {1,2,3,4};
+			int k = 0;
+			System.out.println("Permutations");
+			do {
+				System.out.println(Arrays.toString(a));
+				k++;
+			} while (next_permutation(a));
+			System.out.println("Num Permutations: " + k + ", nPr(4, 4): " + nPr(4, 4));
+			System.out.println();
+			
+			a = new int[]{0,1,2};
+			k = 0;
+			System.out.println("Combinations");
+			do {
+				System.out.println(Arrays.toString(a));
+				k++;
+			} while (next_combination(a, 4));
+			System.out.println("Num Combinations: " + k + ", nCr(5, 3): " + nCr(5, 3));
+			System.out.println();
+			
+			a = new int[]{0,0,0};
+			k = 0;
+			System.out.println("Combinations with repetition");
+			do {
+				System.out.println(Arrays.toString(a));
+				k++;
+			} while (next_combination_with_rep(a, 4));
+			System.out.println("Num Combinations: " + k + ", nCrWithRep(4, 3): " + nCrWithRep(4, 3));
+			
 		}
 		System.out.println("total time: " + (System.currentTimeMillis() - start) + " ms");
 		

@@ -17,52 +17,52 @@ import java.util.TreeSet;
 
 public class SolutionAll {
 	public static void main(String[] args) {
-		//flippingBits(System.in);
-		//utopianTree(System.in);
-		//maximizingXOR(System.in);
-		//alternatingCharacters(System.in);
-		//theLoveLetterMystery(System.in);
-		//angryChildren(System.in);
-		//gameOfThrones(System.in);
-		//acmIcpcTeam(System.in);
-		//fillingJars(System.in);
-		//chocolateFeast(System.in);
-		//sherlockAndSquares(System.in);
-		//sherlockAndTheBeast(System.in);
-		//findDigits(System.in);
-		//isFibo(System.in);
-		//sherlockAndPairs(System.in);
-		//sherlockAndWatson(System.in);
-		//iceCreamParlor(System.in);
-		//almostSorted(System.in); 			//TODO
-		//circleCity(System.in);
-		//mrKmarsh(System.in); 				//TODO
-		//encryption(System.in);
-		//missingNumbers(System.in);
-		//coinOnTheTable(System.in);		//TODO
-		//theGridSearch2(System.in);
-		//pairs(System.in);
-		//theMaximumSubarray(System.in);
-		//knapsack(System.in);
-		//theLongestCommonSubsequence(System.in);
-		//fibonacciModified(System.in);
-		//pangrams(System.in);
-		//candies(System.in);
-		//palindromeIndex(System.in);
-		//anagram(System.in);
-		//quickSort1(System.in);
-		//restaurant(System.in);
-		//commonChild(System.in);
-		//gemStones(System.in);
-		//biggerIsGreater(System.in);
-		//twoArrays(System.in);
-		//markAndToys(System.in);
-		//stockMaximize(System.in);
-		//pRngSequenceGuessing(System.in);
-		//keywordTranspositionCipher(System.in);
-		//sherlockAndCost(System.in);
-		//playGame2(System.in);					// TODO
-		redJohnIsBack(System.in);
+//		flippingBits(System.in);
+//		utopianTree(System.in);
+//		maximizingXOR(System.in);
+//		alternatingCharacters(System.in);
+//		theLoveLetterMystery(System.in);
+//		angryChildren(System.in);
+//		gameOfThrones(System.in);
+//		acmIcpcTeam(System.in);
+//		fillingJars(System.in);
+//		chocolateFeast(System.in);
+//		sherlockAndSquares(System.in);
+//		sherlockAndTheBeast(System.in);
+//		findDigits(System.in);
+//		isFibo(System.in);
+//		sherlockAndPairs(System.in);
+//		sherlockAndWatson(System.in);
+//		iceCreamParlor(System.in);
+//		almostSorted(System.in); 			//TODO
+//		circleCity(System.in);
+//		mrKmarsh(System.in); 				//TODO
+//		encryption(System.in);
+//		missingNumbers(System.in);
+//		coinOnTheTable(System.in);		//TODO
+//		theGridSearch2(System.in);
+//		pairs(System.in);
+//		theMaximumSubarray(System.in);
+//		knapsack(System.in);
+//		theLongestCommonSubsequence(System.in);
+//		fibonacciModified(System.in);
+//		pangrams(System.in);
+//		candies(System.in);
+//		palindromeIndex(System.in);
+//		anagram(System.in);
+//		quickSort1(System.in);
+//		restaurant(System.in);
+//		commonChild(System.in);
+//		gemStones(System.in);
+//		biggerIsGreater(System.in);
+//		twoArrays(System.in);
+//		markAndToys(System.in);
+//		stockMaximize(System.in);
+//		pRngSequenceGuessing(System.in);
+//		keywordTranspositionCipher(System.in);
+//		sherlockAndCost(System.in);
+//		playGame2(System.in);					// TODO
+//		redJohnIsBack(System.in);
 	}
 	
 	public static void redJohnIsBack(InputStream in) {

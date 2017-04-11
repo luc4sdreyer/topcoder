@@ -2,9 +2,11 @@ import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 
 import org.junit.Test;
 
@@ -39,20 +41,45 @@ public class VariousAlgorithmsTest {
 	}
 	
 	@Test
-	public void testGetPrimeFactors() {
-		int limit = 1000;
-		LinkedHashSet<Integer> primes = VariousAlgorithms.getPrimes(limit);
-		for (int i = 2; i < 1000; i++) {
-			ArrayList<Long> pf = VariousAlgorithms.getPrimeFactors(i);
-			long a = 1;
-			for (int j = 0; j < pf.size(); j++) {
-				assertTrue(primes.contains((int)(long)pf.get(j)));
-				a *= pf.get(j);
+	public void testNth_permutation() {
+		for (int len = 1; len <= 8; len++) {
+			int[] c = new int[len];
+			for (int i = 0; i < c.length; i++) {
+				c[i] = (char) ('a' + i);
 			}
-			assertEquals(i, a);
+			int[] c2 = c.clone();
+			ArrayList<Integer> c3 = new ArrayList<>();
+			for (int i = 0; i < c2.length; i++) {
+				c3.add(c2[i]);
+			}
+			int count = 0;
+			do {
+				@SuppressWarnings("unchecked")
+				ArrayList<Integer> c4 = (ArrayList<Integer>) c3.clone();
+				VariousAlgorithms.nth_permutation(c4, count++);
+				System.currentTimeMillis();
+				for (int i = 0; i < c2.length; i++) {
+					assertEquals((int)c4.get(i), c2[i]);
+				}
+			} while (VariousAlgorithms.next_permutation(c2));
 		}
-		VariousAlgorithms.getPrimeFactors(214);
 	}
+	
+//	@Test
+//	public void testGetPrimeFactors() {
+//		int limit = 1000;
+//		BitSet primes = VariousAlgorithms.getPrimes(limit);
+//		for (int i = 2; i < 1000; i++) {
+//			ArrayList<Long> pf = VariousAlgorithms.getPrimeFactors(i);
+//			long a = 1;
+//			for (int j = 0; j < pf.size(); j++) {
+//				assertTrue(primes.((int)(long)pf.get(j)));
+//				a *= pf.get(j);
+//			}
+//			assertEquals(i, a);
+//		}
+//		VariousAlgorithms.getPrimeFactors(214);
+//	}
 	
 	@Test
 	public void testCombinationWithRepetition() {
@@ -101,6 +128,66 @@ public class VariousAlgorithmsTest {
 				System.nanoTime();
 			}
 			assertEquals(expected, actual);
+		}
+	}
+	
+	@Test
+	public void testBinarySearch() {
+		int tests = 10000;
+		int maxLength = 1000;
+		Random rand = new Random(0);
+		for (int i = 0; i < tests; i++) {
+			int length = rand.nextInt(maxLength) + 1;
+			int[] data = new int[length];
+			HashSet<Integer> chosen = new HashSet<>();
+			
+			for (int j = 0; j < data.length; j++) {
+				int a = rand.nextInt(length*2);
+				while (chosen.contains(a)) {
+					a = rand.nextInt(length*2);
+				}
+				data[j] = a;
+				chosen.add(a);
+			}
+			
+			Arrays.sort(data);
+			
+			for (int j = 0; j < data.length; j++) {
+				int target = data[j];
+				int expected = j;
+				
+				int actual = VariousAlgorithms.binarySearch(data, target);
+				assertEquals(expected, actual);
+			}
+		}
+	}
+	
+	@Test
+	public void testBinarySearchWithDuplicates() {
+		int tests = 10000;
+		int maxLength = 1000;
+		Random rand = new Random(0);
+		for (int i = 0; i < tests; i++) {
+			int length = rand.nextInt(maxLength) + 1;
+			int[] data = new int[length];
+			
+			for (int j = 0; j < data.length; j++) {
+				int a = rand.nextInt(length);
+				data[j] = a;
+			}
+			
+			Arrays.sort(data);
+			
+			for (int j = 0; j < data.length; j++) {
+				while (j < data.length-1 && data[j+1] == data[j]) {
+					j++;
+				}
+				int target = data[j];
+				int expected = j;
+				
+				int actual = VariousAlgorithms.binarySearchWithDuplicates(data, target);
+				assertEquals(expected, actual);
+			}
 		}
 	}
 	
@@ -196,5 +283,16 @@ public class VariousAlgorithmsTest {
 			assertEquals(exp.length(), act.length());
 		}
 	}
-
+	
+	@Test
+	public void testCounter() {
+		VariousAlgorithms.Counter<Integer> count = new VariousAlgorithms.Counter<Integer>();
+		int size = (int) 10e6;
+		for (int i = 0; i < size; i++) {
+			count.add(5);
+			count.add(6);
+		}
+		assertEquals((int)count.get(5), size);
+		assertEquals((int)count.get(6), size);
+	}
 }

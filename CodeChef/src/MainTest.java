@@ -28,9 +28,9 @@ public class MainTest {
 					ArrayList<Long> c = (ArrayList<Long>) a.clone();
 					
 					long time = System.nanoTime();
-					String res = Dec14Long.sanskar7(n, k, a);
+					String res = Long14_12.sanskar7(n, k, a);
 					//String res2 = sanskar3(n, k, a);
-					String res2 = Dec14Long.sanskar8(n, k, b);
+					String res2 = Long14_12.sanskar8(n, k, b);
 					time = (System.nanoTime() - time)/1000000;
 					//if (time >= 100) {
 					if (!res.equals(res2)) {
@@ -49,41 +49,41 @@ public class MainTest {
 	@Test
 	public void test3() {
 		int[] a = new int[]{-1, -2, 9, 2, -3, -4, 3, 4, 8, 8, 1};
-		assertEquals(12, Dec14Long.chefAndBracketPairsFslow(a.length, a));
+		assertEquals(12, Long14_12.chefAndBracketPairsFslow(a.length, a));
 		
 		a = new int[]{-2, -3, -4, 2, 3, 4};
-		assertEquals(4, Dec14Long.chefAndBracketPairsFslow(a.length, a));
+		assertEquals(4, Long14_12.chefAndBracketPairsFslow(a.length, a));
 		
 		a = new int[]{-2, -3, -4, 3, 2, 4};
-		assertEquals(5, Dec14Long.chefAndBracketPairsFslow(a.length, a));
+		assertEquals(5, Long14_12.chefAndBracketPairsFslow(a.length, a));
 		
 		a = new int[]{-2, -3, -4, -5, 4, 3, 2, 5};
-		assertEquals(9, Dec14Long.chefAndBracketPairsFslow(a.length, a));
+		assertEquals(9, Long14_12.chefAndBracketPairsFslow(a.length, a));
 		
 		
 		
 		a = new int[]{-2, -3, -2, 2, 3, 2};
-		assertEquals(10, Dec14Long.chefAndBracketPairsFslow(a.length, a));
+		assertEquals(10, Long14_12.chefAndBracketPairsFslow(a.length, a));
 		
 		a = new int[]{-2, -3, -2, 2, 3};
-		assertEquals(5, Dec14Long.chefAndBracketPairsFslow(a.length, a));
+		assertEquals(5, Long14_12.chefAndBracketPairsFslow(a.length, a));
 		
 		a = new int[]{-3, -2, 2, 3, 2};
-		assertEquals(5, Dec14Long.chefAndBracketPairsFslow(a.length, a));
+		assertEquals(5, Long14_12.chefAndBracketPairsFslow(a.length, a));
 		
 		a = new int[]{-2, -2, -3, -2, 2, 3, 2};
-		assertEquals(16, Dec14Long.chefAndBracketPairsFslow(a.length, a));
+		assertEquals(16, Long14_12.chefAndBracketPairsFslow(a.length, a));
 		
 		a = new int[]{-2, -3, -2, 2, 3, 2, 2};
-		assertEquals(16, Dec14Long.chefAndBracketPairsFslow(a.length, a));
+		assertEquals(16, Long14_12.chefAndBracketPairsFslow(a.length, a));
 		
 		
 		
 		a = new int[]{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-		assertEquals(184756, Dec14Long.chefAndBracketPairsFslow(a.length, a));
+		assertEquals(184756, Long14_12.chefAndBracketPairsFslow(a.length, a));
 		
 		a = new int[]{-2, -2, 2, 2};
-		assertEquals(6, Dec14Long.chefAndBracketPairsFslow(a.length, a));
+		assertEquals(6, Long14_12.chefAndBracketPairsFslow(a.length, a));
 		
 	}
 

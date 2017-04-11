@@ -1,2 +1,4 @@
 eclipse.preferences.version=1
 encoding//src/dataStructures/SegmentTreeHolder.java=UTF-8
+encoding//src/dataStructures/SegmentTreeLazyHolder.java=UTF-8
+encoding//src/dataStructures/SegmentTreePersistentHolder.java=UTF-8

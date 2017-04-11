@@ -1,0 +1,544 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.Random;
+import java.util.StringTokenizer;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.Base64;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+
+public class Long16_04 {
+	public static void main(String[] args) {
+		DEVGOSTR(System.in);
+//		perf_DEVGOSTR();
+//		perf_DEVGOSTR_2();
+//		test_DEVGOSTR();
+	}
+
+	public static void test_DEVGOSTR() {
+		Random rand = new Random(0);
+		for (int len = 1; len <= 50; len++) {
+			for (int A = 1; A <= 2; A++) {
+				for (int K = 0; K <= len; K++) {
+					for (int j = 0; j < 100; j++) {
+						char[] s = new char[len];
+						for (int i = 0; i < s.length; i++) {
+							s[i] = (char) ('a' + rand.nextInt(A));
+						}
+						long r1 = DEVGOSTR(A, K, s);
+						long r2 = DEVGOSTR2(A, K, s);
+						if (r1 != r2) {
+							System.out.println("fail");
+							DEVGOSTR(A, K, s);
+							DEVGOSTR2(A, K, s);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	public static void perf_DEVGOSTR_2() {
+		for (int len = 19; len <= 19; len++) {
+			long t1 = System.currentTimeMillis();
+			for (int j = 0; j < 500; j++) {
+				for (int A = 3; A <= 3; A++) {
+					char[] s = new char[len];
+					for (int i = 0; i < s.length; i++) {
+						s[i] = 'a';
+					}
+					long nice = DEVGOSTR2(A, 1000, s);
+
+					//				System.out.println("A: " + A + " len x: " + len + "\t " + nice);
+				}
+			}	
+			System.out.println(len + "\t" + (System.currentTimeMillis() - t1));
+		}
+	}
+
+	public static void perf_DEVGOSTR() {
+		long t1 = System.currentTimeMillis();
+		//		for (int j = 0; j < 100; j++) {
+		for (int A = 1; A <= 3; A++) {
+			for (int len = 1; len <= 50; len++) {
+				char[] s = new char[len];
+				for (int i = 0; i < s.length; i++) {
+					s[i] = 'a';
+				}
+				long nice = DEVGOSTR2(A, 1000, s);
+
+//				System.out.println("A: " + A + " len x: " + len + "\t " + nice);
+			}
+			//				System.out.println();
+		}	
+		//		}
+		System.out.println(System.currentTimeMillis() - t1);
+	}
+
+	public static final int[][][] devgo_cache = new int[27][][];
+	public static final long[][] devgo_comp = new long[27][];
+	
+	static {
+		devgo_comp[24] = new long[]{11096161415L,11096161424L,11100760496L,11190042752L,11444209864L,11473851760L,11487650272L,11563134016L,11564218685L,11564218688L,11564219413L,11564219416L,11576932528L,12309316544L,12341494342L,12341494360L,12350712080L,12682407808L,12696206320L,12723803344L,12725948824L,12725955620L,12725955647L,12726480098L,12726480152L,12726480826L,12726480827L,12726480832L,12726480880L,12737601856L,13339308080L,13422099152L,13712399344L,13726197856L,13770725104L,13795190416L,13808988928L,14189659810L,14189836714L,14189836948L,14189836949L,14189836957L,14189836976L,14190368390L,14275089824L,14289407365L,14289407368L,14289407392L,14289409555L,14289412496L,14314023322L,14314023970L,14314200460L,14314200466L,14314200469L,14314204678L,14314204840L,14318799973L,14458051158L,14458581870L,14458581872L,14458582572L,14458582599L,14582768480L,14582945816L,14791960547L,14828606146L,14828606151L,14828606152L,14831141694L,14831673108L,14831673135L,14831673136L,14845471647L,14845471648L,14955859744L,14969658256L,16369949188L,16369949197L,16369949200L,16600212760L,16627757296L,16697129456L,16779920528L,16821316064L,16827627752L,16904107136L,17067035638L,17070220720L,17084019232L,17153011792L,17153129080L,17166810304L,17194407328L,17208205840L,17277198400L,17290996912L,17671844698L,17672048141L,17672048144L,17672052515L,17676444202L,17676444203L,17676444211L,17676444230L,17676621349L,17676621350L,17676621377L,17676975644L,17677152791L,17800807714L,17800807723L,17800807957L,17800984861L,17905154790L,17905685502L,17905685504L,17905686204L,17905686231L,18154058720L,18278245326L,18278744948L,18278776740L,18278776767L,18278776768L,18278778400L,18279861440L,18292575279L,18292575280L,18419770960L,18527149984L,18540948496L,18667282040L,18694472122L,18694472128L,18708771584L,18710328761L,18963246328L,19024959248L,19024959296L,19066354832L,19273332512L,19289218832L,19314728048L,19315063144L,19315063152L,19398050560L,19398056400L,19402283090L,19411849028L,19411849072L,19439446096L,19439451936L,19453244608L,19646423776L,19660222288L,19687819312L,19701617824L,19829543504L,19829543507L,19856733589L,20261391255L,20266174224L,20266185888L,20449355264L,20495748717L,20495748718L,20495768400L,21546784448L,21559621970L,21559621976L,21559622698L,21559622704L,21560582960L,21636066704L,21649865216L,21678089936L,21933674224L,22013757670L,22013757688L,22022956480L,22755340496L,22769139008L,22796736032L,22810534544L,22834999856L,23142230272L,23183625808L,23785332032L,23799130544L,23868123104L,23881921616L,23883082808L,23883094966L,23883095020L,23884144876L,23884144877L,23884144880L,23884144904L,23884145605L,23884145632L,24172221808L,24250373759L,24250373768L,24255012880L,24619721522L,24619898426L,24619898660L,24619898669L,24744085033L,24744085034L,24744085087L,24744262172L,24744262180L,24744262181L,24744262234L,24745147915L,24745325062L,24748861685L,24749760568L,24749760571L,24749762758L,24904605822L,24904605824L,24917444080L,24918400462L,24918404334L,24918404336L,24918404361L,24918408320L,24918935775L,25028792432L,25042590944L,25159522784L,25291494870L,25291494897L,25291495599L,25291495600L,25292026311L,25415682208L,25622124626L,25692285109L,25692285112L,26403448950L,26413014888L,26413020720L,26527772610L,26527772612L,26527811976L,26564129824L,26784386093L,26784386096L,26811499855L,26813109592L,26854546576L,26944244456L,27138370429L,27143153398L,27143153408L,27156951920L,27156963600L,27225944480L,27239742992L,27239754672L,27267340016L,27281138528L,27350131088L,27363929600L,27530043160L,27530043184L,27612834256L,27654229792L,27724266256L,27737020864L,27737158160L,27737158176L,28101906410L,28106505914L,28106505917L,28106505923L,28106508023L,28106508104L,28106682413L,28106683061L,28132401320L,28132401344L,28132401347L,28132405718L,28132413712L,28146736384L,28230869426L,28230869434L,28230869435L,28230869488L,28230869669L,28231046573L,28231932316L,28351709454L,28351709456L,28363973501L,28363973502L,28363973504L,28365507966L,28365507968L,28365507993L,28366039407L,28405184863L,28600082672L,28613881184L,28738598502L,28738598529L,28738599231L,28738599232L,28739129943L,28986972448L,28987326472L,29108909018L,29108909024L,29108909027L,29237813072L,29306910608L,29470983248L,29483188247L,29484781760L,29512378784L,29526177296L,29526234968L,29719356464L,29733154976L,29760752000L,29774550512L,29857873024L,29899268560L,30106246240L,30109480816L,30147641776L,32795113034L,32795113040L,32796348704L,32910918727L,32910918808L,32911140176L,32915391712L,33199942853L,33288482976L,33302281488L,33542531232L,33570128256L,33915622496L,33918876512L,33957018032L,34034665504L,34076061040L,34332629574L,34332629592L,34407756768L,34421555280L,34449152304L,34462950816L,34661805024L,34689402048L,34703200560L,34730797584L,36139422883L,36154170080L,36278356688L,36397703209L,36900352608L,36927949632L,36945000306L,36945177210L,36945177444L,36945177453L,37024482919L,37024483026L,37024483027L,37024483080L,37024483081L,37024539216L,37052136240L,37069363818L,37069540956L,37069540965L,37074140469L,37273443872L,37314839408L,37397630480L,37439026016L,38004607514L,38004607520L,38004725612L,38017926954L,38019626400L,38047223424L,38061021936L,38088618960L,38143813008L,38171410032L,38177846472L,38185208544L,38212805568L,39630503753L,39631034464L,39631034465L,39631035032L,39631035167L,39631035194L,39879407680L,40003594289L,40004125703L,40004125728L,40004125730L,40017924240L,40017924242L,40252498944L,40266297456L,40427185194L,40427185200L,40431784698L,40431784707L,40431961845L,40431961846L,40556148210L,40556148219L,40556148453L,40556325357L,40750308256L,40758531008L,40791703792L,40929531718L,40998681472L,41040077008L,41123399520L,41137198032L,41164795056L,41178593568L,41306198376L,41312175312L,41370061616L,41371772736L,41385571248L,41413168272L,41426966784L,42391127582L,42391127591L,42477221024L,42477221033L,42528114608L,42569510144L,42825269472L,42825269473L,42868222095L,42868222104L,42868222176L,42868228665L,42868237488L,42901205872L,42915004384L,42942601408L,42956399920L,43352368063L,43352368064L,43352368072L,43361415664L,43375214176L,43660295570L,43660296056L,43688783936L,43739788560L,43739788561L,43748305440L,44050164496L,44061875200L,44075673712L,44480689456L,44485287016L,44494487968L,44522084992L,44535883504L,44825005472L,44867579232L,44908974768L,49057735621L,49057735622L,49057735624L,49057735625L,49057737727L,49057737808L,49109847565L,49109847592L,49109847600L,49243757360L,49284116960L,49285152896L,49492130576L,49533526112L,49616848624L,49630647136L,49658243686L,49658244160L,49659838009L,49672042672L,49800638246L,49800638280L,49865221840L,49879020352L,49883271888L,49906617376L,49906617384L,49920415888L,50077058416L,50077058417L,50090856928L,50090856929L,50090856956L,50091388370L,50325431632L,50339230144L,50404424264L,50404426688L,50463947465L,50463947492L,50463948192L,50463948194L,50464478906L,50482883256L,50652799904L,50710788165L,50710788168L,50712321408L,50777517952L,50791316464L,51025891168L,51039689680L,51196332208L,51210130720L,51237727744L,51251526256L,51444705424L,51458503936L,51486100960L,51499899472L,51583221984L,51624617520L,51685923152L,51695471600L,51831595200L,51872990736L,51873049632L,52974138560L,52987937072L,53015534096L,53016144423L,53016144432L,53016157545L,53029332608L,53361028336L,53402423872L,53688396608L,53715993632L,54134807888L,54148606400L,54462176160L,54521697664L,54807670400L,54807676752L,54835267424L,54838521440L,54849065936L,54876662960L,55259312880L,55581449952L,55622845488L,55993831424L,56083416384L,56125251872L,56672555208L,57046217984L,57073815008L,57170404592L,57198001616L,57819997536L,57867656496L,57944184144L,57945189432L,57945189433L,58003755943L,58165491776L,58174134080L,58183699046L,58183699054L,58183718736L,58183718737L,58193088800L,58206887312L,58234484336L,58289678384L,58317275408L,58331073920L,58358670944L,58939271328L,58980666864L,59063457936L,59104853472L,59487567632L,59487742022L,59570200768L,59636295472L,59689781312L,59703579824L,59731176848L,59744975360L,59938154528L,59951953040L,59979550064L,59993348576L,60076671088L,60118066624L,60325044304L,60366439272L,60366439840L,60850450640L,60864247856L,60864249152L,61098823856L,61112622368L,61171141368L,61171141371L,61185490275L,61185490278L,61237340416L,61348065792L,61485713632L,61490540344L,61490540425L,64134420560L,64175816096L,64253463568L,64291978336L,64294859104L,64626554832L,64640353344L,64667950368L,64681748880L,64880603088L,64908200112L,64921998624L,64949595648L,65034269799L,65034269808L,65295089888L,65299341424L,65299936040L,65299936121L,65414132896L,65415913093L,65415913096L,65787224160L,65801022672L,65996442442L,66041272416L,66068869440L,67492241936L,67525257040L,67533637472L,67616428544L,67657824080L,67739729876L,68238424464L,68266021488L,68279820000L,68307417024L,68362611072L,68390208096L,68404006608L,68405542528L,68431603632L,68504999568L,68521054200L,68651849839L,68652911263L,68652911264L,68652912640L,68652912667L,68652912721L,68777097872L,69100410978L,69100587882L,69100588116L,69100588125L,69224774490L,69224774492L,69224951628L,69224951637L,69229551141L,69229551144L,69398030911L,69399093739L,69399093792L,69399093793L,69426690816L,69426690817L,69523280400L,69550877424L,70969106320L,71010501856L,71217479536L,71258875072L,71312337037L,71312337040L,71312396086L,71342197584L,71355996096L,71383593120L,71385134877L,71397391632L,71590570800L,71604369312L,71631966336L,71645764848L,71649248424L,72129775648L,72144364679L,72273504842L,72378148864L,72502866912L,72516665424L,72582595866L,72587195370L,72587195379L,72587372517L,72711558882L,72711558891L,72711559125L,72711736029L,72751121225L,72751121277L,72751121279L,72751121304L,72751121306L,72751240128L,72765038640L,73776904208L,73859695280L,74149995472L,74163793984L,74232786544L,74246585056L,74249281704L,74249281713L,74249288274L,74699487520L,74713286032L,74740883056L,74740895736L,74751800800L,74754681568L,75086377296L,75127772832L,75478568352L,75860156848L,75873955360L,76098242864L,76247046624L,76471334128L,76485132640L,76866373880L,76914537776L,77076143188L,77076323896L,77134725584L,77217516656L,77258912192L,77341703264L,77341704072L,77507816848L,77521615360L,77590607920L,77604406432L,77632003456L,77645801968L,77714794528L,77728593040L,79456064240L,79580250848L,79589746808L,79589746970L,79692389472L,79829154856L,79829155504L,79842954016L,79953342112L,79967140624L,79984105149L,79984105152L,80012802963L,80012802966L,80353158288L,80438797336L,80557001824L,80667804720L,81415130272L,81428928784L,81456525808L,81470324320L,81474930160L,81479713364L,81479713372L,81479752728L,81479752730L,81663503488L,81677302000L,81704899024L,81718697536L,81802020048L,81843415584L,82050393264L,82091788800L,82575799600L,82589598112L,82824172816L,82837971328L,82962689376L,83076531209L,83172798768L,83211062592L,83211474480L,83211474482L,84222928160L,84236726672L,84305719232L,84319517744L,84397203960L,84397204032L,84397204041L,84397217154L,84397241136L,84440209152L,84440209154L,84609817936L,84692609008L,84732830167L,84732830185L,84775876888L,84775876906L,85026468464L,85054065488L,85067864000L,85090857632L,85095461024L,85756671232L,85800248016L,85841643552L,86181797192L,86181797200L,86181797201L,86187137792L,86214734816L,86531512208L,86544266816L,86558065328L,86917148605L,86917148848L,86931156592L,86956638168L,86956638170L,86960917344L,87326727056L,87326727072L,87326727083L,87506311400L,87506311481L,87506313583L,87506313584L,87506313586L,87506313587L,87580749536L,87594548048L,87663540608L,87677338892L,87677339120L,87680527538L,87704936144L,87713439216L,87718734656L,87787727216L,87801525728L,87801525744L,87920731824L,87920731834L,87967639312L,88049891680L,88050430384L,88091825920L,88174616992L,88384289840L,88411886864L,88425685376L,88453282400L,88508476448L,88536073472L,88549871984L,88577469008L,89158069392L,89199464928L,89282196888L,89282256000L,89323651536L,89380041328L,89384815552L,89544959167L,89544959168L,89572556191L,89572556192L,89572556245L,89573619073L,89669145776L,89696742800L,89902088192L,89915886704L,90026274800L,90040073312L,90288973840L,90288977968L,90318737263L,90318737317L,90318738720L,90318738721L,90319800145L,90328442448L,90413164576L,90442925328L,90444458352L,90444458355L,};
+		devgo_comp[25] = new long[]{37024483026L,37024483027L,37024483080L,37024483081L,40017924242L,42569510144L,42825269473L,42942601408L,42956399920L,49109847565L,49109847592L,49109847600L,50091388370L,50463948194L,53015534096L,53029332608L,53402423872L,56083416384L,57945189432L,57945189433L,59570200768L,69426690817L,72751121277L,72751121279L,72751121304L,72751121306L,73859695280L,74232786544L,74246585056L,76866373880L,80353158288L,83211474480L,83211474482L,84305719232L,84319517744L,84440209154L,84692609008L,87326727056L,87326727072L,87326727083L,89573619073L,90318738721L,98385339102L,98385339104L,98385339120L,99599828559L,99599828560L,101746867490L,102997888722L,102997888776L,108418268651L,110835531632L,111208622896L,111222421408L,111820331618L,112192891442L,121281555584L,121295354096L,121668445360L,123918595128L,127708530433L,130057104191L,130980888168L,134602737697L,147329542800L,147852350880L,147855458689L,148600578337L,154749665953L,155494785601L,164515564320L,168250249152L,184044197378L,192884577313L,195102809397L,195102809424L,196247739279L,196247739280L,196247739288L,197989327326L,197989327328L,205563162600L,207301763648L,207674854912L,207688653424L,213031505569L,213776625217L,216433094038L,217747787600L,217761586112L,218134677376L,224255402400L,239077168417L,241059474864L,254077827026L,257524930658L,258545391604L,260751446544L,261980181216L,264149675040L,264151291154L,264523850978L,267598394786L,267970954610L,};
+		devgo_comp[26] = new long[]{127708530433L,147329542800L,168250249152L,241059474864L,254077827026L,261980181216L,295156017308L,325254805953L,325254805954L,332506594898L,552132592134L,588743217838L,649299282114L,649299282116L,654404032129L,717231505251L,};
+	}
+
+	private static void initDevgo_cache(int len) {
+		int k = 0;
+		int[][] cache = new int[95523][];
+
+		if (devgo_comp[len] != null) {
+			for (int m = 0; m < devgo_comp[len].length; m++) {
+				int[] x = new int[len];
+				long b10 = devgo_comp[len][m];
+
+				for (int j = 0; j < x.length && b10 > 0; j++) {
+					x[x.length - j -1] = (int) (b10 % 3);
+					b10 /= 3;
+				}
+
+				cache[k++] = Arrays.copyOf(x, x.length);
+
+				int[] temp = new int[x.length];
+				for (int j = 0; j < x.length; j++) {
+					temp[j] = (x[j] + 1) % 3;
+				}
+				cache[k++] = temp;
+
+				temp = new int[x.length];
+				for (int j = 0; j < x.length; j++) {
+					temp[j] = (x[j] + 2) % 3;
+				}
+				cache[k++] = temp;
+			}
+		} else {
+			final int A = 3;
+
+			final char[] s = new char[len];
+			int invalid_prog_idx = -1;
+			int invalid_prog_value = -1;
+
+			int[] x = new int[s.length];
+			final int xlen = s.length;
+			do {
+				if (x[0] == 1) {
+					break;
+				}
+				if (invalid_prog_idx < 0 || x[invalid_prog_idx] != invalid_prog_value) { 
+					boolean valid = true;
+
+					for (int m = 1; m <= xlen/2; m++) {
+						final int m2 = m*2;
+						for (int start = 0; start < xlen - m2; start++) {
+							if (x[start] == x[start + m] && x[start] == x[start + m2]) {
+								valid = false;
+								invalid_prog_idx = start + m2;
+								invalid_prog_value = x[start];
+
+								start = xlen;
+								m = xlen;
+							}
+						}
+					}
+
+					if (valid) {
+						invalid_prog_value = -1;
+						cache[k++] = Arrays.copyOf(x, xlen);
+
+						int[] temp = new int[xlen];
+						for (int i = 0; i < xlen; i++) {
+							temp[i] = (x[i] + 1) % 3;
+						}
+						cache[k++] = temp;
+
+						temp = new int[xlen];
+						for (int i = 0; i < xlen; i++) {
+							temp[i] = (x[i] + 2) % 3;
+						}
+						cache[k++] = temp;
+
+					}
+				}
+				if (invalid_prog_idx >= 0 && x[invalid_prog_idx] == invalid_prog_value) {
+					for (int i = invalid_prog_idx+1; i < xlen; i++) {
+						x[i] = A-1;
+					}
+				}
+			} while (next_number(x, A));
+
+			long[] comp = new long[k];
+			for (int i = 0; i < comp.length; i++) {
+				long b10 = 0;
+				for (int j = 0; j < cache[i].length; j++) {
+					b10 = b10 * 3 + cache[i][j];
+				}
+				comp[i] = b10;
+
+				int[] decomp = new int[cache[i].length];
+				long pow = 3;
+				for (int j = 0; j < cache[i].length && b10 > 0; j++) {
+					decomp[cache[i].length - j -1] = (int) (b10 % pow);
+					b10 /= 3;
+				}
+				if (!Arrays.equals(decomp, cache[i])) {
+					System.out.println("fail");
+				}
+			}
+//			System.out.print("devgo_comp["+len+"] = new long[]{");
+//			for (int i = 0; i < comp.length; i++) {
+//				System.out.print(comp[i] + "L,");
+//			}
+//			System.out.println("};");
+//			System.out.println(serializeCompressEncodeB64(comp));
+			
+		}
+
+		devgo_cache[len] = Arrays.copyOf(cache, k);
+	}
+	
+//	public static String serializeCompressEncodeB64(Object obj) throws IOException {
+//		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//		GZIPOutputStream gzipOut = new GZIPOutputStream(baos);
+//		ObjectOutputStream objectOut = new ObjectOutputStream(gzipOut);
+//		objectOut.writeObject(obj);
+//		objectOut.close();
+//		return Base64.getEncoder().encodeToString(baos.toByteArray());
+//	}
+//	
+//	public static long[] decodeB64DecompressingDeserialize(String str) {
+//		ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(str));
+//		GZIPInputStream gzipIn = new GZIPInputStream(bais);
+//		ObjectInputStream objectIn = new ObjectInputStream(gzipIn);
+//		long[] obj = (long[]) objectIn.readObject();
+//		objectIn.close();
+//		return obj;
+//	}
+
+	public static long DEVGOSTR2(int A, int K, char[] s) {
+		long ret = 0;
+		int invalid_prog_idx = -1;
+		int invalid_prog_value = -1;
+		boolean debug = false;
+
+		if (A == 1) {
+			if (s.length >= 3) {
+				ret = 0;
+			} else {
+				ret = 1;
+			}
+		} else if (s.length >= 27) {
+			ret = 0;
+		} else if (A == 2 && s.length >= 9) {
+			ret = 0;
+		} else if (A == 2) {
+			int move_idx = s.length - 1;
+
+			int[] si = new int[s.length];
+			for (int i = 0; i < si.length; i++) {
+				si[i] = s[i] - 'a';
+			}
+			int[] x = new int[s.length];
+
+			int nice = 0;
+			do {
+				move_idx = s.length - 1;
+				if (invalid_prog_idx < 0 || x[invalid_prog_idx] != invalid_prog_value) { 
+					boolean valid = true;
+
+					for (int m = 1; m <= x.length/2; m++) {
+						for (int start = 0; start < x.length - m*2; start++) {
+							if (x[start] == x[start + m] && x[start] == x[start + m*2]) {
+								valid = false;
+								invalid_prog_idx = start + m*2;
+								invalid_prog_value = x[start];
+
+								start = x.length;
+								m = x.length;
+							}
+						}
+					}
+
+					if (valid) {
+						invalid_prog_value = -1;
+						if (debug) {
+							char[] ci = new char[s.length];
+							for (int i = 0; i < ci.length; i++) {
+								ci[i] = (char) (x[i] + 'a');
+							}
+							System.out.println(new String(ci));
+						}
+
+						int hd = 0;
+						for (int i = 0; i < x.length && hd <= K; i++) {
+							if (x[i] != si[i]) {
+								hd++;
+							}
+						}
+						if (hd <= K) {
+							nice++;
+						}
+					} else {
+						if (debug) {
+							char[] ci = new char[s.length];
+							for (int i = 0; i < ci.length; i++) {
+								ci[i] = (char) (x[i] + 'a');
+							}
+							System.out.println(new String(ci) + "\t invalid");
+						}
+					}
+				} else {
+					if (debug) {
+						char[] ci = new char[s.length];
+						for (int i = 0; i < ci.length; i++) {
+							ci[i] = (char) (x[i] + 'a');
+						}
+						System.out.println(new String(ci) + "\t invalid");
+					}
+				}
+				if (invalid_prog_idx >= 0 && x[invalid_prog_idx] == invalid_prog_value) {
+					for (int i = invalid_prog_idx+1; i < x.length; i++) {
+						x[i] = A-1;
+					}
+					//					move_idx = invalid_prog_idx;
+				}
+			} while (next_number(x, A, move_idx));
+
+			ret = nice;
+		} else {
+			if (devgo_cache[s.length] == null) {
+				initDevgo_cache(s.length);
+			}
+
+			final int[][] cache = devgo_cache[s.length];
+			final int s_len = s.length;
+
+			int[] si = new int[s.length];
+			for (int i = 0; i < si.length; i++) {
+				si[i] = s[i] - 'a';
+			}
+			int nice = 0;
+
+			for (int j = 0; j < cache.length; j++) {
+				int hd = 0;
+				for (int i = 0; i < s_len; i++) {
+					if (cache[j][i] != si[i]) {
+						hd++;
+					}
+				}
+				if (hd <= K) {
+					nice++;
+				}
+			}
+			ret = nice;
+		}
+		return ret;
+	}
+
+	public static long DEVGOSTR(int A, int K, char[] s) {
+		long ret = 0;
+		int invalid_prog_idx = -1;
+		int invalid_prog_value = -1;
+		boolean debug = false;
+
+		if (A == 1) {
+			if (s.length >= 3) {
+				ret = 0;
+			} else {
+				ret = 1;
+			}
+		} else if (s.length >= 27) {
+			ret = 0;
+		} else {
+			int move_idx = s.length - 1;
+
+			int[] si = new int[s.length];
+			for (int i = 0; i < si.length; i++) {
+				si[i] = s[i] - 'a';
+			}
+			int[] x = new int[s.length];
+
+			int nice = 0;
+			do {
+				move_idx = s.length - 1;
+				if (invalid_prog_idx < 0 || x[invalid_prog_idx] != invalid_prog_value) { 
+					boolean valid = true;
+
+					for (int m = 1; m <= x.length/2; m++) {
+						for (int start = 0; start < x.length - m*2; start++) {
+							if (x[start] == x[start + m] && x[start] == x[start + m*2]) {
+								valid = false;
+								invalid_prog_idx = start + m*2;
+								invalid_prog_value = x[start];
+
+								start = x.length;
+								m = x.length;
+							}
+						}
+					}
+
+					if (valid) {
+						invalid_prog_value = -1;
+						if (debug) {
+							char[] ci = new char[s.length];
+							for (int i = 0; i < ci.length; i++) {
+								ci[i] = (char) (x[i] + 'a');
+							}
+							System.out.println(new String(ci));
+						}
+
+						int hd = 0;
+						for (int i = 0; i < x.length && hd <= K; i++) {
+							if (x[i] != si[i]) {
+								hd++;
+							}
+						}
+						if (hd <= K) {
+							nice++;
+						}
+					} else {
+						if (debug) {
+							char[] ci = new char[s.length];
+							for (int i = 0; i < ci.length; i++) {
+								ci[i] = (char) (x[i] + 'a');
+							}
+							System.out.println(new String(ci) + "\t invalid");
+						}
+					}
+				} else {
+					if (debug) {
+						char[] ci = new char[s.length];
+						for (int i = 0; i < ci.length; i++) {
+							ci[i] = (char) (x[i] + 'a');
+						}
+						System.out.println(new String(ci) + "\t invalid");
+					}
+				}
+				if (invalid_prog_idx >= 0 && x[invalid_prog_idx] == invalid_prog_value) {
+					for (int i = invalid_prog_idx+1; i < x.length; i++) {
+						x[i] = A-1;
+					}
+					//					move_idx = invalid_prog_idx;
+				}
+			} while (next_number(x, A, move_idx));
+
+			ret = nice;
+		}
+		return ret;
+	}
+
+	public static void DEVGOSTR(InputStream in) {
+		MyScanner scan = new MyScanner(in);
+		int tests = scan.nextInt();
+		for (int t = 0; t < tests; t++) {
+			int A = scan.nextInt();
+			int K = scan.nextInt();
+			char[] s = scan.next().toCharArray();
+			System.out.println(DEVGOSTR2(A, K, s));
+		}
+	}
+
+	public static boolean next_number(int list[], int base) {
+		return next_number(list, base, list.length - 1);
+	}
+
+	public static boolean next_number(int list[], int base, int i) {
+		list[i]++;
+
+		if (list[i] == base) {
+			boolean carry = true;
+			while (carry) {
+				if (i == 0) {
+					return false;
+				}
+
+				carry = false;
+				list[i] = 0;
+				list[--i]++;				
+
+				if (list[i] == base) {
+					carry = true;
+				}
+			}
+		}
+
+		return true;
+	}
+
+	public static class MyScanner {
+		BufferedReader br;
+		StringTokenizer st;
+
+		public MyScanner(InputStream in) {
+			this.br = new BufferedReader(new InputStreamReader(in));
+		}
+
+		public void close() {
+			try {
+				this.br.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		String next() {
+			while (st == null || !st.hasMoreElements()) {
+				try {
+					String s = br.readLine();
+					if (s != null) {
+						st = new StringTokenizer(s);
+					} else {
+						return null;
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			return st.nextToken();
+		}
+
+		long[] nextLongArray(int n) {
+			long[] a = new long[n];
+			for (int i = 0; i < a.length; i++) {
+				a[i] = this.nextLong();
+			}
+			return a;
+		}
+
+		int[] nextIntArray(int n) {
+			int[] a = new int[n];
+			for (int i = 0; i < a.length; i++) {
+				a[i] = this.nextInt();
+			}
+			return a;
+		}
+
+		int nextInt() {
+			return Integer.parseInt(next());
+		}
+
+		long nextLong() {
+			return Long.parseLong(next());
+		}
+
+		double nextDouble() {
+			return Double.parseDouble(next());
+		}
+
+		String nextLine(){
+			String str = "";
+			try {
+				str = br.readLine();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return str;
+		}
+	}
+}
