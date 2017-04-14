@@ -1,5 +1,7 @@
 package dataStructures;
 
+import static org.junit.Assert.*;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,19 +9,21 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import javafx.scene.shape.Arc;
+import org.junit.Test;
+
+public class SegmentTreePersistentTest {
 
 /**
  * Based on anudeeps's segment tree: https://github.com/anudeep2011/programming/blob/master/MKTHNUM.cpp
  */
-
-public class SegmentTreePersistentHolder {
 
 	static boolean debug = false;
 	
@@ -176,6 +180,7 @@ public class SegmentTreePersistentHolder {
 			}
 
 			int mid = (left+right)>>1;
+			@SuppressWarnings("unused")
 			int newCount = a.left.count - b.left.count + (!repCount.containsKey(a.left.value) ? 1 : repCount.get(a.left.value)) - 
 					(!repCount.containsKey(b.left.value) ? 1 : repCount.get(b.left.value));
 			int oldCount = a.left.count - b.left.count;
@@ -188,6 +193,46 @@ public class SegmentTreePersistentHolder {
 			return query_tree(a.right, b.right, mid, right, k-count);
 		}
 	}
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	/****************************************************************************************************
+	 * TESTS
+	 ***************************************************************************************************/
+	
 	
 	public static InputReader in;
 	public static PrintWriter out;
@@ -203,12 +248,10 @@ public class SegmentTreePersistentHolder {
 			int failCount = 0;
 			for (int id = 0; id < data2.length; id++) {
 				int[] data = data2[id];
-				int count = 0;
 				SegmentTree st = new SegmentTree(data, true);
 				for (int a = 0; a < data.length; a++) {
 					for (int b = a; b < data.length; b++) {
 						for (int k = 0; k <= b-a; k++) {
-							count++;
 							int extra2 = 0;
 							if (id == 0) {
 								if (b >= 7) {
@@ -362,4 +405,162 @@ public class SegmentTreePersistentHolder {
 			return a;
 		}
     }
+	
+	/****************************************************************************************************
+	 * TESTS
+	 ***************************************************************************************************/
+	
+	public static void shuffle(int[] a, Random rand) {
+        for (int i = a.length; i > 1; i--) {
+        	int r = rand.nextInt(i);
+        	int temp = a[i-1];
+        	a[i-1] = a[r];
+        	a[r] = temp;
+        }
+	}
+
+	@Test
+	public void testKthNumber() {
+		int maxLength = 100;
+		int numTests = 1000;
+		int maxValue = 1000000000;
+		Random rand = new Random(0);
+		for (int j = 1; j <= numTests; j++) {
+			int len = rand.nextInt(maxLength)+1;
+			int[] data = new int[len];
+			HashSet<Integer> chosen = new HashSet<>();
+			
+			for (int i = 0; i < data.length; i++) {
+				int r = rand.nextInt(maxValue) - maxValue/2;
+				while (chosen.contains(r)) {
+					r = rand.nextInt(maxValue) - maxValue/2;
+				}
+				data[i] = r;
+			}
+			
+			SegmentTree st = new SegmentTree(data, true);
+			
+			for (int i = 0; i < numTests; i++) {
+				int low = rand.nextInt(len);
+				int high = rand.nextInt(len-low) + low;
+				
+				int[] sorted = new int[high - low + 1];
+				for (int k = 0; k < sorted.length; k++) {
+					sorted[k] = data[low + k];
+				}
+				Arrays.sort(sorted);
+				
+				for (int k = 0; k < sorted.length; k++) {
+					int expected = sorted[k];
+					
+					int actual = st.query(low, high, k+1);
+					assertEquals(expected, actual);
+				}
+			}
+		}
+	}
+	
+	@Test
+	public void testQuerySpeed1() {
+		// 10^5 size, 10^5 queries
+		int len = 100000;
+		int numTests = 1;
+		Random rand = new Random(0);
+		int sum = 0;
+		for (int j = 1; j <= numTests; j++) {
+			int[] data = new int[len];
+			
+			for (int i = 0; i < data.length; i++) {
+				data[i] = i;
+			}
+			shuffle(data, rand);
+			
+			SegmentTree st = new SegmentTree(data, true);
+			
+			for (int i = 0; i < len; i++) {
+				int low = rand.nextInt(len);
+				int high = rand.nextInt(len-low) + low;
+				
+				int actual = st.query(low, high, 0);
+				sum += actual;
+			}
+		}
+		assertTrue(sum >= 0);
+	}
+	
+	@Test
+	public void testQuerySpeed2() {
+		// 10 size, 10 queries, 10^5 tests
+		int len = 10;
+		int numTests = 10000;
+		Random rand = new Random(0);
+		int sum = 0;
+		for (int j = 1; j <= numTests; j++) {
+			int[] data = new int[len];
+			
+			for (int i = 0; i < data.length; i++) {
+				data[i] = i;
+			}
+			shuffle(data, rand);
+			
+			SegmentTree st = new SegmentTree(data, true);
+			
+			for (int i = 0; i < len; i++) {
+				int low = rand.nextInt(len);
+				int high = rand.nextInt(len-low) + low;
+				
+				int actual = st.query(low, high, 0);
+				sum += actual;
+			}
+		}
+		assertTrue(sum >= 0);
+	}
+
+	//@Test
+	public void testKthNumberWithDuplicates() {
+		// Not working... 
+		int maxLength = 100;
+		int numTests = 1000;
+		int maxValue = maxLength;
+		Random rand = new Random(0);
+		for (int j = 1; j <= numTests; j++) {
+			int len = rand.nextInt(maxLength)+1;
+			int[] data = new int[len];
+			
+			for (int i = 0; i < data.length; i++) {
+				int r = rand.nextInt(maxValue) - maxValue/2;
+				data[i] = r;
+			}
+			Arrays.sort(data);
+			
+			SegmentTree st = new SegmentTree(data, true);
+			
+			for (int i = 0; i < numTests; i++) {
+				int low = rand.nextInt(len);
+				int high = rand.nextInt(len-low) + low;
+				
+				int[] sorted = new int[high - low + 1];
+				for (int k = 0; k < sorted.length; k++) {
+					sorted[k] = data[low + k];
+				}
+				Arrays.sort(sorted);
+				int[] rank = new int[sorted.length];
+				int count = 0;
+				for (int k = 1; k < rank.length; k++) {
+					if (sorted[k] != sorted[k-1]) {
+						count++;
+					}
+					rank[k] = count;
+				}
+				
+				for (int k = 0; k < sorted.length; k++) {
+					int expected = rank[k];
+					
+					int actual = st.query(low, high, k+1);
+					assertEquals(expected, actual);
+				}
+			}
+		}
+	}
+	
 }
