@@ -147,9 +147,17 @@ public class SegmentTreePersistentHolderTest {
 					sorted[k] = data[low + k];
 				}
 				Arrays.sort(sorted);
+				int[] rank = new int[sorted.length];
+				int count = 0;
+				for (int k = 1; k < rank.length; k++) {
+					if (sorted[k] != sorted[k-1]) {
+						count++;
+					}
+					rank[k] = count;
+				}
 				
 				for (int k = 0; k < sorted.length; k++) {
-					int expected = sorted[k];
+					int expected = rank[k];
 					
 					int actual = st.query(low, high, k+1);
 					assertEquals(expected, actual);

@@ -6,28 +6,47 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
+import java.util.TreeSet;
+
+import javafx.scene.shape.Arc;
 
 /**
  * Based on anudeeps's segment tree: https://github.com/anudeep2011/programming/blob/master/MKTHNUM.cpp
  */
 
 public class SegmentTreePersistentHolder {
+
+	static boolean debug = false;
+	
 	public static class Node {
 		public int count;
 		public int repeatCount;
 		public Node left, right;
 		public char id;
 		public static char counter = 'A';
+		public int value;
 
-		public Node(int count, Node left, Node right) {
+		public Node(int count, Node left, Node right, Node parent, int value) {
+			this.value = value;
+			init(count, left, right, parent);
+		}
+
+		public Node(int count, Node left, Node right, Node parent) {
+			init(count, left, right, parent);
+		}
+		
+		public void init(int count, Node left, Node right, Node parent) {
 			this.count = count;
 			this.repeatCount = 1;
 			this.left = left;
 			this.right = right;
 			this.id = Node.counter++;
+			if (debug) System.out.println("new Node ["+this+"], left: [" + left + "]\t right: [" + right + "]\t parent: " + parent);
 		}
 		
 		public String toString() {
@@ -35,15 +54,16 @@ public class SegmentTreePersistentHolder {
 		}
 
 		public Node insert(int left, int right, int w) {
+			if (debug) System.out.println("internal insert: left " + left + "\t right " + right + "\t w " + w);
 			if (left <= w && w < right) {
 				// With in the range, we need a new node
 				if (left+1 == right) {
-					return new Node(this.count+1, null, null);
+					return new Node(this.count+1, null, null, this, left);
 				}
 
 				int mid = (left+right)>>1;
 
-				return new Node(this.count+1, this.left.insert(left, mid, w), this.right.insert(mid, right, w));
+				return new Node(this.count+1, this.left.insert(left, mid, w), this.right.insert(mid, right, w), this);
 			}
 
 			// Out of range, we can use previous tree node.
@@ -61,6 +81,8 @@ public class SegmentTreePersistentHolder {
 		boolean do_compression;
 		int[] reverseMap;
 		
+		TreeMap<Integer, Integer> repCount;
+		
 		/**
 		 * Either the input must be already be compressed, or do_compression must be true 
 		 * to let the tree do it's own compression.
@@ -74,49 +96,69 @@ public class SegmentTreePersistentHolder {
 				// apply compression
 				
 				reverseMap = new int[N];
-				TreeMap<Integer, Integer> map = new TreeMap<>();
+				repCount = new TreeMap<>();
 				HashMap<Integer, Integer> ref = new HashMap<>();
 				for (int i = 0; i < a.length; i++) {
-					if (!map.containsKey(a[i])) {
-						map.put(a[i], 0);
+					if (!repCount.containsKey(a[i])) {
+						repCount.put(a[i], 0);
 					}
-					map.put(a[i], map.get(a[i]) + 1);
+					repCount.put(a[i], repCount.get(a[i]) + 1);
 				}
 				
 				int i = 0;
-				for (Integer k: map.keySet()) {
-					int repeats = map.get(k);
+				for (Integer k: repCount.keySet()) {
 					ref.put(k, i);
-					for (int j = 0; j < repeats; j++) {
-						reverseMap[i] = k;
-						i++;
-					}
+					reverseMap[i] = k;
+					i++;
 				}
 				
 				int[] compress = new int[a.length];
-				int[] repCount = new int[a.length];
+				int[] rCount = new int[a.length];
 				for (i = 0; i < a.length; i++) {
 					int ordinal = ref.get(a[i]);
-					compress[i] = ordinal + repCount[ordinal];
-					repCount[ordinal]++;
+					compress[i] = ordinal + rCount[ordinal];
+					rCount[ordinal]++;
 				}
+				
+				// above does compression but not to rank
+				
 				a = compress;
+				
+//				int i = 0;
+//				for (Integer k: map.keySet()) {
+//					ref.put(k, i);
+//					reverseMap[i] = k;
+//					i++;
+//				}
+//
+//				int[] compress = new int[i];
+//				for (Integer k: map.keySet()) {
+//					ref.put(k, i);
+//					reverseMap[i] = k;
+//					i++;
+//				}
+//				
+//				for (i = 0; i < a.length; i++) {
+//					compress[i] = ref.get(a[i]);
+//				}
+//				a = compress;
 			}
 			
 			root = new Node[N];
-			Null = new Node(0, null, null);
+			Null = new Node(0, null, null, null);
 			Null.left = Null;
 			Null.right = Null;
 			
 			for (int i = 0; i < inputLength; i++) {
 				// Build a tree for each prefix using segment tree of previous prefix
+				if (debug) System.out.println("\n\ninserting index " + i + ": " + a[i]);
 				root[i] = (i == 0 ? Null : root[i-1]).insert(0, inputLength, a[i]);
 			}
 		}
 		
 		public int query(int u, int v, int k) {
 			/**
-			 * What would be the k-th number in a[u, v] (inclusive), if this segment was sorted?
+			 * What would the k-th number (1-indexed) in a[u, v] (inclusive) be, if this segment was sorted?
 			 * Based on http://www.spoj.com/problems/MKTHNUM/
 			 */
 			int ret = this.query_tree(root[v], (u==0?Null:root[u-1]), 0, inputLength, k);
@@ -129,14 +171,20 @@ public class SegmentTreePersistentHolder {
 
 		private int query_tree(Node a, Node b, int left, int right, int k) {
 			if (left+1 == right) {
+				if (debug) System.out.println("Q left: " + left + " right: " + right + " a: " + a + " b: " + b + " k: " + k + " found leaf node!");
 				return left;
 			}
 
 			int mid = (left+right)>>1;
-			int count = a.left.count - b.left.count;
+			int newCount = a.left.count - b.left.count + (!repCount.containsKey(a.left.value) ? 1 : repCount.get(a.left.value)) - 
+					(!repCount.containsKey(b.left.value) ? 1 : repCount.get(b.left.value));
+			int oldCount = a.left.count - b.left.count;
+			int count = oldCount;
 			if (count >= k) {
+				if (debug) System.out.println("Q left: " + left + " right: " + right + " a: " + a + " b: " + b + " k: " + k + " count: " + count + " going <");
 				return query_tree(a.left, b.left, left, mid, k);
 			}
+			if (debug) System.out.println("Q left: " + left + " right: " + right + " a: " + a + " b: " + b + " k: " + k + " count: " + count + " going >");
 			return query_tree(a.right, b.right, mid, right, k-count);
 		}
 	}
@@ -145,6 +193,96 @@ public class SegmentTreePersistentHolder {
 	public static PrintWriter out;
 	
 	public static void main(String[] args) {
+		{
+			int[][] data2 = new int[][]{
+				{0, 4, 1, 5, 2, 6, 3, 0},
+				{0, 0, 4, 1, 5, 2, 6, 3},
+				{0, 4, 1, 5, 4, 2, 6, 3},
+				//{0, 0, 0, 4, 1, 5, 2, 6, 3},
+			};
+			int failCount = 0;
+			for (int id = 0; id < data2.length; id++) {
+				int[] data = data2[id];
+				int count = 0;
+				SegmentTree st = new SegmentTree(data, true);
+				for (int a = 0; a < data.length; a++) {
+					for (int b = a; b < data.length; b++) {
+						for (int k = 0; k <= b-a; k++) {
+							count++;
+							int extra2 = 0;
+							if (id == 0) {
+								if (b >= 7) {
+									if (a == 0 && k >= 1) {
+										extra2 = 1;
+									}
+									if (a > 0 && k < 1) {
+										extra2 = -1;
+									}
+								}
+							} else if (id == 1) {
+								if (b >= 1) {
+									if (a == 0 && k >= 1) {
+										extra2 = 1;
+									}
+									if (a == 1 && k < 1) {
+										extra2 = -1;
+									}
+								}
+							} else if (id == 2) {
+//								if (b >= 4) {
+//									if (a == 0 && k >= 5) {
+//										extra2 = 1;
+//									}
+//									if (a == 1 && k < 5) {
+//										extra2 = -1;
+//									}
+//								}
+							} else if (id == 3) {
+								if (b >= 1) {
+									if (a == 0) {
+										if (k == 1) {
+											extra2 = 1;
+										}
+										if (k >= 2) {
+											extra2 = 2;
+										}
+									}
+									if (a == 1 && k < 1) {
+										extra2 = -1;
+									}
+								}
+							}
+							int r1 = st.query(a, b, k+1+extra2);
+							
+							TreeSet<Integer> x = new TreeSet<>();
+							ArrayList<Integer> y = new ArrayList<>();
+							for (int i = a; i <= b; i++) {
+								x.add(data[i]);
+							}
+							for (Integer m: x) {
+								y.add(m);
+							}
+							if (k >= y.size()) {
+								break;
+							}
+							int r2 = y.get(k);
+							String extra = "";
+							if (r1 != r2) {
+								extra = "       <--------     FAIL";
+								failCount += 1; 
+								System.out.println(k + "\t in ["+a+", "+b+"] = " + r1 + ", should be " + r2 + "\t buffer " + extra2 + extra);
+								if (debug) System.out.println("\n");
+							}
+						}
+						System.out.println();
+					}
+				}
+			}
+			System.out.println("failCount: " + failCount);
+			if (System.currentTimeMillis() < 0) {
+				return;
+			}
+		}
         InputStream inputStream = System.in;
         OutputStream outputStream = System.out;
         in = new InputReader(inputStream);
