@@ -19,16 +19,28 @@ import dataStructures.Pair;
 
 public class VariousAlgorithms {
 
-	public static int clearBit(int x, int i) {
-		return (x & ~(1 << i));
+	public static int clearBit(int value, int idx) {
+		return (value & ~(1 << idx));
 	}
 	
-	public static int setBit(int x, int i) {
-		return (x | (1 << i));
+	public static int setBit(int value, int idx) {
+		return (value | (1 << idx));
 	}
 	
-	public static boolean getBit(int x, int i) {
-		return (x & (1 << i)) != 0;
+	public static boolean getBit(int value, int idx) {
+		return (value & (1 << idx)) != 0;
+	}
+
+	public static long clearBitL(long value, int idx) {
+		return (value & ~(1L << idx));
+	}
+	
+	public static long setBitL(long value, int idx) {
+		return (value | (1L << idx));
+	}
+	
+	public static boolean getBitL(long value, int idx) {
+		return (value & (1L << idx)) != 0;
 	}
 
 	/*******************************************************************************************************************************
