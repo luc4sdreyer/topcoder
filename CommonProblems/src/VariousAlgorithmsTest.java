@@ -295,4 +295,48 @@ public class VariousAlgorithmsTest {
 		assertEquals((int)count.get(5), size);
 		assertEquals((int)count.get(6), size);
 	}
+	
+	@Test
+	public void testZAlgorithm() {
+		int tests = 10000;
+		int maxLength = 200;
+		Random rand = new Random(0);
+		for (int i = 0; i < tests; i++) {
+			int length = rand.nextInt(maxLength) + 1;
+			char[] s = new char[length];
+			int alphabetSize = rand.nextInt(5) + 1;
+			for (int j = 0; j < s.length; j++) {
+				s[j] = (char) (rand.nextInt(alphabetSize) + 'a');
+			}
+			
+			int[] expected = new int[length];
+			for (int j = 1; j < expected.length; j++) {
+				int m = 0;
+				while (j+m < expected.length && s[j+m] == s[m]) {
+					 m++;
+				}
+				expected[j] = m;
+			}
+			int[] actual = VariousAlgorithms.zalgo(s);
+			assertArrayEquals(expected, actual);
+		}
+	}
+	
+	@Test
+	public void testNCR() {
+		int[] mod = {2, 31, 10007, 1000000007};
+		int maxN = 30;
+		for (int m = 0; m < mod.length; m++) {
+			for (int n = 6; n < maxN; n++) {
+				for (int k = 0; k < maxN; k++) {
+					if (n < mod[m] && k < mod[m] && (n-k) < mod[m]) {
+//							System.out.println("n: " + n + " k: " + k);
+						long expected = VariousAlgorithms.nCr(n, k) % mod[m];
+						long actual = VariousAlgorithms.nCrBig(n, k, mod[m]);
+						assertEquals(expected, actual);
+					}
+				}
+			}
+		}
+	}
 }

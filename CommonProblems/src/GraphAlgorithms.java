@@ -1,20 +1,18 @@
-import java.io.InputStream;
-import java.math.BigInteger;
+import static org.junit.Assert.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Random;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.Stack;
 import java.util.TreeSet;
+
+import org.junit.Test;
 
 public class GraphAlgorithms {
 
@@ -26,7 +24,6 @@ public class GraphAlgorithms {
 	 * the nodes in the graph. 
 	 */
 
-	public boolean[][] bitmap = new boolean[600][400];
 
 	private class NodeDfs {
 		public int x, y;
@@ -36,28 +33,34 @@ public class GraphAlgorithms {
 	}
 
 	int doFill(int x, int y) {
+		int[][] map = new int[600][400];
+		int[][] colours = new int[600][400];
+		int[] dy = {-1, 0, 1, 0};
+		int[] dx = {0, 1, 0, -1};
+		
 		int result = 0;
+		int colour = 0;
 
 		// Declare stack of nodes
-		Stack<NodeDfs> s = new Stack<NodeDfs>();
-		s.push(new NodeDfs(x, y));
+		Stack<NodeDfs> stack = new Stack<NodeDfs>();
+		stack.push(new NodeDfs(x, y));
+		colour++;
 
-		while (s.empty() == false) {
-			NodeDfs top = s.pop();
+		while (!stack.isEmpty()) {
+			NodeDfs top = stack.pop();
 
-			if (top.x < 0 || top.x > bitmap.length) continue;
-			if (top.y < 0 || top.y > bitmap[0].length) continue;
-			if (bitmap[top.x][top.y]) continue;
+			if (top.x < 0 || top.x >= map[0].length) continue;
+			if (top.y < 0 || top.y >= map.length) continue;
+			if (map[top.y][top.x] == 0) continue;
 
-			bitmap[top.x][top.y] = true; // Record visit
+			colours[top.x][top.y] = colour; // Record visit
 
 			result++;
 
 			// visit every adjacent node
-			s.push(new NodeDfs(top.x + 1, top.y));
-			s.push(new NodeDfs(top.x - 1, top.y));
-			s.push(new NodeDfs(top.x, top.y + 1));
-			s.push(new NodeDfs(top.x, top.y - 1));
+			for (int i = 0; i < dx.length; i++) {
+				stack.push(new NodeDfs(top.x + dx[i], top.y + dy[i]));
+			}
 		}
 		return result;
 	}
@@ -101,6 +104,8 @@ public class GraphAlgorithms {
 	}
 
 	public Node bfs(int x, int y) {
+		int[][] map = new int[600][400];
+		
 		// Declare stack of nodes
 		Queue<Node> q = new LinkedList<Node>();
 		q.add(new Node(x, y, (int)0));
@@ -112,7 +117,7 @@ public class GraphAlgorithms {
 		while (q.size() != 0) {
 			Node top = q.poll();
 
-			if (top.x < 0 || top.x >= bitmap[0].length || top.y < 0 || top.y >= bitmap.length || visited[top.y][top.x]) {
+			if (top.x < 0 || top.x >= map[0].length || top.y < 0 || top.y >= map.length || visited[top.y][top.x]) {
 				continue;
 			}
 			
@@ -139,15 +144,17 @@ public class GraphAlgorithms {
 	 * Uses a Priority Queue (Heap, get best node in O(log n))
 	 */
 	public Node dijkstra() {
+		int[][] map = new int[600][400];
 		PriorityQueue<Node> q = new PriorityQueue<Node>();
 
 		while (q.size() != 0) {
 			Node top = q.poll();
 
-			if (top.x < 0 || top.x >= bitmap.length) continue;
-			if (top.y < 0 || top.y >= bitmap[0].length) continue;
-			if(bitmap[top.x][top.y]) continue;
-			bitmap[top.x][top.y] = true;
+			if (top.x < 0 || top.x >= map.length) continue;
+			if (top.y < 0 || top.y >= map[0].length) continue;
+			if(map[top.x][top.y] == 0) continue;
+			
+			map[top.x][top.y] = 1;
 			if ((top.x == this.targetX) && (top.y ==this.targetY)) {
 				return top;
 			}
@@ -352,6 +359,7 @@ public class GraphAlgorithms {
 		int[] low;				// Used as part of the algorithm
 		int[] color;			// Tracks visited status
 		int N;					// Size of the graph
+		int numComponents;		// Number of components
 		ArrayList<ArrayList<Integer>> g;
 		
 		// A cut edge is an edge that when removed it creates more components than previously in the graph.
@@ -374,11 +382,10 @@ public class GraphAlgorithms {
 				cutEdge.put(i, new ArrayList<Integer>());
 			}
 			
-			int comp = 0;
 			for (int i = 0; i < N; i++) {
 				if (color[i] == 0) {
 					parent[i] = -1;
-					component[i] = comp++;
+					component[i] = numComponents++;
 					dfs(i, 0);
 				}
 			}
@@ -771,10 +778,16 @@ public class GraphAlgorithms {
 		}
 	}
 
-	public static void generateGraph(Random ra, int N, int M, int C, boolean allowMultiEdges) {
+	/**
+	 * Recurrent edges are allowed.
+	 */
+	public static void generateGraph(Random ra, int N, int M, int C, 
+			ArrayList<ArrayList<Integer>> g, ArrayList<HashSet<Integer>> gset, ArrayList<ArrayList<Integer>> cost) {
+		/**
 		ArrayList<ArrayList<Integer>> g = new ArrayList<>();
 		ArrayList<HashSet<Integer>> gset = new ArrayList<>();
 		ArrayList<ArrayList<Integer>> cost = new ArrayList<>();
+		*/
 		for (int i = 0; i < N; i++) {
 			g.add(new ArrayList<Integer>());
 			gset.add(new HashSet<Integer>());
@@ -791,13 +804,11 @@ public class GraphAlgorithms {
 			cost.get(oldNode).add(c);
 			cost.get(newNode).add(c);
 		}
-		if (!allowMultiEdges) {
-			M = (int) Math.min(M, (N-1L)*N/2);
-		}
-		for (int i = 0; i < M - (N-1); i++) {
+		M = (int) Math.min(M, (N-1L)*N/2);
+		for (int i = 0; i < M - (N - 2); i++) {
 			int a = ra.nextInt(N);
 			int b = ra.nextInt(N);
-			while ((allowMultiEdges && a == b) || (!allowMultiEdges && gset.get(a).contains(b))) {
+			while (a == b || gset.get(a).contains(b)) {
 				a = ra.nextInt(N);
 				b = ra.nextInt(N);
 			}
@@ -823,4 +834,152 @@ public class GraphAlgorithms {
 		return (x & (1 << i)) != 0;
 	}
 
+	@Test
+	public void CutVerticesTest() {
+		ArrayList<ArrayList<Integer>> graph = new ArrayList<>();
+		int N = 9;
+		for (int i = 0; i < N; i++) {
+			graph.add(new ArrayList<Integer>());
+		}
+		graph.get(0).add(1);	graph.get(1).add(0);
+		graph.get(1).add(2);	graph.get(2).add(1);
+		graph.get(0).add(2);	graph.get(2).add(0);
+		graph.get(3).add(4);	graph.get(4).add(3);
+		graph.get(4).add(5);	graph.get(5).add(4);
+		graph.get(5).add(6);	graph.get(6).add(5);
+		graph.get(5).add(7);	graph.get(7).add(5);
+		graph.get(5).add(8);	graph.get(8).add(5);
+		graph.get(6).add(7);	graph.get(7).add(6);
+		graph.get(6).add(8);	graph.get(8).add(6);
+		graph.get(7).add(8);	graph.get(8).add(7);
+		
+		// Visually:
+		// 0--2     4--5--6
+		// | /      |  |\/|
+		// |/       |  |/\|           
+		// 1        3  7--8
+		
+		GraphAlgorithms.CutVertices cv = new GraphAlgorithms.CutVertices(graph);
+		
+		// Three biconnected components in the graph
+		assertEquals(cv.biConnected[N-1], 2);
+	}
+
+	@Test
+	public void CutVerticesTest2() {
+		int numTests = 100;
+		int maxSize = 100;
+		Random rand = new Random(0);
+		for (int test = 0; test < numTests; test++) {
+			int N = rand.nextInt(maxSize) +2;
+			int M = rand.nextInt(N*(N-1)/2) +1;
+			
+			ArrayList<ArrayList<Integer>> g = new ArrayList<>();
+			ArrayList<HashSet<Integer>> gset = new ArrayList<>();
+			ArrayList<ArrayList<Integer>> cost = new ArrayList<>();
+			generateGraph(rand, N, M, 1, g, gset, cost);
+			
+			int numEdges = M;
+			int numNodes = N;
+			
+			CutVertices cv = new CutVertices(g);
+			while (numEdges > 0 && numNodes > 0) {
+				
+				if (rand.nextBoolean()) {
+					// delete random edge
+					int edgeCount = 0;
+					int delEdge = rand.nextInt(numEdges*2);
+					int nodeA = -1;
+					int nodeB = -1;
+					for (int j = 0; j < g.size() && nodeA == -1; j++) {
+						for (int i = 0; i < g.get(j).size() && nodeA == -1; i++) {
+							if (edgeCount == delEdge) {
+								nodeA = j;
+								nodeB = g.get(j).get(i);
+							}
+							edgeCount++;
+						}
+					}
+	
+					g.get(nodeA).remove(Integer.valueOf(nodeB));
+					g.get(nodeB).remove(Integer.valueOf(nodeA));
+	
+					CutVertices cv2 = new CutVertices(g);
+					if (cv.cutEdge.get(nodeA).contains(nodeB)) {
+						// components should increase
+						assertEquals(cv.numComponents+1, cv2.numComponents); 
+					} else {
+						// components should stay the same
+						assertEquals(cv.numComponents, cv2.numComponents);
+					}
+					numEdges--;
+					cv = cv2;
+					
+				} else {
+					// delete random node
+					int nodeA = rand.nextInt(numNodes);
+	
+					for (int j = 0; j < g.size(); j++) {
+						ArrayList<Integer> children = g.get(j);
+						for (int i = 0; i < children.size(); i++) {
+							while (children.contains(Integer.valueOf(nodeA))) {
+								children.remove(Integer.valueOf(nodeA));
+								g.get(nodeA).remove(Integer.valueOf(i));
+								numEdges--;
+							}
+						}
+					}
+					g.remove(nodeA);
+	
+					// rename nodes
+					for (int j = 0; j < g.size(); j++) {
+						ArrayList<Integer> children = g.get(j);
+						for (int i = 0; i < children.size(); i++) {
+							if (children.get(i) >= nodeA) {
+								children.set(i, children.get(i)-1);	
+							}
+						}
+					}
+					
+					CutVertices cv2 = new CutVertices(g);
+					if (cv.cutVertex[nodeA]) {
+						// components should increase
+						assertTrue(cv2.numComponents > cv.numComponents); 
+					} else {
+						// components should stay the same, unless the removed node is a singular component
+						int compSize = 0;
+						for (int i = 0; i < cv.component.length; i++) {
+							if (cv.component[nodeA] == cv.component[i]) {
+								compSize++;
+							}
+						}
+						if (compSize == 1) {
+							assertEquals(cv.numComponents - 1, cv2.numComponents);
+						} else {
+							assertEquals(cv.numComponents, cv2.numComponents);
+						}
+					}
+					
+					numNodes -= 1;
+					cv = cv2;
+				}
+			}
+		}
+	}
+	
+	@Test
+	public void maxBpmTest() {
+		int n = 1000;
+		Random ra = new Random(0);
+		boolean[][] bpGraph = new boolean[n][n];
+		for (int i = 0; i < bpGraph.length; i++) {
+			for (int j = 0; j < bpGraph.length; j++) {
+				if (ra.nextDouble() < 0.001) {
+					bpGraph[i][j] = true;
+				}
+			}
+		}
+
+		assertEquals(GraphAlgorithms.maxBPM(bpGraph), 551);
+	}
 }

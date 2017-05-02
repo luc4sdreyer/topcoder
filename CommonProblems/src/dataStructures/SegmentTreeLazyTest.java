@@ -71,7 +71,7 @@ public class SegmentTreeLazyTest {
 		/**
 		 * Increment elements within range [i, j] with value value
 		 */
-		public void update_tree(int i, int j, int value) {
+		public void update(int i, int j, int value) {
 			update_tree(1, 0, N-1, i, j, value);
 		}
 
@@ -103,9 +103,16 @@ public class SegmentTreeLazyTest {
 		}
 		
 		/**
+		 * Sets element at i to the specified value. Setting to Long.MIN_VALUE is not supported.
+		 */
+		public void set(int i, int value) {
+			set_tree(1, 0, N-1, i, i, value);
+		}
+		
+		/**
 		 * Sets elements within range [i, j] to the specified value. Setting to Long.MIN_VALUE is not supported.
 		 */
-		public void set_tree(int i, int j, int value) {
+		public void set(int i, int j, int value) {
 			set_tree(1, 0, N-1, i, j, value);
 		}
 
@@ -138,7 +145,7 @@ public class SegmentTreeLazyTest {
 		/**
 		 * Query tree to get max element value within range [i, j]
 		 */
-		public long query_tree(int i, int j) {
+		public long get(int i, int j) {
 			return query_tree(1, 0, N-1, i, j);
 		}
 
@@ -217,13 +224,13 @@ public class SegmentTreeLazyTest {
 			int mid = 0;
 			long f = 0;
 			int best = -1;
-			if (value > query_tree(i, N)) {
+			if (value > get(i, N)) {
 				return -(search(0, tree[1]) + 1) -1;
 			}
 			boolean found = false;
 			while (left <= right) {
 				mid = (left + right) / 2;
-				f = query_tree(i, mid);
+				f = get(i, mid);
 				if (f == value) {
 					found = true;
 					best = mid;
@@ -387,7 +394,7 @@ public class SegmentTreeLazyTest {
 				for (int k = low; k <= high; k++) {
 					a[k] += change;
 				}
-				st.update_tree(low, high, change);
+				st.update(low, high, change);
 				
 				for (int m = 0; m < a.length; m++) {
 					low = rand.nextInt(len);
@@ -396,7 +403,7 @@ public class SegmentTreeLazyTest {
 					for (int k = low; k <= high; k++) {
 						expected = Math.max(expected, a[k]);
 					}
-					long actual = st.query_tree(low, high);
+					long actual = st.get(low, high);
 					
 					assertEquals(expected, actual);
 				}
@@ -430,7 +437,7 @@ public class SegmentTreeLazyTest {
 				for (int k = low; k <= high; k++) {
 					a[k] = change;
 				}
-				st.set_tree(low, high, change);
+				st.set(low, high, change);
 				
 				for (int m = 0; m < a.length; m++) {
 					low = rand.nextInt(len);
@@ -439,10 +446,10 @@ public class SegmentTreeLazyTest {
 					for (int k = low; k <= high; k++) {
 						expected = Math.max(expected, a[k]);
 					}
-					long actual = st.query_tree(low, high);
+					long actual = st.get(low, high);
 					
 					if (actual != expected) {
-						st.query_tree(low, high);
+						st.get(low, high);
 					}
 					
 					assertEquals(expected, actual);
@@ -520,7 +527,7 @@ public class SegmentTreeLazyTest {
 				for (int k = low; k <= high; k++) {
 					a[k] += change;
 				}
-				st.update_tree(low, high, change);
+				st.update(low, high, change);
 
 				for (int m = 0; m < a.length; m++) {
 					low = rand.nextInt(len);
@@ -530,11 +537,11 @@ public class SegmentTreeLazyTest {
 					for (int k = low; k <= high; k++) {
 						expected += a[k];
 					}
-					long actual = st.query_tree(low, high);
+					long actual = st.get(low, high);
 					
 					if (expected != actual) {
 						System.out.println(i + "\t expected: " + expected + "\t actual: " + actual);
-						st.query_tree(low, high);
+						st.get(low, high);
 					}
 					assertEquals(expected, actual);
 				}
@@ -583,7 +590,7 @@ public class SegmentTreeLazyTest {
 					a[k] += change;
 					
 					// Do point updates to avoid lazy updates.
-					st.update_tree(k, k, change);
+					st.update(k, k, change);
 				}
 
 				for (int m = 0; m < a.length; m++) {
@@ -594,11 +601,11 @@ public class SegmentTreeLazyTest {
 					for (int k = low; k <= high; k++) {
 						expected += a[k];
 					}
-					long actual = st.query_tree(low, high);
+					long actual = st.get(low, high);
 					
 					if (expected != actual) {
 						System.out.println(i + "\t expected: " + expected + "\t actual: " + actual);
-						st.query_tree(low, high);
+						st.get(low, high);
 					}
 					assertEquals(expected, actual);
 				}

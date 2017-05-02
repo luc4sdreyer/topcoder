@@ -20,8 +20,20 @@ import java.util.StringTokenizer;
 public class R289 {
 	public static void main(String[] args) {
 		//maximumInTable(System.in);
-		paintingPebbles(System.in);
+		paintingPebbles2(System.in);
 	}	
+
+	public static void paintingPebbles2(InputStream in) {
+		MyScanner scan = new MyScanner(in);
+		int n = scan.nextInt();
+		int k = scan.nextInt();
+		int[] a = scan.nextIntArray(n);
+		
+		int[][] colors = new int[n][k];
+		for (int i = 0; i < a.length; i++) {
+			
+		}
+	}
 	
 	public static void paintingPebbles(InputStream in) {
 		MyScanner scan = new MyScanner(in);

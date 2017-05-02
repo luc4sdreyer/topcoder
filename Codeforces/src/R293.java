@@ -20,7 +20,32 @@ public class R293 {
 		//vitalyAndStrings(System.in);
 		//tanyaAndInvitation(System.in);
 		//anyaAndSmartphone(System.in);
-		ilyaAndEscalator(System.in);
+		ilyaAndEscalator2(System.in);
+	}
+	
+	public static void ilyaAndEscalator2(InputStream in) {
+		MyScanner scan = new MyScanner(in);
+		int n = scan.nextInt();
+		double p = scan.nextDouble();
+		int t = scan.nextInt();
+		
+		double[][] dp = new double[n+1][t+1];
+		dp[0][0] = 1;
+		for (int x = 0; x < dp[0].length-1; x++) {
+			for (int y = 0; y < dp.length; y++) {
+				dp[y][x+1] += (1 - p) * dp[y][x];
+				if (y < dp.length -1) {
+					dp[y+1][x+1] += (p) * dp[y][x];
+				}
+			}
+		}
+		
+		double prob = n;
+		for (int y = 0; y < dp.length; y++) {
+			prob -= dp[y][t] * (n-y);
+		}
+		
+		System.out.println(prob);
 	}
 	
 	public static void ilyaAndEscalator(InputStream in) {

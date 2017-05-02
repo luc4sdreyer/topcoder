@@ -314,6 +314,9 @@ public class VariousAlgorithms {
 	 * Number of combinations without repetition:  n! / (r! * (n - r)!)
 	 */
 	public static long nCr(int n, int r) {
+		if (n < r) {
+			return 0;
+		}
 		if (n == 0) {
 			return 1;
 		}
@@ -331,6 +334,37 @@ public class VariousAlgorithms {
 			ret /= i;
 		}
 		return ret;
+	}
+
+	/**
+	 * Number of combinations over modulo m, uses modular multiplicative inverse to 
+	 * handle very large numbers.
+	 */
+	public static int nCrBig(int n, int r, int modulo) {
+		if (n < r) {
+			return 0;
+		}
+		
+		// symmetry
+		if (n - r < r) {
+			r = n - r;
+		}
+
+		long a = 1;
+		long b = 1;
+		long mod = modulo;
+		
+		for (long i = n - r + 1; i <= n; i++) {
+			a = (a * i) % mod;
+		}
+		for (long i = 2; i <= r; i++) {
+			b = (b * i) % mod;
+		}
+
+		long bInv = modularMultiplicativeInverse((int) b, modulo);
+		long ret = (a * bInv) % mod;
+		
+		return (int) ret;
 	}
 
 	/**
@@ -691,6 +725,51 @@ public class VariousAlgorithms {
 	}
 	
 	/*******************************************************************************************************************************
+	 * Very fast way to calculate a modular exponent. Cannot overflow!
+	 */
+	public static int fastModularExponent(int a, int exp, int mod) {
+		long[] results = new long[65];
+		long m = mod;
+		int power = 1;
+		long res = 1;
+		while (exp > 0) {
+			if (power == 1) {
+				results[power] = a % m;
+			} else {
+				results[power] = (results[power-1] * results[power-1]) % m;
+			}
+			if (exp % 2 == 1) {
+				res = (res * results[power]) % m;
+			}
+			exp /= 2;
+			power++;
+		}
+		return (int) (res % m);
+	}
+	
+	public static BigInteger fastModularExponent(BigInteger a, BigInteger exp, BigInteger mod) {
+		ArrayList<BigInteger> results = new ArrayList<>();
+		BigInteger m = mod;
+		int power = 1;
+		BigInteger res = BigInteger.ONE;
+		BigInteger two = BigInteger.valueOf(2);
+		results.add(BigInteger.ZERO);
+		while (!exp.equals(BigInteger.ZERO)) {
+			if (power == 1) {
+				results.add(a.mod(m));
+			} else {
+				results.add(results.get(power-1).multiply(results.get(power-1)).mod(m));
+			}
+			if (exp.mod(two).equals(BigInteger.ONE)) {
+				res = (res.multiply(results.get(power))).mod(m);
+			}
+			exp = exp.divide(two);
+			power++;
+		}
+		return res.mod(m);
+	}
+	
+	/*******************************************************************************************************************************
 	 * Goldbach's conjecture is one of the oldest and best-known unsolved problems in number theory and in all of mathematics:
 	 * 
 	 * Every even integer greater than 2 can be expressed as the sum of two primes.
@@ -739,51 +818,6 @@ public class VariousAlgorithms {
 			ptr[i] = ptr[i-1] * (n + 1 - i) / i;
 		}
 		return ptr;
-	}
-	
-	/*******************************************************************************************************************************
-	 * Very fast way to calculate a modular exponent. Cannot overflow!
-	 */
-	public static int fastModularExponent(int a, int exp, int mod) {
-		long[] results = new long[65];
-		long m = mod;
-		int power = 1;
-		long res = 1;
-		while (exp > 0) {
-			if (power == 1) {
-				results[power] = a % m;
-			} else {
-				results[power] = (results[power-1] * results[power-1]) % m;
-			}
-			if (exp % 2 == 1) {
-				res = (res * results[power]) % m;
-			}
-			exp /= 2;
-			power++;
-		}
-		return (int) (res % m);
-	}
-	
-	public static BigInteger fastModularExponent(BigInteger a, BigInteger exp, BigInteger mod) {
-		ArrayList<BigInteger> results = new ArrayList<>();
-		BigInteger m = mod;
-		int power = 1;
-		BigInteger res = BigInteger.ONE;
-		BigInteger two = BigInteger.valueOf(2);
-		results.add(BigInteger.ZERO);
-		while (!exp.equals(BigInteger.ZERO)) {
-			if (power == 1) {
-				results.add(a.mod(m));
-			} else {
-				results.add(results.get(power-1).multiply(results.get(power-1)).mod(m));
-			}
-			if (exp.mod(two).equals(BigInteger.ONE)) {
-				res = (res.multiply(results.get(power))).mod(m);
-			}
-			exp = exp.divide(two);
-			power++;
-		}
-		return res.mod(m);
 	}
 
 	/*******************************************************************************************************************************
@@ -841,6 +875,44 @@ public class VariousAlgorithms {
 
 	public static ArrayList<Integer> kmp(String s, String k) {
 		return kmp(s.toCharArray(), k.toCharArray());
+	}
+	
+	/*******************************************************************************************************************************
+	 * Z Algorithm:
+	 * Produces an array Z where Z[i] is the length of the longest substring starting from S[i] which is also a prefix of S.
+	 * E.g. if S = "babab", then Z = 00201 
+	 * Very useful for quick substring checks. Based on http://codeforces.com/blog/entry/3107
+	 * 
+	 * Complexity: O(n) to build, O(1) to query.
+	 * Use a segment tree for advanced queries.
+	 */
+	public static int[] zalgo(char[] s) {
+		int L = 0;
+		int R = 0;
+		int n = s.length;
+		int[] z = new int[n];
+		
+		for (int i = 1; i < n; i++) {
+			if (i > R) {
+				L = R = i;
+				while (R < n && s[R-L] == s[R]) {
+					R++;
+				}
+				z[i] = R-L; R--;
+			} else {
+				int k = i-L;
+				if (z[k] < R-i+1) {
+					z[i] = z[k];
+				} else {
+					L = i;
+					while (R < n && s[R-L] == s[R]) {
+						R++;
+					}
+					z[i] = R-L; R--;
+				}
+			}
+		}
+		return z;
 	}
 
 	/*******************************************************************************************************************************
