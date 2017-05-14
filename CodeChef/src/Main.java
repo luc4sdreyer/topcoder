@@ -150,8 +150,9 @@ public class Main {
 					
 					moves += 2;
 				}
-				scores[test] = moves;
-				mean += moves;
+				int score = (200 - moves) * 100;
+				scores[test] = score;
+				mean += score;
 			}
 			mean /= numTests;
 			for (int i = 0; i < scores.length; i++) {
