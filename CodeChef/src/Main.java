@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -62,18 +63,19 @@ public class Main {
 			int numTests = 10000;
 			int[] scores = new int[numTests];
 			double mean = 0;
+			double meanTurns = 0;
 			double stdev = 0;
 			for (int test = 0; test < numTests; test++) {
-				String myMap =    "........#.\n"
-						+ ".###......\n"
-						+ "..........\n"
-						+ "##..#..#..\n"
-						+ ".......#..\n"
-						+ "..#....#..\n"
-						+ "#.#.......\n"
-						+ "#.........\n"
-						+ "...####..#\n"
-						+ ".#........\n";
+				String myMap =    ".###....#.\n"
+								+ ".....#....\n"
+								+ ".###.#....\n"
+								+ "........#.\n"
+								+ "....#.....\n"
+								+ "..#.#.....\n"
+								+ "#.#.#.....\n"
+								+ "#...#.....\n"
+								+ "..........\n"
+								+ "..#..#....\n";
 				
 				final int N = 10;
 				char[][] seenMap = new char[N][N];
@@ -147,15 +149,17 @@ public class Main {
 				int score = (200 - moves) * 100;
 				scores[test] = score;
 				mean += score;
+				meanTurns += moves/2;
 			}
 			mean /= numTests;
+			meanTurns /= numTests;
 			for (int i = 0; i < scores.length; i++) {
 				stdev += (scores[i] - mean) * (scores[i] - mean);
 			}
 			stdev /= numTests;
 			stdev = Math.sqrt(stdev);
 			
-			System.out.println("mean: " + String.format("%.2f", mean) + " stdev: " + String.format("%.2f", stdev));
+			System.out.println("mean: " + String.format("%.2f", mean) + "\t stdev: " + String.format("%.2f", stdev) + "\t meanTurns: " + String.format("%.2f", meanTurns));
 			
 		}
 	}
@@ -187,7 +191,6 @@ public class Main {
 //							+ "..........\n";
 			//System.out.println(placeShips(rand, me));
 			System.out.println(myMap);
-			GameData game = new GameData();
 			final int N = 10;
 			char[][] map = new char[N][N];
 			for (int y = 0; y < N; y++) {
@@ -322,11 +325,26 @@ public class Main {
 //		if (System.currentTimeMillis() != -1) {
 //			return new int[]{0, 0};
 //		}
+		ArrayList<int[]> hitList = new ArrayList<>();
 		int hits = 0;
 		for (int y = 0; y < map.length; y++) {
 			for (int x = 0; x < map.length; x++) {
 				if (map[y][x] == 'h') {
 					hits++;
+				}
+				if (map[y][x] == 'h' || map[y][x] == 'd') {
+					// don't count subs 
+					int nn = 0;
+					for (int dir = 0; dir < dx.length; dir++) {
+						int py = y + dy[dir];
+						int px = x + dx[dir];
+						if (px >= 0 && px < map.length && py >= 0 && py < map.length && map[py][px] == 'd') {
+							nn++;
+						}
+					}
+					if (nn > 0) {
+						hitList.add(new int[]{x,y});
+					}
 				}
 			}
 		}
@@ -430,18 +448,26 @@ public class Main {
 				}
 			}
 		}
-		
-		// Submarines have been removed, so hitting every odd cell will finish the game.
-//		if (possible.isEmpty()) {
-//			for (int y = 0; y < map.length; y++) {
-//				for (int x = 0; x < map.length; x++) {
-//					if (map[y][x] == '-') {
-//						possible.add(new int[]{x, y});
-//					}
-//				}
-//			}
-//		}
-		return possible.get(rand.nextInt(possible.size()));
+		Collections.sort(possible, new Comparator<int[]>() {
+			@Override
+			public int compare(int[] o1, int[] o2) {
+				int sqDist1 = 0;
+				for (int[] hit: hitList) {
+					int dist1 = hit[0] + o1[0];
+					int dist2 = hit[1] + o1[1];
+					sqDist1 += dist1 * dist1 + dist2 * dist2;
+				}
+				int sqDist2 = 0;
+				for (int[] hit: hitList) {
+					int dist1 = hit[0] + o2[0];
+					int dist2 = hit[1] + o2[1];
+					sqDist2 += dist1 * dist1 + dist2 * dist2;
+				}
+				return Integer.compare(sqDist1, sqDist2);
+			}
+		});
+		return possible.get(0);
+		//return possible.get(rand.nextInt(possible.size()));
 	}
 	
 	public static String placeShips(Random rand, GameData data) {
