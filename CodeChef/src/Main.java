@@ -50,8 +50,8 @@ public class Main {
 //        CHEFCODE2();
 //        WSITES01();
 //        GPD();
-//        CHEFBATL();
-        testCHEFBATL();
+        CHEFBATL();
+//        testCHEFBATL();
  
         out.close();
     }
@@ -127,19 +127,13 @@ public class Main {
 					if (realMap[my][mx] != '.') {
 						realMap[my][mx] = 'h';
 						hp--;
-						int nn = 0;
-						for (int i = 0; i < dx.length; i++) {
-							int tx = mx + dx[i];
-							int ty = my + dy[i];
-							if (0 <= tx && tx < N && 0 <= ty && ty < N && realMap[ty][tx] == '#') {
-								nn++;
-							}
-						}
-						if (nn == 0) {
+
+						if (isSunk(realMap, mx, my, '#')) {
 							// sunk
 							seenMap[my][mx] = 'h';
 							fillHit(seenMap, mx, my, 'h');
 							fillHit(realMap, mx, my, 'h');
+							markReserved(seenMap, 'x');
 						} else {
 							// hit
 							seenMap[my][mx] = 'h';
@@ -226,6 +220,7 @@ public class Main {
 					// sunk
 					map[move[1]][move[0]] = 'h';
 					fillHit(map, move[0], move[1], 'h');
+					markReserved(map, 'x');
 					p1move = true;
 				} else if (reply == 4) {
 					// won
@@ -255,18 +250,66 @@ public class Main {
 		System.out.println("0");
 	}
 	
-	public static void fillHit(char[][] map, int sx, int sy, char marker) {
+	public static void markReserved(char[][] map, char marker) {
+		int[] mdx = {1, 1, 1, 0, -1, -1, -1, 0};
+		int[] mdy = {1, 0, -1, -1, -1, 0, 1, 1};
+		int N = 10;
+		for (int y = 0; y < N; y++) {
+			for (int x = 0; x < N; x++) {
+				if (map[y][x] == 'd') {
+					for (int i = 0; i < mdy.length; i++) {
+						int tx = x + mdx[i];
+						int ty = y + mdy[i];
+						if (0 <= tx && tx < N && 0 <= ty && ty < N && map[ty][tx] != 'd') {
+							map[ty][tx] = marker;
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	public static boolean isSunk(char[][] map, int sx, int sy, char marker) {
 		int[] top = new int[]{sx, sy};
 		int[] mdx = {0, 1, 0, -1};
 		int[] mdy = {1, 0, -1, 0};
+	
 		int N = 10;
+		boolean[][] visited = new boolean[N][N];
 		Stack<int[]> s = new Stack<>();
 		s.add(top);
 		while (!s.isEmpty()) {
 			top = s.pop();
 			int tx = top[0];
 			int ty = top[1];
-			if (0 <= tx && tx < N && 0 <= ty && ty < N && map[ty][tx] == marker) {
+			if (0 <= tx && tx < N && 0 <= ty && ty < N && !visited[ty][tx] && (map[ty][tx] == marker || map[ty][tx] == 'h')) {
+				if (map[ty][tx] == marker) {
+					return false;
+				}
+				visited[ty][tx] = true;
+				for (int i = 0; i < mdy.length; i++) {
+					s.add(new int[]{tx + mdx[i], ty + mdy[i]});
+				}
+			}
+		}
+		return true;
+	}
+	
+	public static void fillHit(char[][] map, int sx, int sy, char marker) {
+		int[] top = new int[]{sx, sy};
+		int[] mdx = {0, 1, 0, -1};
+		int[] mdy = {1, 0, -1, 0};
+	
+		int N = 10;
+		boolean[][] visited = new boolean[N][N];
+		Stack<int[]> s = new Stack<>();
+		s.add(top);
+		while (!s.isEmpty()) {
+			top = s.pop();
+			int tx = top[0];
+			int ty = top[1];
+			if (0 <= tx && tx < N && 0 <= ty && ty < N && !visited[ty][tx] && (map[ty][tx] == marker || map[ty][tx] == 'd')) {
+				visited[ty][tx] = true;
 				map[ty][tx] = 'd';
 				for (int i = 0; i < mdy.length; i++) {
 					s.add(new int[]{tx + mdx[i], ty + mdy[i]});
