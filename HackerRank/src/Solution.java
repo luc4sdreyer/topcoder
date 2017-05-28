@@ -3,7 +3,7 @@ import java.math.*;
 import java.util.*;
 import java.util.Map.Entry;
 
-//  world-codesprint-10
+//  world-codesprint-11
 
 public class Solution {
 	public static InputReader in;
@@ -17,410 +17,324 @@ public class Solution {
 //		out = new PrintWriter(outputStream, true);
 		out = new PrintWriter(outputStream, false); // enable this for ludicrous speed
 		
-//		rewardPoints();
-//		zigzagArray2();
-		maximalAndSubsequences();
-//		testMaximalAndSubsequences2();
+//		balancedArray();
+//		numericString();
+//		simpleFileCommands();
+		cityConstruction();
 		
 		out.close();
 	}
 	
-	public static void testMaximalAndSubsequences2() {
-		Random rand = new Random(0);
-		int numTests = 10000;
-		for (int test = 0; test < numTests; test++) {
-			long[] a = new long[6];
-			for (int j = 0; j < a.length; j++) {
-				a[j] = rand.nextInt(100000000);
-			}
-			for (int k = 1; k <= a.length; k++) {
-				long[] exp = all_combinations(a, k);
-				long[] actual = maximalAndSubsequences2(a.length, k, Arrays.copyOf(a, a.length));
-				for (int j = 0; j < actual.length; j++) {
-					if (exp[j] != actual[j]) {
-						maximalAndSubsequences2(a.length, k, Arrays.copyOf(a, a.length));
-						System.out.println("fail");
-					}
-				}
-			}
-		}
-	}
-	
-	public static void testMaximalAndSubsequences() {
-		long[] a = {15, 14, 12, 12, 12, 11, 11, 10, 10, 10, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 8};
-		for (int k = 1; k <= a.length; k++) {
-			long[] ret = maximalAndSubsequences(a.length, k, Arrays.copyOf(a, a.length));
-			System.out.println("k: " + k + ", " + Long.toBinaryString(ret[0]) + " " + ret[1]);
-		}
-	}
-
-	public static void maximalAndSubsequences() {
-		int n = in.nextInt();
-		int k = in.nextInt();
-		long[] a = in.nextLongArray(n);
-		long[] ret = maximalAndSubsequences2(n, k, a);
-		System.out.println(ret[0]);
-		System.out.println(ret[1]);
-	}
-	
-	public static long[] maximalAndSubsequences2(int n, int k, long[] a) {
-		boolean[] valid = new boolean[n];
-		Arrays.fill(valid, true);
-		
-		for (int bit = 63; bit >= 0; bit--) {
-			int numSet = 0;
-			for (int i = 0; i < a.length; i++) {
-				if (valid[i] && getBitL(a[i], bit)) {
-					numSet++;
-				}
-			}
-			if (numSet >= k) {
-				// exclude 0's
-				for (int i = 0; i < a.length; i++) {
-					if (!getBitL(a[i], bit)) {
-						valid[i] = false;
-					}
-				}
-			}
-		}
-
-		long max = Long.MAX_VALUE;
-		int numMax = 0;
-		for (int i = 0; i < valid.length; i++) {
-			if (valid[i]) {
-				max &= a[i];
-				numMax++;
-			}
-		}
-		int mod = 1000 * 1000 * 1000 + 7;
-
-		return new long[]{max, nCrBig(numMax, k, mod)};
-	}
-
-	public static int nCrBig(int n, int r, int modulo) {
-		if (n < r) {
-			return 0;
+	public static void cityConstruction() {
+		int N = in.nextInt();
+		int M = in.nextInt();
+		if (N > 5000) {
+			return;
 		}
 		
-		// symmetry
-		if (n - r < r) {
-			r = n - r;
-		}
-
-		long a = 1;
-		long b = 1;
-		long mod = modulo;
+		HashMap<Integer, HashSet<Integer>> g = new HashMap<>();
+		HashMap<Integer, HashSet<Integer>> visits = new HashMap<>();
 		
-		for (long i = n - r + 1; i <= n; i++) {
-			a = (a * i) % mod;
-		}
-		for (long i = 2; i <= r; i++) {
-			b = (b * i) % mod;
-		}
-
-		long bInv = modularMultiplicativeInverse((int) b, modulo);
-		long ret = (a * bInv) % mod;
-		
-		return (int) ret;
-	}
-	
-	public static int eulerTotientFunction(int n) {
-		int result = n;
-		for (int i = 2; i*i <= n; i++) {
-			if (n % i == 0) {
-				result -= result / i;
-			}
-			while (n % i == 0) {
-				n /= i;
-			}
-		}
-		   
-		if (n > 1) {
-			result -= result / n;
-		}
-		return result;
-	}
-	
-	public static int modularMultiplicativeInverse(int b, int mod) {
-		return fastModularExponent(b, eulerTotientFunction(mod) - 1, mod) % mod;
-	}
-	
-	public static int fastModularExponent(int a, int exp, int mod) {
-		long[] results = new long[65];
-		long m = mod;
-		int power = 1;
-		long res = 1;
-		while (exp > 0) {
-			if (power == 1) {
-				results[power] = a % m;
-			} else {
-				results[power] = (results[power-1] * results[power-1]) % m;
-			}
-			if (exp % 2 == 1) {
-				res = (res * results[power]) % m;
-			}
-			exp /= 2;
-			power++;
-		}
-		return (int) (res % m);
-	}
-
-	public static long[] all_combinations(long list[], int k) {
-		int N = 1 << list.length;
-		long mmax = 0;
-		for (int n = 0; n < N; n++) {
-			int count = 0;
-			long bAnd = Integer.MAX_VALUE;
-			for (int i = 0; i < list.length; i++) {
-				if (((1 << i) & n) != 0) {
-					count++;
-					bAnd &= list[i];
-				}
-			}
-			if (count == k) {
-				mmax = Math.max(mmax, bAnd);
-			}
-		}
-		int numMax = 0;
-		HashSet<Integer> chosen = new HashSet<>();
-		for (int n = 0; n < N; n++) {
-			int count = 0;
-			long bAnd = Integer.MAX_VALUE;
-			HashSet<Integer> chosen2 = new HashSet<>();
-			for (int i = 0; i < list.length; i++) {
-				if (((1 << i) & n) != 0) {
-					count++;
-					bAnd &= list[i];
-					chosen2.add(i);
-				}
-			}
-			if (count == k && bAnd == mmax) {
-				chosen.addAll(chosen2);
-				numMax++;
-			}
-			
-		}
-		return new long[]{mmax, numMax};
-	}
-	
-	public static long[] maximalAndSubsequences(int n, int k, long[] a) {
-		Arrays.sort(a);
-
-		long max = 0;
-		int numMax = 0;
-		
-		if (k == n) {
-			max = Integer.MAX_VALUE;
-			max = a[0];
-			for (int i = 0; i < a.length; i++) {
-				max &= a[i];
-			}
-			numMax = a.length;
-		} else {
-			for (int bit = 2; bit >= 0; bit--) {
-			//for (int bit = 63; bit >= 0; bit--) {
-				int lastValid = 0;
-				lastValid = binarySearchWithDuplicates(a, bit, n - k -1);
-				//int amount = (n - k -1) - (lastValid);
-				int amount = (n) - (lastValid);
-				if (k > amount) {
-					// this index doesn't matter anymore.
-					for (int i = 0; i < a.length; i++) {
-						a[i] = clearBitL(a[i], bit);
-					}
-					Arrays.sort(a);
-				}
-			}
-			
-			for (int i = 0; i < a.length; i++) {
-				max = Math.max(max, a[i]);
-			}
-			
-			for (int i = 0; i < a.length; i++) {
-				if (a[i] == max) {
-					numMax++;
-				}
-			}
+		for (int i = 0; i < N; i++) {
+			g.put(i+1, new HashSet<Integer>());
 		}
 		
-		long mod = 1000 * 1000 * 1000 + 7;
-		long ways = 1;
-		for (int i = 0; i < numMax; i++) {
-			ways = ways * 1;
+		for (int i = 0; i < M; i++) {
+			int u = in.nextInt();
+			int v = in.nextInt();
+			g.get(u).add(v);
 		}
 		
-		return new long[]{max, numMax};
-	}
-	
-	public static int binarySearchWithDuplicates(long[] a, int target, int low) {
-		int high = a.length-1;
-		int lastValid = a.length;
-		while (low <= high) {
-			int mid = (low + high) >>> 1;
-			if (getBitL(a[mid], target)) {
-				high = mid - 1;
-				lastValid = mid;
-			} else {
-				low = mid + 1;
-			}
-		}
-		return lastValid;
-	}
-	
-	public static long clearBitL(long value, int idx) {
-		return (value & ~(1L << idx));
-	}
-	
-	public static long setBitL(long value, int idx) {
-		return (value | (1L << idx));
-	}
-	
-	public static boolean getBitL(long value, int idx) {
-		return (value & (1L << idx)) != 0;
-	}
-	
-	public static void zigzagArray2() {
-		int n = in.nextInt();
-		int[] a = in.nextIntArray(n);
-		ArrayList<Integer> b = new ArrayList<>();
-		for (int j = 0; j < a.length; j++) {
-			b.add(a[j]);
-		}
-//		for (int i = 1; i < b.size(); i++) {
-//			while (i < b.size() && b.get(i-1) == b.get(i)) {
-//				b.remove(i);
-//			}
-//		}
-		for (int i = 2; i < b.size(); i++) {
-			while (i < b.size() && b.get(i-2) > b.get(i-1) && b.get(i-1) > b.get(i)) {
-				b.remove(i-1);
-			}
-			while (i < b.size() && b.get(i-2) < b.get(i-1) && b.get(i-1) < b.get(i)) {
-				b.remove(i-1);
-			}
-		}
+		int Q = in.nextInt();
+		for (int i = 0; i < Q; i++) {
+			int type = in.nextInt();
+			if (type == 1) {
+				int x = in.nextInt();
+				int d = in.nextInt();
+				N++;
+				g.put(N, new HashSet<Integer>());
 
-		System.out.println(n - b.size());
-	}
-	
-	public static void zigzagArray() {
-		int n = in.nextInt();
-		int[] a = in.nextIntArray(n);
-		int minTotal = a.length;
-		for (int i = 0; i < 2; i++) {
-			ArrayList<Integer> b = new ArrayList<>();
-			for (int j = 0; j < a.length; j++) {
-				b.add(a[j]);
-			}
-			int idx = 0;
-			boolean increase = true;
-			if (i == 1) {
-				increase = false;
-			}
-			while (idx < b.size() -1) {
-				if (increase) {
-					if (b.get(idx) <= b.get(idx+1)) {
-						int start = idx;
-						int end = start;
-						int max = 0;
-						
-						while (end < b.size() -1 && b.get(end) <= b.get(end+1)) {
-							max = Math.max(max, b.get(end+1));
-							end++;
-						}
-						
-						for (int j = start; j < end; j++) {
-							int x = b.remove(start+1);
-							System.out.println("removed " + x + " at " + (start+1));
-						}
-						if (start != end) {
-							b.add(start+1, max);
-							System.out.println("add " + max + " at " + (start+1));
-						}
-					} else {
-						while (idx < b.size() -1 && b.get(idx) > b.get(idx+1)) {
-							int x = b.remove(idx+1);
-							System.out.println("removed " + x + " at " + (idx+1));
-						}
-					}
+				if (d == 0) {
+					g.get(x).add(N);
 				} else {
-					if (b.get(idx) >= b.get(idx+1)) {
-						int start = idx;
-						int end = start;
-						int min = Integer.MAX_VALUE;
-						
-						while (end < b.size() -1 && b.get(end) >= b.get(end+1)) {
-							min = Math.min(min, b.get(end+1));
-							end++;
+					g.get(N).add(x);
+				}
+			} else {
+				int x = in.nextInt();
+				int y = in.nextInt();
+				
+				if (visits.containsKey(x) && visits.get(x).contains(y)) {
+					System.out.println("Yes");
+				} else {
+					HashSet<Integer> visited = new HashSet<>();
+					Stack<Integer> s = new Stack<>();
+					int top = x;
+					s.add(top);
+					while (!s.isEmpty()) {
+						top = s.pop();
+						if (visited.contains(top)) {
+							continue;
 						}
-						
-						for (int j = start; j < end; j++) {
-							int x = b.remove(start+1);
-							System.out.println("removed " + x + " at " + (start+1));
+						visited.add(top);
+						if (top == y) {
+							break;
 						}
-						if (start != end) {
-							b.add(start+1, min);
-							System.out.println("add " + min + " at " + (start+1));
+						if (visits.containsKey(top) && visits.get(top).contains(y)) {
+							visited.addAll(visits.get(top));
+							break;
 						}
-						
-					} else {
-						while (idx < b.size() -1 && b.get(idx) < b.get(idx+1)) {
-							int x = b.remove(idx+1);
-							System.out.println("removed " + x + " at " + (idx+1));
+						for (Integer n: g.get(top)) {
+							if (!visited.contains(n)) {
+								s.add(n);
+							}
 						}
 					}
+					
+					if (visits.containsKey(x)) {
+						visited.addAll(visits.get(x));
+					}
+					visits.put(x, visited);
+					if (visited.contains(y)) {
+						System.out.println("Yes");
+					} else {
+						System.out.println("No");
+					}
 				}
-				increase = increase ? false : true;
-				idx++;
 			}
-			minTotal = Math.min(minTotal, n - b.size());
-			System.out.println();
 		}
-		System.out.println(minTotal);
 	}
 	
-	public static void rewardPoints() {
-		int[] a = in.nextIntArray(3);
-		int sum = 0;
+	public static void simpleFileCommands() {
+		int q = in.nextInt();
+		HashMap<String, RangeUnion> map = new HashMap<>();
+		
+		for (int i = 0; i < q; i++) {
+			char[] cmd = in.next().toCharArray();
+			if (cmd[0] == 'c') {
+				// create
+				String name = in.next();
+				name = create(map, name);
+				System.out.println("+ " + name);
+			} else if (cmd[0] == 'd') {
+				// delete
+				String name = in.next();
+				name = delete(map, name);
+				System.out.println("- " + name);
+			} else {
+				// rename
+				String oldName = in.next();
+				String newName = in.next();
+				String oldName2 = delete(map, oldName);
+				String newName2 = create(map, newName);
+				System.out.println("r " + oldName2 + " -> " + newName2);
+			}
+		}
+	}
+
+	private static String delete(HashMap<String, RangeUnion> map, String name) {
+		long id = 0;
+		if (name.contains("(")) {
+			id = Long.parseLong(name.substring(name.indexOf('(') +1, name.indexOf(')')));
+			name = name.substring(0, name.indexOf('('));
+		}
+		RangeUnion range = map.get(name);
+		range.remove(id, id);
+		if (id > 0) {
+			name += "(" + id + ")";
+		}
+		return name;
+	}
+
+	private static String create(HashMap<String, RangeUnion> map, String name) {
+		if (!map.containsKey(name)) {
+			map.put(name, new RangeUnion());
+		}
+		RangeUnion range = map.get(name);
+		long id = range.ceilingGap(0);
+		range.add(id, id);
+		if (id > 0) {
+			name += "(" + id + ")";
+		}
+		return name;
+	}
+	
+	
+	
+	public static class RangeUnion {
+		TreeMap<Long, Long> range;
+		
+		public RangeUnion() {
+			range = new TreeMap<>();
+		}
+		
+
+		/**
+		 * Add the range [a, b]. Overlap is ignored.
+		 */
+		public void add(long a, long b) {
+			// If a range covers [a, b], do nothing
+			Entry<Long, Long> lt = range.lowerEntry(a);
+			if (lt != null && lt.getValue() > b) {
+				return;
+			}
+
+			Entry<Long, Long> gte = range.ceilingEntry(a);
+	
+			// remove ranges that are entirely in [a, b]
+			while (gte != null && gte.getValue() <= b) {
+				range.remove(gte.getKey());
+				gte = range.ceilingEntry(a);
+			}
+			
+			// merge the range that ends in [a-1, b], if it exists
+			lt = range.lowerEntry(a);
+			if (lt != null && lt.getValue() >= a-1) {
+				range.put(lt.getKey(), b);
+				a = lt.getKey();
+			}
+			
+			// remove the range that starts in [a, b+1], if it exists
+			Entry<Long, Long> gt = range.floorEntry(b+1);
+			if (gt != null && gt.getKey() >= a) {
+				range.remove(gt.getKey());
+				range.put(a, gt.getValue());
+			}
+
+			if (!isSet(a)) {
+				range.put(a, b);	
+			}
+		}
+		
+		/**
+		 * Remove the range [a, b].
+		 */
+		public void remove(long a, long b) {
+			Entry<Long, Long> gte = range.ceilingEntry(a);
+	
+			// remove ranges that are entirely in [a, b]
+			while (gte != null && gte.getValue() <= b) {
+				range.remove(gte.getKey());
+				gte = range.ceilingEntry(a);
+			}
+			
+			// remove the range that covers [a, b], if it exists
+			Entry<Long, Long> lt = range.lowerEntry(a);
+			if (lt != null && lt.getValue() > b) {
+				range.put(lt.getKey(), a-1);
+				range.put(b+1, lt.getValue());
+			}
+			
+			// remove the range that ends in [a, b], if it exists
+			lt = range.lowerEntry(a);
+			if (lt != null && lt.getValue() >= a) {
+				range.put(lt.getKey(), a-1);
+			}
+			
+			// remove the range that starts in [a, b], if it exists
+			Entry<Long, Long> gt = range.floorEntry(b);
+			if (gt != null && gt.getKey() >= a) {
+				range.remove(gt.getKey());
+				range.put(b+1, gt.getValue());
+			}
+		}
+		
+		/**
+		 * Get the first gap >= x. That is the first point >= x where there is no range set.
+		 */
+		public long ceilingGap(long x) {
+			Entry<Long, Long> lte = range.floorEntry(x);
+			if (lte == null) {
+				return x;
+			} else {
+				return Math.max(lte.getValue()+1, x);
+			}
+		}
+		
+		/**
+		 * Return whether there is a range [a, b] such that a <= x <= b  
+		 */
+		public boolean isSet(long x) {
+			Entry<Long, Long> lte = range.floorEntry(x);
+			if (lte == null) {
+				return false;
+			} else {
+				return x <= lte.getValue();
+			}
+		}
+		
+		public long[] getRange(long x) {
+			Entry<Long, Long> entry = getRangeEntry(x);
+			if (entry == null) {
+				return null;
+			} else {
+				return new long[]{entry.getKey(), entry.getValue()};
+			}
+		}
+		
+		private Entry<Long, Long> getRangeEntry(long x) {
+			Entry<Long, Long> lte = range.floorEntry(x);
+			if (lte != null && x <= lte.getValue()) {
+				return lte;
+			}
+			return null;
+		}
+		
+		public String toString() {
+			return range.toString();
+		}
+	}
+	
+	public static void numericString() {
+		char[] s = in.next().toCharArray();
+		int k = in.nextInt();
+		int b = in.nextInt();
+		int m = in.nextInt();
+		
+		long total = 0;
+		int num = 0;
+		int power = 1;
+		for (int i = k-1; i >= 0; i--) {
+			num = (num + (s[i] - '0') * power) % m;
+			power = (power * b) % m;
+		}
+		
+//		System.out.println(num);
+		total += num;
+		
+		for (int i = 0; i < s.length -k; i++) {
+			num = (num * b) % m;
+			int remove = ((s[i] - '0') * power) % m;
+			num = (num + m - remove + (s[i+k] - '0')) % m;
+//			System.out.println(num);
+			total += num;
+		}
+		System.out.println(total);
+	}
+	
+	public static void balancedArray() {
+		int[] a = in.nextIntArray(in.nextInt());
+		int sumA = 0;
+		int sumB = 0;
 		for (int i = 0; i < a.length; i++) {
-			sum += Math.min(10,a[i]);
-		}
-		sum *= 10;
-		System.out.println(sum);
-	}
-	
-	public static class InputReader {
-		public BufferedReader reader;
-		public StringTokenizer tokenizer;
-
-		public InputReader(InputStream stream) {
-			reader = new BufferedReader(new InputStreamReader(stream), 32768);
-			tokenizer = null;
-		}
-
-		public String next() {
-			while (tokenizer == null || !tokenizer.hasMoreTokens()) {
-				try {
-					tokenizer = new StringTokenizer(reader.readLine());
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
+			if (i < a.length/2) {
+				sumA += a[i];
+			} else {
+				sumB += a[i];
 			}
-			return tokenizer.nextToken();
 		}
-
-		public int nextInt() {return Integer.parseInt(next());}
-		public long nextLong() {return Long.parseLong(next());}
-		public double nextDouble() {return Double.parseDouble(next());}
-		public long[] nextLongArray(int n) {
-			long[] a = new long[n];
-			for (int i = 0; i < a.length; i++) a[i] = this.nextLong();
-			return a;
-		}
-		public int[] nextIntArray(int n) {
-			int[] a = new int[n];
-			for (int i = 0; i < a.length; i++) a[i] = this.nextInt();
-			return a;
-		}
+		System.out.println(Math.abs(sumA - sumB));
 	}
+ 
+    public static class InputReader {
+        public BufferedReader r;
+        public StringTokenizer st;
+        public InputReader(InputStream s) {r = new BufferedReader(new InputStreamReader(s), 32768); st = null;}
+        public String next() {while (st == null || !st.hasMoreTokens()) {try {st = new StringTokenizer(r.readLine());}
+        catch (IOException e) {throw new RuntimeException(e);}} return st.nextToken();}
+        public int nextInt() {return Integer.parseInt(next());}
+        public long nextLong() {return Long.parseLong(next());}
+        public double nextDouble() {return Double.parseDouble(next());}
+        public long[] nextLongArray(int n) {long[] a = new long[n]; for (int i = 0; i < a.length; i++) {a[i] = this.nextLong();} return a;}
+        public int[] nextIntArray(int n) {int[] a = new int[n];	for (int i = 0; i < a.length; i++) {a[i] = this.nextInt();} return a;}
+    }
 }

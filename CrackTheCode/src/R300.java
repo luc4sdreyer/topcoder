@@ -35,16 +35,27 @@ public class R300 {
 	}
 
 	public static void code() {
-		int n = 5114;
-		int start = 9;
+		int n = 5422;
+		int start = 0;
 		for (int i = 0; i < n-1; i++) {
 			if (i % 2 == 0) {
-				start += 2;
+				start += 1;
 			} else {
-				start += 10;
+				start += 11;
 			}
 			System.out.println(start);
 		}
+		
+//		int n = 5114;
+//		int start = 9;
+//		for (int i = 0; i < n-1; i++) {
+//			if (i % 2 == 0) {
+//				start += 2;
+//			} else {
+//				start += 10;
+//			}
+//			System.out.println(start);
+//		}
 	}
 
 	public static class InputReader {
