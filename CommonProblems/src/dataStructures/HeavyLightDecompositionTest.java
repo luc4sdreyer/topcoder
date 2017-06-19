@@ -21,11 +21,27 @@ import java.util.StringTokenizer;
 
 import org.junit.Test;
 
+import com.sun.xml.internal.bind.v2.model.core.ID;
+
+
 
 public class HeavyLightDecompositionTest {
 
-	public static InputReader in;
-	public static PrintWriter out;
+	/*******************************************************************************************************************************
+	 * Heavy Light Decomposition
+	 * 
+	 * Query time: O(log^2 N)
+	 * 
+	 * Based on anudeep's HLD: https://blog.anudeep2011.com/heavy-light-decomposition/
+	 * 
+	 * We will divide the tree into vertex-disjoint chains (Meaning no two chains has a node in common) in such
+	 * a way that to move from any node in the tree to the root node, we will have to change at most log N chains.
+	 * To put it in another words, the path from any node to root can be broken into pieces such that the each
+	 * piece belongs to only one chain, then we will have no more than log N pieces.
+	 * 
+	 * This solution uses edge costs because it's built around finding the maximum edge cost on a path from A to B:
+	 * http://www.spoj.com/problems/QTREE/
+	 */
 	
 	public static class HLD {
 		ArrayList<ArrayList<Integer>> g;
@@ -600,6 +616,407 @@ public class HeavyLightDecompositionTest {
 	}
 
 	
+	
+	
+	
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	/*******************************************************************************************************************************
+	 * Heavy Light Decomposition
+	 * 
+	 * Query time: O(log^2 N)
+	 * 
+	 * Based on anudeep's HLD: https://blog.anudeep2011.com/heavy-light-decomposition/
+	 * 
+	 * This is a simpler solution. It's built to find if vertex C is on the path from A to B.
+	 * Cost is kept separate for convenience, in this case it's going to be the same as the graph structure.
+	 * Uses a plain segment tree for speed.
+	 */
+	
+	public static class HLD2 {
+		ArrayList<ArrayList<Integer>> g;
+		int N;
+		int log2N;
+		int root;
+		int maxDepth = 0;
+		ArrayList<ArrayList<Integer>> cost;
+		
+		// With respect to a node
+		int[] depth;
+		int[] parent;
+		int[] subtreeSize;
+		int[] chainId;
+		int[] chainPosition;
+		boolean[] leaf;
+		int[][] ancestor; 	// ancestor[node][i] is node's 2^(i-1)'th ancestor
+		int[] nodeCost;
+		
+		// With respect to a chain
+		int[] getChainHead;
+		int[] getChainLength;
+		SegmentTree[] tree;
+		
+		public HLD2(ArrayList<ArrayList<Integer>> g, ArrayList<ArrayList<Integer>> cost, int inRoot) {
+			N = g.size();
+			log2N =  32 - Integer.numberOfLeadingZeros(N - 1);
+			this.g = g;
+			this.cost = cost;
+			this.parent = new int[N]; 	// -1 for root
+			this.depth = new int[N];	// 0 for root node
+			this.subtreeSize = new int[N];
+			this.leaf = new boolean[N];
+			this.chainId = new int[N];
+			this.chainPosition = new int[N];
+			this.nodeCost = new int[N];
+			this.getChainHead = new int[N];
+			this.getChainLength = new int[N];
+			this.ancestor = new int[N][log2N];
+			
+			this.root = inRoot;
+
+			// Find the node in the middle of the graph and set it as the root if no root is given. 
+			Arrays.fill(depth, -1);
+			Arrays.fill(parent, -1);
+			Queue<Integer> queue = new LinkedList<>();
+			for (int i = 0; i < N; i++) {
+				Arrays.fill(this.ancestor[i], -1);
+				if (g.get(i).size() == 1) {
+					leaf[i] = true;
+					queue.add(i);
+				}
+			}
+			BitSet visited = new BitSet();
+			if (this.root == -1) {
+				while (!queue.isEmpty()) {
+					int top = queue.poll();
+					visited.set(top);
+					this.root = top;
+					ArrayList<Integer> children = g.get(top);
+					for (int i = 0; i < children.size(); i++) {
+						int childIdx = children.get(i);
+						if (!visited.get(childIdx)) {
+							queue.add(childIdx);
+						}
+					}
+				}
+			}
+			
+			queue.clear();
+			depth[this.root] = 0;
+			queue.add(this.root);
+			
+			// Set depth and parent
+			while (!queue.isEmpty()) {
+				int top = queue.poll();
+				ArrayList<Integer> children = g.get(top);
+				ArrayList<Integer> costs = cost.get(top);
+				for (int i = 0; i < children.size(); i++) {
+					int childIdx = children.get(i);
+					if (depth[childIdx] == -1) {
+						parent[childIdx] = top;
+						nodeCost[childIdx] = costs.get(i);
+						ancestor[childIdx][0] = top;
+						depth[childIdx] = depth[top]+1;
+						maxDepth = Math.max(maxDepth, depth[childIdx]);
+						queue.add(childIdx);
+					}
+				}
+			}
+			
+			// Set ancestor for LCA
+			for (int i = 1; i < log2N; i++) {
+				for (int j = 0; j < N; j++) {
+					if (ancestor[j][i-1] != -1) {
+						ancestor[j][i] = ancestor[ancestor[j][i-1]][i-1];
+					}
+				}
+			}
+			
+			// Set subtree size
+			Arrays.fill(subtreeSize, 1);
+			HashMap<Integer, ArrayList<Integer>> nodesPerDepth = new HashMap<>();
+			for (int i = 0; i < N; i++) {
+				if (depth[i] != -1) {
+					if (!nodesPerDepth.containsKey(depth[i])) {
+						nodesPerDepth.put(depth[i], new ArrayList<Integer>());
+					}
+					nodesPerDepth.get(depth[i]).add(i);
+				}
+			}
+			for (int i = maxDepth; i > 0; i--) {
+				ArrayList<Integer> list = nodesPerDepth.get(i);
+				for (int j = 0; j < list.size(); j++) {
+					subtreeSize[parent[list.get(j)]] += subtreeSize[list.get(j)];
+				}
+			}
+			
+			// Chain creation
+			visited.clear();
+			queue.clear();
+			queue.add(this.root);
+			int chainCounter = 0;
+			Arrays.fill(getChainHead, -1);
+			Arrays.fill(getChainLength, 0);
+			Arrays.fill(chainId, -1);
+			Arrays.fill(chainPosition, -1);
+			
+			chainId[root] = 0;
+			chainPosition[root] = 0;
+			getChainHead[chainId[root]] = root;
+			getChainLength[chainId[root]] = 1;
+			
+			while (!queue.isEmpty()) {
+				int top = queue.poll();
+				ArrayList<Integer> children = g.get(top);
+				visited.set(top);
+				
+				int specialChild = -1;
+				int maxSize = -1;
+				for (int i = 0; i < children.size(); i++) {
+					int childIdx = children.get(i);
+					if (!visited.get(childIdx) && subtreeSize[childIdx] > maxSize) {
+						maxSize = subtreeSize[childIdx];
+						specialChild = childIdx;
+					}
+				}
+				for (int i = 0; i < children.size(); i++) {
+					int childIdx = children.get(i);
+					if (!visited.get(childIdx)) {
+						if (childIdx == specialChild) {
+							chainId[childIdx] = chainId[top];
+							chainPosition[childIdx] = chainPosition[top] + 1;
+							
+						} else {
+							// Start a new chain
+							chainCounter++;
+							chainId[childIdx] = chainCounter;
+							chainPosition[childIdx] = 0;
+							getChainHead[chainCounter] = childIdx; 
+						}
+						getChainLength[chainId[childIdx]]++;
+						queue.add(childIdx);
+					}
+				}
+			}
+			
+			chainCounter++;
+			getChainLength = Arrays.copyOf(getChainLength, chainCounter);
+			getChainHead = Arrays.copyOf(getChainHead, chainCounter);
+			
+			tree = new SegmentTree[chainCounter];
+			int[][] tempTree = new int[chainCounter][];
+			for (int i = 0; i < chainCounter; i++) {
+				tempTree[i] = new int[getChainLength[i]];
+			}
+			for (int i = 0; i < N; i++) {
+				tempTree[chainId[i]][chainPosition[i]] = nodeCost[i];
+			}
+			for (int i = 0; i < chainCounter; i++) {
+				tree[i] = new SegmentTree(tempTree[i]);
+			}
+		}
+		
+		/**
+		 * https://csengerg.github.io/2015/12/24/lowest-common-ancestor.html
+		 */
+		public int LCA(int u, int v) {
+			// Ensure that u is deeper than v.
+			if (depth[u] < depth[v]) {
+				int temp = u;
+				u = v;
+				v = temp;
+			}
+			
+			for (int i = log2N; i >= 0; i--) {
+				// Get u on the same logarithmic height as v.
+				if (depth[u] - (1 << i) >= depth[v]) {
+					u = ancestor[u][i];
+				}
+			}
+			
+			if (u == v) {
+				return u;
+			} else {
+				// Jump to the highest node below the LCA node on both sides
+				for (int i = log2N-1; i >= 0; i--) {
+					if (ancestor[u][i] != ancestor[v][i] && ancestor[u][i] != -1) {
+						u = ancestor[u][i];
+						v = ancestor[v][i];
+					}
+				}
+				return ancestor[u][0];
+			}
+		}
+		
+		/**
+		 * Each edge has a cost, but this data structure requires vertex costs. So each vertex is given the cost of the 
+		 * edge towards its parent. This works because this is a tree, not a general graph with cycles.  
+		 */
+		public int query(int u, int v, int searchValue) {
+			int lca = LCA(u, v);
+			int costU = tree[0].IDENTITY;
+			if (lca != u) {
+				costU = queryUp(u, lca, searchValue);
+			}
+			int costV = tree[0].IDENTITY;
+			if (lca != v) {
+				costV = queryUp(v, lca, searchValue);
+			}
+			return tree[0].function(costU, costV);
+		}
+		
+		public int queryUp(int child, int ansc, int searchValue) {
+			int res = tree[0].IDENTITY;
+			while (true) {
+				if (chainId[child] != chainId[ansc]) {
+					res = tree[0].function(res, tree[chainId[child]].get(0, chainPosition[child], searchValue));
+					child = parent[getChainHead[chainId[child]]];
+				} else {
+					res = tree[0].function(res, tree[chainId[child]].get(chainPosition[ansc]+1, chainPosition[child], searchValue));
+					break;
+				}
+			}
+			return res;
+		}
+		
+		/**
+		 * Set the value of the tree at u to value.
+		 */
+		public void set_tree(int u, int value) {
+			int child = u;
+			tree[chainId[child]].set(chainPosition[child], value);
+		}
+		
+	}
+
+	public static class SegmentTree {
+		private int[][] t;
+		private int[] a;
+		private int N;
+		private int n;
+
+		/**
+		 * This function can be any associative binary function. For example sum, min, max, bitwise and, gcd. 
+		 */
+		protected int function(int a, int b) {
+			if (a == searchValue || b == searchValue) {
+				return searchValue;
+			}
+			return -1;
+		}
+
+		/**
+		 * The value of IDENTITY should be such that f(IDENTITY, x) = x, e.g. 0 for sum, +infinity for min, -infinity for max, and 0 for gcd.
+		 */
+		protected int IDENTITY = -1;
+		private int searchValue = IDENTITY;
+
+		public SegmentTree(int[] b) {
+			n = (int) (Math.log10(b.length)/Math.log10(2))+1;
+			N = 1 << n;
+			this.a = new int[N];
+			for (int i = 0; i < b.length; i++) {
+				this.a[i] = b[i];
+			}
+			t = new int[N][n+1];
+			for (int x = 0; x < N; x++) {
+				t[x][0] = a[x];
+			}
+			for (int y = 1; y <= n; y++) {
+				for (int x = 0; x < N; x+=(1<<y)) {
+					t[x][y] = function(t[x][y-1], t[x+(1<<(y-1))][y-1]);
+				}
+			}
+		} 
+
+		/**
+		 * Set position i to v. Time: O(log n)
+		 */
+		public void set(int i, int v) {
+			t[i][0] = a[i] = v;
+			for (int y = 1; y <= n; y++) {
+				int x = i-(i&((1<<y)-1));
+				t[x][y] = function(t[x][y-1], t[x+(1<<(y-1))][y-1]);
+			}
+		}
+
+		/**
+		 * Get the function over the interval [a, b]. Time: O(log n)
+		 */
+		public int get(int i, int j, int searchValue) {
+			this.searchValue = searchValue;
+			int res = IDENTITY, height = 0; j++;
+			while (i+(1<<height) <= j) {
+				while ((i&((1<<(height+1))-1)) == 0 && i+(1<<(height+1)) <= j) height++;
+				res = function(res, t[i][height]);
+				i += (1<<height);
+			}
+			while (i < j) {
+				while (i+(1<<height) > j) height--;
+				res = function(res, t[i][height]);
+				i += (1<<height);
+			}
+			return res;
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	public static InputReader in;
+	public static PrintWriter out;
+	
 	public static void HLD() {
 		Random ra = new Random(0); 
 				
@@ -748,7 +1165,15 @@ public class HeavyLightDecompositionTest {
 	 ***************************************************************************************************/
 	
 	@Test
-	public void testQueries() {
+	public void testQueriesHLD() {
+		/**
+		 * Problem : SPOJ – QTREE
+		 * Solution : Each edge has a number associated with it. Given 2 nodes A and B, we need to find
+		 * the edge on path from A to B with maximum value. Clearly we can break the path into A to
+		 * LCA( A, B ) and B to LCA( A, B ), calculate answer for each of them and take the maximum of
+		 * both. As mentioned above as the tree need not be balanced, it may take up to O( N ) to travel
+		 * from A to LCA( A, B ) and find the maximum. Let us use HLD as detailed above to solve the problem.
+		 */
 		Random ra = new Random(0);
 		for (int size = 2; size <= 20; size++) {
 			for (int tests = 0; tests < 100; tests++) {
@@ -828,8 +1253,9 @@ public class HeavyLightDecompositionTest {
 	@Test
 	public void testPerformance() {
 		Random ra = new Random(0);
-		int size = 10000;
-		for (int tests = 0; tests < 20; tests++) {
+		int size = 100000;
+		for (int tests = 0; tests < 5; tests++) {
+			long time = System.currentTimeMillis();
 			ArrayList<ArrayList<Integer>> g = new ArrayList<>();
 			ArrayList<ArrayList<Integer>> cost = new ArrayList<>();
 			for (int i = 0; i < size; i++) {
@@ -847,7 +1273,7 @@ public class HeavyLightDecompositionTest {
 			}
 			
 			HLD hld = new HLD(g, cost, -1);
-			for (int i = 0; i < size*10; i++) {
+			for (int i = 0; i < size; i++) {
 				boolean query = ra.nextBoolean();
 				if (query) {
 					int start = ra.nextInt(size);
@@ -863,7 +1289,99 @@ public class HeavyLightDecompositionTest {
 					hld.set_tree(a, b, c);
 				}
 			}
+			time = System.currentTimeMillis() - time;
+			System.out.println("Total time: " + time);
 		}
 	}
 	
+	public static void generateTree(Random ra, int N, ArrayList<ArrayList<Integer>> g) {
+		for (int i = 0; i < N; i++) {
+			g.add(new ArrayList<Integer>());
+		}
+		for (int i = 1; i < N-1; i++) {
+			int oldNode = ra.nextInt(i);
+			int newNode = i;
+			g.get(oldNode).add(newNode);
+			g.get(newNode).add(oldNode);
+		}
+	}
+		
+//	@Test
+//	public void testQueriesHLD2() {
+//		/**
+//		 * Is C on the path from A to B?
+//		 */
+//		
+//		Random rand = new Random(0);
+//		int maxSize = 10;
+//		int numTests = 10000;
+//		
+//		for (int test = 0; test < numTests; test++) {
+//			ArrayList<ArrayList<Integer>> g = new ArrayList<>();
+//			int N = rand.nextInt(maxSize) +1;
+//			generateTree(rand, N, g);
+//			
+//			Tree[] tree = adjacencyListToTree(g);
+//			HLD2 hld = new HLD2(g, g, -1);
+//
+//			for (int q = 0; q < N; q++) {
+//				int a = rand.nextInt(N);
+//				int b = rand.nextInt(N);
+//				int c = rand.nextInt(N);
+//								
+//				
+//			}
+//			for (int i = 0; i < N; i++) {
+//				boolean query = rand.nextBoolean();
+//				if (query) {
+//					for (int start = 0; start < size; start++) {
+//						for (int end = 0; end < size; end++) {
+//							Stack<int[]> s = new Stack<>();
+//							int[] top = {start, 0};
+//							s.add(top);
+//							BitSet visited = new BitSet();
+//							int totalCost = -1;
+//							while (!s.isEmpty()) {
+//								top = s.pop();
+//								if (visited.get(top[0])) {
+//									continue;
+//								}
+//								if (top[0] == end) {
+//									totalCost = top[1];
+//									break;
+//								}
+//								visited.set(top[0]);
+//								ArrayList<Integer> children = g.get(top[0]); 
+//								for (int j = 0; j < children.size(); j++) {
+//									s.add(new int[]{children.get(j), top[1] + cost.get(top[0]).get(j)});
+//								}
+//							}
+//							if (hld.query(start, end) != totalCost) {
+//								hld.query(start, end);
+//							}
+//							assertEquals(hld.query(start, end), totalCost);
+//						}
+//					}
+//				} else {
+//					// update random cost
+//					int a = rand.nextInt(size);
+//					int bIdx = rand.nextInt(g.get(a).size());
+//					int c = rand.nextInt(100);
+//					cost.get(a).set(bIdx, c);
+//					boolean done = false;
+//					int b = g.get(a).get(bIdx);
+//					for (int j = 0; j < g.get(b).size(); j++) {
+//						if (g.get(b).get(j) == a) {
+//							cost.get(b).set(j, c);
+//							done = true;
+//							break;
+//						}
+//					}
+//					assertTrue(done);
+//					
+//					hld.set_tree(a, b, c);
+//				}
+//			}
+//		}
+//	}
 }

@@ -42,6 +42,18 @@ public class VariousAlgorithms {
 	public static boolean getBitL(long value, int idx) {
 		return (value & (1L << idx)) != 0;
 	}
+	
+	/*******************************************************************************************************************************
+	 * In-place array reverse
+	 */
+    public static void reverse(int[] a) {
+    	int N = a.length;
+    	for (int i = 0; i < N/2; i++) {
+    		int temp = a[i];
+    		a[i] = a[N - i - 1];
+    		a[N - i - 1] = temp;
+		}
+    }
 
 	/*******************************************************************************************************************************
 	 * Disjoint-set data structure, also called a union–find data structure or merge–find set, is a data structure that keeps track
@@ -526,10 +538,10 @@ public class VariousAlgorithms {
 	public void all_combinations2(int list[]) {
 		int len = list.length;
 		int N = 1 << len;
-		for (int n = 0; n < N; n++) {
+		for (int j = 0; j < N; j++) {
 			boolean[] active = new boolean[len];
 			for (int i = 0; i < len; i++) {
-				if (((1 << i) & n) != 0) {
+				if (((1 << i) & j) != 0) {
 					active[i] = true;
 				}
 			}
@@ -1132,8 +1144,27 @@ public class VariousAlgorithms {
 	 */
 	public static boolean collinear(long x1, long y1, long x2, long y2, long x3, long y3) {
 		return (x2-x1) * (y3-y1) == (x3 - x1) * (y2 - y1);
-	} 
-
+	}
+	
+	/*******************************************************************************************************************************
+	 * A linear congruential generator (LCG) is an algorithm that yields a sequence of pseudo-randomized numbers calculated with
+	 * a discontinuous piecewise linear equation. The method represents one of the oldest and best-known pseudorandom number
+	 * generator algorithms.[1] The theory behind them is relatively easy to understand, and they are easily implemented and fast,
+	 * especially on computer hardware which can provide modulo arithmetic by storage-bit truncation.
+	 * 
+	 * An easy way to "hash" a sequence of numbers. These LCG constanst are from C++11's minstd_rand.
+	 */
+	public static int LCG(int x) {
+		return (1103515245 * x + 12345) % ((1 << 31) -1);
+	}
+	
+	/*******************************************************************************************************************************
+	 * a long LCG
+	 */
+	public static long LCG(long x) {
+		return (2862933555777941757L * x + 3037000493L) % ((1L << 63) -1);
+	}
+	
 	/*******************************************************************************************************************************
 	 * Just a HashMap wrapper to make counting easier
 	 */

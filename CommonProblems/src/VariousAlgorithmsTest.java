@@ -339,4 +339,34 @@ public class VariousAlgorithmsTest {
 			}
 		}
 	}
+	
+	@Test
+	public void LCAInt() {
+		HashSet<Integer> set = new HashSet<>();
+		int collisions = 0;
+		int x = 0;
+		for (int i = 0; i < 2000000; i++) {
+			if (set.contains(x)) {
+				collisions++;
+			}
+			set.add(x);
+			x = VariousAlgorithms.LCG(x); 
+		}
+		assertEquals(collisions, 0);
+	}
+	
+	@Test
+	public void LCALong() {
+		HashSet<Long> set = new HashSet<>();
+		int collisions = 0;
+		long x = 0;
+		for (int i = 0; i < 2000000; i++) {
+			if (set.contains(x)) {
+				collisions++;
+			}
+			set.add(x);
+			x = VariousAlgorithms.LCG(x); 
+		}
+		assertEquals(collisions, 0);
+	}
 }

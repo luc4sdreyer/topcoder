@@ -1,16 +1,6 @@
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.PriorityQueue;
-import java.util.Queue;
-import java.util.Random;
-import java.util.Scanner;
-import java.util.Stack;
-import java.util.TreeSet;
+import java.util.*;
 
 import org.junit.Test;
 
@@ -354,18 +344,19 @@ public class GraphAlgorithms {
 		int[] depth;			// The depth
 		int[] parent;			// The parent of each node 
 		int[] component;		// Marks each connected component. Most problems have just one component 
-		int[] biConnected;		// Marks each biconnected component. Cut vertices cannot belong to a biconnected component (-1)
+		int[] biConnected;		// Marks each biconnected component. Cut vertices cannot belong to a biconnected component (-1). 
 		boolean[] cutVertex;	// Marks cut vertices
 		int[] low;				// Used as part of the algorithm
 		int[] color;			// Tracks visited status
 		int N;					// Size of the graph
 		int numComponents;		// Number of components
+		int[] componentSize;	// Component size
 		ArrayList<ArrayList<Integer>> g;
 		
 		// A cut edge is an edge that when removed it creates more components than previously in the graph.
 		// A graph can have cut vertices without cut edges, but not the other way around. Also know as a bridge.
 		// More info: https://en.wikipedia.org/wiki/Bridge_(graph_theory)
-		HashMap<Integer, ArrayList<Integer>> cutEdge;
+		HashMap<Integer, HashSet<Integer>> cutEdge;
 		
 		public CutVertices(ArrayList<ArrayList<Integer>> graph) {
 			N = graph.size();
@@ -379,7 +370,7 @@ public class GraphAlgorithms {
 			cutVertex = new boolean[N];
 			cutEdge = new HashMap<>();
 			for (int i = 0; i < N; i++) {
-				cutEdge.put(i, new ArrayList<Integer>());
+				cutEdge.put(i, new HashSet<Integer>());
 			}
 			
 			for (int i = 0; i < N; i++) {
@@ -398,6 +389,11 @@ public class GraphAlgorithms {
 					biConnected[i] = bicomp++;
 					dfsSimple(i);
 				}
+			}
+			
+			componentSize = new int[numComponents];
+			for (int i = 0; i < N; i++) {
+				componentSize[component[i]]++;
 			}
 		}
 				
@@ -450,6 +446,384 @@ public class GraphAlgorithms {
 	        color[top] = 2;
 		}
 	}
+
+	/*******************************************************************************************************************************
+	 * Block Cut Tree
+	 * 
+	 * A block is a connected graph which does not have any cut edge. This expands on the idea of a biconnected component by
+	 * including the cut vertices on the borders of the the biconnected component. The number of blocks and connected components
+	 * are the same for any graph, but vertices (specifically cut vertices) can be part of more than one block.
+	 * 
+	 * This method breaks up a graph into a tree consisting of one vertex per block and one vertex per cut vertex. 
+	 * 
+	 * More info on block cut trees:
+	 * http://www.math.ucsd.edu/~jverstra/154-part4-2014.pdf
+	 * http://compalg.inf.elte.hu/~tony/Oktatas/TDK/FINAL/Chap%205.PDF
+	 * 
+	 * Based on http://www.geeksforgeeks.org/biconnected-components/
+	 */
+
+	public static class BlockCutTree
+	{
+	    public HashMap<Integer, Integer> vertexToTreeNode; // Works only for vertices that are NOT cvs.
+		private int V, E; // No. of vertices & Edges respectively
+	 
+	    // Count is number of biconnected components. time is
+	    // used to find discovery times
+	    int count = 0, time = 0;
+	    
+	    static boolean print = false;
+		private CutVertices cv;
+		private BCTree[] cvTree;
+		private BCTree[] blockTree;
+		private ArrayList<HashSet<Integer>> components;
+		private ArrayList<HashSet<Integer>> vertexToBlock;
+		private BCTree[][] trees;
+		private ArrayList<ArrayList<Integer>> g;
+	 
+	    public static class Edge
+	    {
+	        int u;
+	        int v;
+	        Edge(int u, int v)
+	        {
+	            this.u = u;
+	            this.v = v;
+	        }
+	    };
+	 
+	    //Constructor
+	    // G is used directly (zero copy)
+	    BlockCutTree(ArrayList<ArrayList<Integer>> g)
+	    {
+	    	this.g = g;
+	        V = g.size();
+	        E = 0;
+	        
+			if (BlockCutTree.print) {
+				System.out.println();
+				System.out.println(g.size());
+				for (int i = 0; i < g.size(); i++) {
+					System.out.println(i);
+				}
+				for (int i = 0; i < g.size(); i++) {
+					for (Integer j: g.get(i)) {
+						if (j > i) {
+							System.out.println(i + " " + j);
+						}
+					}
+				}
+			}
+	    }
+	 
+	    //Function to add an edge into the graph
+	    void addEdge(int v,int w)
+	    {
+	        g.get(v).add(w);
+	        g.get(w).add(v);
+	        E += 2;
+	    }
+	 
+	    //Function to add an edge into the graph
+	    void addEdgeSingle(int v,int w)
+	    {
+	        g.get(v).add(w);
+	        E++;
+	    }
+
+		
+		public static class SearchNode {
+			int block;
+			BCTree tree;
+			public SearchNode(int block, BCTree tree) {
+				this.block = block;
+				this.tree = tree;
+			}
+		}
+
+		public static class BCTree extends Tree {
+
+//			Tree parent;
+//			ArrayList<Tree> children;
+//			int id;
+//			int level;
+			
+			boolean cv;
+			int originalId;
+			HashSet<Integer> members;
+			//ArrayList<BCTree> children;
+			
+			public BCTree(boolean cv, int originalId, int id) {
+				super(id, 0);
+				this.cv = cv;
+				this.originalId = originalId;
+				this.members = new HashSet<>();
+				this.parent = null;
+				this.children = new ArrayList<>();
+			}
+			
+			public BCTree addChild(boolean cv, int originalId, int id) {
+				BCTree child = new BCTree(cv, originalId, id);
+				child.parent = this;
+				child.parent.children.add(child);
+				child.level = this.level +1;
+				return child;
+			}
+
+			public String toString() {
+				String me = (cv ? "c" : "b") + originalId + ": (" ;
+				boolean first = true;
+				for (Tree child: this.children) {
+					BCTree realChild = (BCTree)child;
+					if (!first) {
+						me += ", ";
+					}
+					me += (realChild.cv ? "c" : "b") + realChild.originalId;
+					first = false;
+				}
+				return me + ")";
+			}
+		}
+	 
+	    // A recursive function that finds and prints strongly connected
+	    // components using DFS traversal
+	    // u --> The vertex to be visited next
+	    // disc[] --> Stores discovery times of visited vertices
+	    // low[] -- >> earliest visited vertex (the vertex with minimum
+	    //             discovery time) that can be reached from subtree
+	    //             rooted with current vertex
+	    // *st -- >> To store visited edges
+	    void BCCUtil(int u, int disc[], int low[], LinkedList<Edge>st,
+	                 int parent[])
+	    {
+	 
+	        // Initialize discovery time and low value
+	        disc[u] = low[u] = ++time;
+	        int children = 0;
+	        boolean singleVertex = true;
+	 
+	        // Go through all vertices adjacent to this
+	        Iterator<Integer> it = g.get(u).iterator();
+	        while (it.hasNext())
+	        {
+	        	singleVertex = false;
+	            int v = it.next();  // v is current adjacent of 'u'
+	 
+	            // If v is not visited yet, then recur for it
+	            if (disc[v] == -1)
+	            {
+	                children++;
+	                parent[v] = u;
+	 
+	                // store the edge in stack
+	                st.add(new Edge(u,v));
+	                BCCUtil(v, disc, low, st, parent);
+	 
+	                // Check if the subtree rooted with 'v' has a
+	                // connection to one of the ancestors of 'u'
+	                // Case 1 -- per Strongly Connected Components Article
+	                if (low[u] > low[v])
+	                    low[u] = low[v];
+	 
+	                // If u is an articulation point,
+	                // pop all edges from stack till u -- v
+	                if ( (disc[u] == 1 && children > 1) ||
+	                        (disc[u] > 1 && low[v] >= disc[u]) )
+	                {
+	                    while (st.getLast().u != u || st.getLast().v != v)
+	                    {
+	                    	if (print) {
+	                    		System.out.print(st.getLast().u + "--" + st.getLast().v + " ");
+	                    	}
+	                    	components.get(count).add(st.getLast().u);
+	                    	components.get(count).add(st.getLast().v);
+	                    	vertexToBlock.get(st.getLast().u).add(count);
+	                    	vertexToBlock.get(st.getLast().v).add(count);
+	                        st.removeLast();
+	                    }
+                    	if (print) {
+                    		System.out.println(st.getLast().u + "--" + st.getLast().v + " ");
+                    	}
+                    	components.get(count).add(st.getLast().u);
+                    	components.get(count).add(st.getLast().v);
+                    	vertexToBlock.get(st.getLast().u).add(count);
+                    	vertexToBlock.get(st.getLast().v).add(count);
+	                    st.removeLast();
+	 
+	                    count++;
+	                }
+	            }
+	 
+	            // Update low value of 'u' only of 'v' is still in stack
+	            // (i.e. it's a back edge, not cross edge).
+	            // Case 2 -- per Strongly Connected Components Article
+	            else if (v != parent[u] && disc[v] < low[u])
+	            {
+	                if (low[u]>disc[v])
+	                    low[u]=disc[v];
+	                st.add(new Edge(u,v));
+	            }
+	        }
+	        if (singleVertex) {
+            	components.get(count).add(u);
+            	vertexToBlock.get(u).add(count);
+                count++;
+	        }
+	    }
+	 
+		// The function to do DFS traversal. It uses BCCUtil()
+	    void BCC() {
+			this.cv = new CutVertices(g);
+//			System.out.println("time: done cv");
+			this.cvTree = new BCTree[V];
+			this.blockTree = new BCTree[V];
+			this.components = new ArrayList<>();
+			this.vertexToBlock = new ArrayList<>();
+			vertexToTreeNode = new HashMap<>();
+			
+	        int disc[] = new int[V];
+	        int low[] = new int[V];
+	        int parent[] = new int[V];
+	        LinkedList<Edge> st = new LinkedList<Edge>();
+	 
+	        // Initialize disc and low, and parent arrays
+	        for (int i = 0; i < V; i++)
+	        {
+	        	this.components.add(new HashSet<Integer>());
+	        	this.vertexToBlock.add(new HashSet<Integer>());
+	            disc[i] = -1;
+	            low[i] = -1;
+	            parent[i] = -1;
+	        }
+	        
+	        for (int i = 0; i < V; i++)
+	        {
+	            if (disc[i] == -1)
+	                BCCUtil(i, disc, low, st, parent);
+	 
+	            int j = 0;
+	 
+	            // If stack is not empty, pop all edges from stack
+	            while (st.size() > 0)
+	            {
+	                j = 1;
+		            if (print) {
+		            	System.out.print(st.getLast().u + "--" + st.getLast().v + " ");
+		            }
+                	components.get(count).add(st.getLast().u);
+                	components.get(count).add(st.getLast().v);
+                	vertexToBlock.get(st.getLast().u).add(count);
+                	vertexToBlock.get(st.getLast().v).add(count);
+	                st.removeLast();
+	            }
+	            if (j == 1)
+	            {
+		            if (print) {
+		            	System.out.println();
+		            }
+	                count++;
+	            }
+	        }
+
+	   	 
+//	        System.out.println("time: done dfs");
+
+	        // build BC tree
+	        boolean[] done = new boolean[V];
+	        trees = new BCTree[cv.numComponents][];
+	        for (int i = 0; i < V; i++) {
+	        	if (!done[i] && cv.cutVertex[i]) {
+	        		int treeId = 0;
+	        		BCTree root = new BCTree(true, i, treeId++);
+	        		cvTree[i] = root;
+	        		BCTree[] compTree = new BCTree[cv.componentSize[cv.component[i]] * 2];
+	        		trees[cv.component[i]] = compTree;
+	        		compTree[root.id] = root;
+	        		vertexToTreeNode.put(i, cvTree[i].id);
+	        		
+					Stack<SearchNode> q = new Stack<>();
+					SearchNode top = new SearchNode(-1, root);
+					q.add(top);
+					HashSet<Integer> cVisited = new HashSet<>();
+					HashSet<Integer> bVisited = new HashSet<>();
+					while (!q.isEmpty()) {
+						top = q.pop();
+						if (cVisited.contains(top.tree.originalId)) {
+							continue;
+						}
+						cVisited.add(top.tree.originalId);
+						done[top.tree.originalId] = true;
+
+						HashSet<Integer> comps = vertexToBlock.get(top.tree.originalId);
+						for (Integer comp: comps) {
+							if (bVisited.contains(comp)) {
+								continue;
+							}
+							bVisited.add(comp);
+							BCTree blockChild = cvTree[top.tree.originalId].addChild(false, comp, treeId++);
+							blockTree[comp] = blockChild;
+							compTree[blockChild.id] = blockChild;
+							
+							for (Integer member: components.get(comp)) {
+								blockChild.members.add(member);
+								if (!vertexToTreeNode.containsKey(member)) {
+									vertexToTreeNode.put(member, blockChild.id);
+								}
+								done[member] = true;
+								if (cv.cutVertex[member] && member != top.tree.originalId) {
+									if (cvTree[member] == null) {
+										cvTree[member] = blockChild.addChild(true, member, treeId++);
+										vertexToTreeNode.put(member, cvTree[member].id); // replace the block tree's id if this is cv
+										compTree[cvTree[member].id] = cvTree[member];
+										q.push(new SearchNode(-1, cvTree[member]));
+									}
+								}
+							}
+						}
+					}
+					trees[cv.component[i]] = Arrays.copyOf(compTree, treeId);
+	        	}
+			}
+
+//	        System.out.println("time: build t1");
+	        
+	        // blocks with no cvs
+	        for (int i = 0; i < V; i++) {
+	        	if (!done[i]) {
+	        		int treeId = 0;
+	        		BCTree[] compTree = new BCTree[1];
+	        		
+	        		// there will be only one block/component here. 
+					HashSet<Integer> comps = vertexToBlock.get(i);
+					for (Integer comp: comps) {
+						BCTree root = new BCTree(false, comp, treeId++);
+						BCTree blockChild = root;
+						blockTree[comp] = blockChild;
+						compTree[blockChild.id] = blockChild;
+		        		trees[cv.component[i]] = compTree;
+						
+						for (Integer member: components.get(comp)) {
+							blockChild.members.add(member);
+							if (!vertexToTreeNode.containsKey(member)) {
+								vertexToTreeNode.put(member, blockChild.id);
+							}
+							done[member] = true;
+							if (cv.cutVertex[member] && member != i) {
+								if (cvTree[member] == null) {
+									cvTree[member] = blockChild.addChild(true, member, treeId++);
+									compTree[cvTree[member].id] = cvTree[member];
+								}
+							}
+						}
+					}
+					trees[cv.component[i]] = Arrays.copyOf(compTree, treeId);
+	        	}
+	        }
+	        //System.out.println("time: build t2");
+	        System.currentTimeMillis();
+	    }
+	}
+
 
 	/*******************************************************************************************************************************
 	 * Minimum spanning tree, O(|E|.log|V|)
@@ -700,6 +1074,209 @@ public class GraphAlgorithms {
 	}
 	
 	/*******************************************************************************************************************************
+	 * Cycle detection in an undirected graph.
+	 * based on http://www.geeksforgeeks.org/detect-cycle-undirected-graph/
+	 */
+
+	// TODO: there is a bug here. It thinks that https://www.codechef.com/JUNE17/problems/SBTR is not cyclic
+	// Returns true if the graph contains a cycle, else false.
+	public int isCyclic(ArrayList<ArrayList<Integer>> g) {
+		// Mark all the vertices as not visited and not part of recursion stack
+		int N = g.size();
+		boolean[] visited = new boolean[N];
+		int[] parent = new int[N];
+
+		// DFS to assign parents
+		for (int u = 0; u < N; u++) {
+			if (!visited[u]) {
+				parent[u] = -1;
+
+				int top = u;
+				Stack<Integer> s = new Stack<>();
+				s.add(top);
+				
+				while (!s.isEmpty()) {
+					top = s.pop();
+					if (!visited[top]) {
+						visited[top] = true;
+						ArrayList<Integer> adj = g.get(top);
+						for (Integer i: adj) {
+							if (!visited[i]) {
+								parent[i] = top;
+								s.add(i);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// DFS to check parents
+		visited = new boolean[N];
+		for (int u = 0; u < N; u++) {
+			if (!visited[u]) {
+				parent[u] = -1;
+
+				int[] top = {u, -1};
+				Stack<int[]> s = new Stack<>();
+				s.add(top);
+				
+				while (!s.isEmpty()) {
+					top = s.pop();
+					if (!visited[top[0]]) {
+						visited[top[0]] = true;
+						ArrayList<Integer> adj = g.get(top[0]);
+						for (Integer i: adj) {
+							s.add(new int[]{i, top[0]});
+						}
+					} else if (parent[top[0]] != top[1]) {
+						// If an adjacent is visited and not parent of current vertex,
+						// then there is a cycle.
+						return top[0];
+					}
+				}
+			}
+		}
+		return -1;
+	}
+	
+	/*******************************************************************************************************************************
+	 * Lowest common ancestor in O(log(N)) time. O(N) preprocessing.
+	 * 
+	 * Takes 0-based array of Tree nodes as input.
+	 * 
+	 * Based on https://www.topcoder.com/community/data-science/data-science-tutorials/range-minimum-query-and-lowest-common-ancestor/
+	 */
+	public static class LCA {
+		int N;
+		int log2N;
+		int[] parent;
+		int[] level;
+		int[][] ancestor;
+
+		public LCA(int N, Tree[] tree) {
+			this.N = N;
+			this.log2N = 32 - Integer.numberOfLeadingZeros(N-1) +1;
+			
+			this.parent = new int[N];
+			this.level = new int[N];
+			this.ancestor = new int[N][log2N];
+			
+			int i, j;
+			
+			// Set up the parent array
+			parent[0] = - 1;
+			for (i = 1; i < N; i++) {
+				parent[i] = tree[i].parent.id;
+			}
+			
+			// Set up the level array
+			for (i = 0; i < N; i++) {
+				level[i] = tree[i].level;
+			}
+
+			// Set up the ancestor array
+			// Initialise every element in P with -1
+			for (i = 0; i < N; i++) {
+				for (j = 0; 1 << j < N; j++) {
+					ancestor[i][j] = -1;
+				}
+			}
+
+			// The first ancestor of every node i is T[i]
+			for (i = 0; i < N; i++) {
+				ancestor[i][0] = parent[i];
+			}
+
+			// Bottom up dynamic programming
+			for (j = 1; 1 << j < N; j++) {
+				for (i = 0; i < N; i++) {
+					if (ancestor[i][j - 1] != -1) {
+						ancestor[i][j] = ancestor[ancestor[i][j - 1]][j - 1];
+					}
+				}
+			}
+		}
+		
+		/**
+		 * Return the LCA nodes p and q. 
+		 */
+		public int query(int p, int q) {
+			int tmp, log, i;
+
+			// If p is situated on a higher level than q then we swap them
+			if (level[p] < level[q]) {
+				tmp = p;
+				p = q;
+				q = tmp;
+			}
+
+			// We compute the value of [log(L[p)]
+			for (log = 1; 1 << log <= level[p]; log++);
+			log--;
+
+			// We find the ancestor of node p situated on the same level,
+			// with q using the values in P.
+			for (i = log; i >= 0; i--) {
+				if (level[p] - (1 << i) >= level[q]) {
+					p = ancestor[p][i];
+				}
+			}
+
+			if (p == q) {
+				return p;
+			}
+
+			// We compute LCA(p, q) using the values in P
+			for (i = log; i >= 0; i--) {
+				if (ancestor[p][i] != -1 && ancestor[p][i] != ancestor[q][i]) {
+					p = ancestor[p][i];
+					q = ancestor[q][i];
+				}
+			}
+
+			return parent[p];
+		}
+	}
+	
+	/*******************************************************************************************************************************
+	 * General use Tree class
+	 */
+	public static class Tree {
+		Tree parent;
+		ArrayList<Tree> children;
+		int id;
+		int level;
+		
+		public Tree(int id, int level) {
+			children = new ArrayList<>();
+			this.id = id;
+			this.level = level;
+			parent = null;
+		}
+
+		public Tree addChild(int id) {
+			Tree child = new Tree(id, this.level +1);
+			children.add(child);
+			child.parent = this;
+			return child;
+		}
+
+		public String toString() {
+			String me = id + ": (" ;
+			boolean first = true;
+			for (Tree child: this.children) {
+				if (!first) {
+					me += ", ";
+				}
+				me += child.id;
+				first = false;
+			}
+			return me + ")";
+		}
+	}
+	
+	/*******************************************************************************************************************************
 	 * Simple and fast Pair class
 	 */
 	public static class Pair<A extends Comparable<A>, B extends Comparable<B>> implements Comparable<Pair<A, B>> {
@@ -729,7 +1306,7 @@ public class GraphAlgorithms {
 			return compareFirst != 0 ? compareFirst : this.b.compareTo(o.b);
 		}
 	}
-	
+
 	/*******************************************************************************************************************************
 	 * Standard way of reading in a graph
 	 */
@@ -758,6 +1335,23 @@ public class GraphAlgorithms {
 	}
 
 	/*******************************************************************************************************************************
+	 * Graph builder
+	 */
+	public static class GraphBuilder {
+		ArrayList<ArrayList<Integer>> g = new ArrayList<>();
+		public GraphBuilder() {
+			g = new ArrayList<>();
+		}
+		void addEdge(int a, int b) {
+			while (g.size() <= a || g.size() <= b) {
+				g.add(new ArrayList<Integer>());
+			}
+			g.get(a).add(b);
+			g.get(b).add(a);
+		}
+	}
+
+	/*******************************************************************************************************************************
 	 * Graph generator
 	 */
 	public static void generateTree(Random ra, int N, int C) {
@@ -776,6 +1370,44 @@ public class GraphAlgorithms {
 			cost.get(oldNode).add(c);
 			cost.get(newNode).add(c);
 		}
+	}
+
+	/*******************************************************************************************************************************
+	 * Another graph generator
+	 */
+	public static Tree[] generateTree(Random ra, int N) {
+		Tree[] roots = new Tree[N];
+		roots[0] = new Tree(0, 0);
+		for (int i = 1; i < N; i++) {
+			int parent = ra.nextInt(i);
+			int child = i;
+			roots[child] = roots[parent].addChild(child);
+		}
+		return roots;
+	}
+	
+	/*******************************************************************************************************************************
+	 * Convert an adjacency list to a Tree
+	 */
+	public static Tree[] adjacencyListToTree(ArrayList<ArrayList<Integer>> g) {
+		int N = g.size();
+		Tree[] roots = new Tree[N];
+		roots[0] = new Tree(0, 0);
+		boolean[] visited = new boolean[N];
+		int top = 0;
+		Queue<Integer> q = new LinkedList<>();
+		while (!q.isEmpty()) {
+			top = q.poll();
+			if (!visited[top]) {
+				visited[top] = true;
+				for (Integer child: g.get(top)) {
+					if (!visited[child]) {
+						roots[child] = roots[top].addChild(child);
+					}
+				}
+			}
+		}
+		return roots;
 	}
 
 	/**
@@ -819,6 +1451,41 @@ public class GraphAlgorithms {
 			gset.get(b).add(a);
 			cost.get(a).add(c);
 			cost.get(b).add(c);
+		}
+	}
+
+	/**
+	 * Recurrent edges are allowed.
+	 */
+	public static void generateFastGraph(Random ra, int N, int M, ArrayList<ArrayList<Integer>> g) {
+		/**
+		ArrayList<ArrayList<Integer>> g = new ArrayList<>();
+		ArrayList<HashSet<Integer>> gset = new ArrayList<>();
+		ArrayList<ArrayList<Integer>> cost = new ArrayList<>();
+		*/
+		ArrayList<HashSet<Integer>> gset = new ArrayList<>();
+		for (int i = 0; i < N; i++) {
+			g.add(new ArrayList<Integer>());
+			gset.add(new HashSet<Integer>());
+		}
+		for (int i = 1; i < N-1; i++) {
+			int oldNode = ra.nextInt(i);
+			int newNode = i;
+			g.get(oldNode).add(newNode);
+			g.get(newNode).add(oldNode);
+		}
+		M = (int) Math.min(M, (N-1L)*N/2);
+		for (int i = 0; i < M - (N - 2); i++) {
+			int a = ra.nextInt(N);
+			int b = ra.nextInt(N);
+			while (a == b || gset.get(a).contains(b)) {
+				a = ra.nextInt(N);
+				b = ra.nextInt(N);
+			}
+			g.get(a).add(b);
+			g.get(b).add(a);
+			gset.get(a).add(b);
+			gset.get(b).add(a);
 		}
 	}
 	
@@ -968,6 +1635,75 @@ public class GraphAlgorithms {
 	}
 	
 	@Test
+	public void CycleDetectionTest() {
+		int numTests = 200;
+		int maxSize = 100;
+		Random rand = new Random(0);
+		for (int test = 0; test < numTests; test++) {
+			int N = rand.nextInt(maxSize) +2;
+			int M = rand.nextInt(N*(N-1)/2) +1;
+			
+			ArrayList<ArrayList<Integer>> g = new ArrayList<>();
+			ArrayList<HashSet<Integer>> gset = new ArrayList<>();
+			ArrayList<ArrayList<Integer>> cost = new ArrayList<>();
+			generateGraph(rand, N, M, 1, g, gset, cost);
+			
+			int node = isCyclic(g);
+			while (node >= 0) {
+				// delete the node that was part of a cycle
+				for (int j = 0; j < g.size(); j++) {
+					ArrayList<Integer> children = g.get(j);
+					for (int i = 0; i < children.size(); i++) {
+						while (children.contains(Integer.valueOf(node))) {
+							children.remove(Integer.valueOf(node));
+							g.get(node).remove(Integer.valueOf(i));
+						}
+					}
+				}
+				g.remove(node);
+
+				// rename nodes
+				for (int j = 0; j < g.size(); j++) {
+					ArrayList<Integer> children = g.get(j);
+					for (int i = 0; i < children.size(); i++) {
+						if (children.get(i) >= node) {
+							children.set(i, children.get(i)-1);	
+						}
+					}
+				}
+				node = isCyclic(g);
+			}
+			
+			// In a graph with no cycles, all the edges will be cut-edges, AKA a tree.
+			CutVertices cv = new CutVertices(g);
+			for (int j = 0; j < g.size(); j++) {
+				ArrayList<Integer> children = g.get(j);
+				for (int i = 0; i < children.size(); i++) {
+					assertTrue(cv.cutEdge.get(j).contains(children.get(i)));
+				}
+			}
+		}
+	}
+
+	@Test
+	public void BigCycleDetectionTest() {
+		int N = 1000000;	
+		ArrayList<ArrayList<Integer>> g = new ArrayList<>();
+		for (int i = 0; i < N; i++) {
+			g.add(new ArrayList<Integer>());
+		}
+		for (int i = 0; i < N; i++) {
+			int a = i;
+			int b = (i+1) % N;
+			g.get(a).add(b);
+			g.get(b).add(a);
+		}
+		
+		int node = isCyclic(g);
+		assertTrue(node >= 0);
+	}
+	
+	@Test
 	public void maxBpmTest() {
 		int n = 1000;
 		Random ra = new Random(0);
@@ -981,5 +1717,460 @@ public class GraphAlgorithms {
 		}
 
 		assertEquals(GraphAlgorithms.maxBPM(bpGraph), 551);
+	}
+	
+	@Test
+	public void testLCA() {
+		int numTests = 2000;
+		int maxSize = 200;
+		Random r = new Random(0);
+		for (int test = 0; test < numTests; test++) {
+			int N = r.nextInt(maxSize) + 1;
+			Tree[] tree = generateTree(r, N);
+			LCA lca = new LCA(N, tree);
+			for (int query = 0; query < numTests; query++) {
+				int a = r.nextInt(N);
+				int b = r.nextInt(N);
+				int actual = lca.query(a, b);
+				
+				if (tree[a].level < tree[b].level) {
+					int tmp = a;
+					a = b;
+					b = tmp;
+				}
+				Tree pa = tree[a];
+				Tree pb = tree[b];
+				while (pa.level > pb.level) {
+					pa = pa.parent;
+				}
+				
+				while (true) {
+					if (pa.id == pb.id) {
+						break;
+					}
+					pa = pa.parent;
+					pb = pb.parent;
+				}
+
+				int expected = pa.id;
+				assertEquals(expected, actual);
+			}
+		}
+	}
+	
+	@Test
+	public void testLCAPerformance() {
+		int numTests = 5;
+		int size = 100000;
+		Random r = new Random(0);
+		for (int test = 0; test < numTests; test++) {
+			int N = size;
+			Tree[] tree = generateTree(r, N);
+			
+			long time = System.currentTimeMillis();
+			LCA lca = new LCA(N, tree);
+			for (int query = 0; query < size; query++) {
+				int a = r.nextInt(N);
+				int b = r.nextInt(N);
+				lca.query(a, b);
+			}
+			time = System.currentTimeMillis() - time;
+			System.out.println("Time: "+ time);
+		}
+	}
+	
+	@Test
+	public void BlockCutTreeTest() {
+		// Given distinct vertices a, b, c: can you go from a -> c and b -> c without visiting any node except c more than once?
+		int numTests = 10000;
+		int maxSize = 9;
+		Random rand = new Random(0);
+		for (int test = 0; test < numTests; test++) {
+			int N = rand.nextInt(maxSize) +2;
+			//int N = maxSize;
+			int M = rand.nextInt(N*(N-1)/2) +1;
+			
+			ArrayList<ArrayList<Integer>> g = new ArrayList<>();
+			ArrayList<HashSet<Integer>> gset = new ArrayList<>();
+			ArrayList<ArrayList<Integer>> cost = new ArrayList<>();
+			generateGraph(rand, N, M, 1, g, gset, cost);
+			
+			BlockCutTree bc = new BlockCutTree(g);
+			bc.BCC();
+			LCA[] lca = new LCA[bc.trees.length];
+			for (int i = 0; i < lca.length; i++) {
+				lca[i] = new LCA(bc.trees[i].length, bc.trees[i]);
+			}
+			for (int a = 0; a < N; a++) {
+				for (int b = 0; b < N; b++) {
+					for (int c = 0; c < N; c++) {
+						if (bc.cv.component[a] == bc.cv.component[b]
+							&& bc.cv.component[a] == bc.cv.component[c] 
+							&& a != b && a != c && b != c
+							){
+							//System.out.println();
+							boolean correct = uniquePaths(g, a, b, c, bc.cv);
+							boolean mine = uniquePaths(g, a, b, c, bc, lca[bc.cv.component[a]], bc.trees[bc.cv.component[a]]);
+							if (correct != mine) {
+								BlockCutTree.print = true;
+								System.out.println("fail2");
+								bc = new BlockCutTree(g);
+								bc.BCC();
+								uniquePaths(g, a, b, c, bc.cv);
+								uniquePaths(g, a, b, c, bc, lca[bc.cv.component[a]], bc.trees[bc.cv.component[a]]);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	@Test
+	public void BlockCutTreePerfTest() {
+		// Given distinct vertices a, b, c: can you go from a -> c and b -> c without visiting any node except c more than once?
+		int numTests = 10;
+		int maxSize = 100000;
+		Random rand = new Random(0);
+
+		ArrayList<ArrayList<ArrayList<Integer>>> gs = new ArrayList<>();
+		for (int test = 0; test < numTests; test++) {
+			long time = System.currentTimeMillis();
+			int N = maxSize;
+			int M = 100000;
+			
+			ArrayList<ArrayList<Integer>> g = new ArrayList<>();
+			generateFastGraph(rand, N, M, g);
+			gs.add(g);
+			time = System.currentTimeMillis() - time;
+			System.out.println(time);
+			
+		}
+		System.out.println("done with graphs");
+		
+		for (int test = 0; test < numTests; test++) {
+			ArrayList<ArrayList<Integer>> g = gs.get(test);
+			int N = g.size();
+			long time = System.currentTimeMillis();
+			BlockCutTree bc = new BlockCutTree(g);
+			bc.BCC();
+			LCA[] lca = new LCA[bc.trees.length];
+			for (int i = 0; i < lca.length; i++) {
+				lca[i] = new LCA(bc.trees[i].length, bc.trees[i]);
+			}
+			for (int q = 0; q < N; q++) {
+				int a = rand.nextInt(N);
+				int b = rand.nextInt(N);
+				while (a == b) {
+					b = rand.nextInt(N);
+				}
+				int c = rand.nextInt(N);
+				while (a == c || b == c) {
+					c = rand.nextInt(N);
+				}
+				if (bc.cv.component[a] == bc.cv.component[b]
+					&& bc.cv.component[a] == bc.cv.component[c] 
+					&& a != b && a != c && b != c){
+					
+					uniquePaths(g, a, b, c, bc, lca[bc.cv.component[a]], bc.trees[bc.cv.component[a]]);
+				}
+			}
+			time = System.currentTimeMillis() - time;
+			System.out.println("time: " + time);
+		}
+	}
+	
+	public <E> boolean hasIntersection(HashSet<E> a, HashSet<E> b) {
+		@SuppressWarnings("unchecked")
+		HashSet<E> x = (HashSet<E>) a.clone();
+		x.retainAll(b);
+		return !x.isEmpty();
+	}
+	
+	public HashSet<Integer> getCvsOnPath(ArrayList<ArrayList<Integer>> g, int a, int b, BlockCutTree bc, LCA lca, Tree[] tree) {
+		// get all cvs on the path a->b
+		int comp = bc.cv.component[a];
+		int treeNodeA = bc.vertexToTreeNode.get(a);
+		int treeNodeB = bc.vertexToTreeNode.get(b);
+		int ancestor = lca.query(treeNodeA, treeNodeB);
+		HashSet<Integer> cvs = new HashSet<>();
+		
+		int current = treeNodeA;
+		while (current != ancestor) {
+			if (bc.trees[comp][current].cv) {
+				cvs.add(bc.trees[comp][current].originalId);
+			}
+			current = tree[current].parent.id;
+		}
+
+		current = treeNodeB;
+		while (current != ancestor) {
+			if (bc.trees[comp][current].cv) {
+				cvs.add(bc.trees[comp][current].originalId);
+			}
+			current = tree[current].parent.id;
+		}
+		
+		if (bc.trees[comp][ancestor].cv) {
+			cvs.add(bc.trees[comp][ancestor].originalId);
+		}
+		
+		return cvs;
+	}
+	
+	public boolean uniquePaths(ArrayList<ArrayList<Integer>> g, int a, int b, int c, BlockCutTree bcTree, LCA lca, Tree[] tree) {
+		HashSet<Integer> cvsA = getCvsOnPath(g, a, c, bcTree, lca, tree);
+		HashSet<Integer> cvsB = getCvsOnPath(g, b, c, bcTree, lca, tree);
+		cvsA.retainAll(cvsB);
+		cvsA.remove(c);
+		return cvsA.isEmpty();
+	}
+	
+	public HashSet<Integer> getCVs(ArrayList<ArrayList<Integer>> g, int a, int b, BlockCutTree bc, LCA lca, Tree[] tree) {
+		int comp = bc.cv.component[a];
+		int treeNodeA = bc.vertexToTreeNode.get(a);
+		int treeNodeB = bc.vertexToTreeNode.get(b);
+		int ancestor = lca.query(treeNodeA, treeNodeB);
+		HashSet<Integer> cvs = new HashSet<>();
+		
+		int current = treeNodeA;
+		while (current != ancestor) {
+			if (bc.trees[comp][current].cv) {
+				cvs.add(bc.trees[comp][current].originalId);
+			}
+			current = tree[current].parent.id;
+		}
+
+		current = treeNodeB;
+		while (current != ancestor) {
+			if (bc.trees[comp][current].cv) {
+				cvs.add(bc.trees[comp][current].originalId);
+			}
+			current = tree[current].parent.id;
+		}
+		
+		if (bc.trees[comp][ancestor].cv) {
+			cvs.add(bc.trees[comp][ancestor].originalId);
+		}
+		
+		return cvs;
+	}
+	
+	public boolean uniquePaths(ArrayList<ArrayList<Integer>> g, int a, int b, int c, CutVertices cv) {
+		// can you go from a -> c and b -> c without visiting any node except c more than once?
+
+		int len = g.size();
+		int N = 1 << len;
+		for (int j = 0; j < N; j++) {
+			boolean[] active = new boolean[len];
+			for (int i = 0; i < len; i++) {
+				if (((1 << i) & j) != 0) {
+					active[i] = true;
+				}
+			}
+			boolean[] visited = new boolean[len];
+			int top = a;
+			Queue<Integer> q = new LinkedList<>();
+			q.add(top);
+			boolean foundA = false;
+			while (!q.isEmpty()) {
+				top = q.poll();
+				if (!visited[top] && (active[top] || top == c)) {
+					visited[top] = true;
+					if (top == c) {
+						foundA = true;
+						break;
+					}
+					for (Integer adj: g.get(top)) {
+						q.add(adj);
+					}
+				}
+			}
+			
+			visited = new boolean[N];
+			top = b;
+			q = new LinkedList<>();
+			q.add(top);
+			boolean foundB = false;
+			while (!q.isEmpty()) {
+				top = q.poll();
+				if (!visited[top] && (!active[top] || top == c)) {
+					visited[top] = true;
+					if (top == c) {
+						foundB = true;
+						break;
+					}
+					for (Integer adj: g.get(top)) {
+						q.add(adj);
+					}
+				}
+			}
+			
+			if (foundA && foundB) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public HashSet<Integer> getCVs(ArrayList<ArrayList<Integer>> g, int a, int b, CutVertices cv) {
+		// Djikstra
+		// shortest path, but try to avoid cvs
+		PriorityQueue<int[]> q = new PriorityQueue<int[]>(10, new Comparator<int[]>(){
+			@Override
+			public int compare(int[] o1, int[] o2) {
+//				int comp = Integer.compare(o1[1], o2[1]); 
+//				if (comp == 0) {
+//					return Integer.compare(o2[3], o1[3]);
+//				}
+//				return comp;
+				int comp = Integer.compare(o1[1] + 10000 * o1[3], o2[1] + 10000 * o2[3]);
+				return comp;
+			}
+		});
+		// position, distance, parent, number of cvs
+		int[] top = new int[]{a, 0, -1, 0};
+		if (cv.cutVertex[top[0]]) {
+			top[3]++;
+		}
+		q.add(top);
+		HashSet<Integer> visited = new HashSet<>();
+		int[] parents = new int[g.size()];
+		Arrays.fill(parents, -1);
+		while (!q.isEmpty()) {
+			top = q.poll();
+			if (visited.contains(top[0])) {
+				continue;
+			}
+			visited.add(top[0]);
+			parents[top[0]] = top[2];
+			if (top[0] == b) {
+				break;
+			}
+			ArrayList<Integer> adj = g.get(top[0]);
+			for (Integer i: adj) {
+				if (!visited.contains(i)) {
+					int numCvs = top[3];
+					if (cv.cutVertex[i]) {
+						numCvs++;
+					}
+					q.add(new int[]{i, top[1]+1, top[0], numCvs});
+				}
+			}
+		}
+		int current = b;
+		HashSet<Integer> cvs = new HashSet<>();
+		while (current != a) {
+			if (cv.cutVertex[current]) {
+				cvs.add(current);
+			}
+			current = parents[current]; 
+		}
+		return cvs;
+	}
+	
+	@Test
+	public void CCTest() {
+		ArrayList<ArrayList<Integer>> graph = new ArrayList<>();
+		int N = 6;
+		for (int i = 0; i < N; i++) {
+			graph.add(new ArrayList<Integer>());
+		}
+		graph.get(0).add(1);	graph.get(1).add(0);
+		graph.get(1).add(2);	graph.get(2).add(1);
+		graph.get(2).add(3);	graph.get(3).add(2);
+		graph.get(3).add(4);	graph.get(4).add(3);
+		graph.get(3).add(5);	graph.get(5).add(3);
+		graph.get(5).add(1);	graph.get(1).add(5);
+		
+		CutVertices cv = new CutVertices(graph);
+		System.out.println();
+	}
+
+	@Test
+	public void CC2Test() {
+		GraphBuilder g = new GraphBuilder();
+		g.addEdge(0, 1);
+		g.addEdge(1, 2);
+		g.addEdge(2, 3);
+		g.addEdge(3, 4);
+		g.addEdge(3, 5);
+		g.addEdge(5, 1);
+		BlockCutTree bct = new BlockCutTree(g.g);
+		bct.BCC();
+		assertEquals(bct.count, 3);
+		
+		g = new GraphBuilder();
+		g.addEdge(1, 0);
+		g.addEdge(1, 2);
+		g.addEdge(1, 6);
+		g.addEdge(2, 3);
+		g.addEdge(4, 2);
+		g.addEdge(4, 5);
+		g.addEdge(4, 6);
+		g.addEdge(6, 7);
+		bct = new BlockCutTree(g.g);
+		bct.BCC();
+		assertEquals(bct.count, 5);
+
+		g = new GraphBuilder();
+		g.addEdge(0, 1);
+		g.addEdge(1, 2);
+		g.addEdge(2, 3);
+		g.addEdge(3, 4);
+		g.addEdge(4, 5);
+		bct = new BlockCutTree(g.g);
+		bct.BCC();
+		assertEquals(bct.count, 5);
+		
+		g = new GraphBuilder();
+		g.addEdge(2, 0);
+		g.addEdge(2, 1);
+		g.addEdge(2, 3);
+		g.addEdge(2, 4);
+		g.addEdge(2, 5);
+		g.addEdge(2, 6);
+		g.addEdge(1, 0);
+		g.addEdge(3, 4);
+		g.addEdge(5, 6);
+		bct = new BlockCutTree(g.g);
+		bct.BCC();
+		assertEquals(bct.count, 3);
+		
+		g = new GraphBuilder();
+		g.addEdge(0, 1);
+		g.addEdge(1, 2);
+		g.addEdge(2, 0);
+		bct = new BlockCutTree(g.g);
+		bct.BCC();
+		assertEquals(bct.count, 1);
+	}
+
+	@Test
+	public void CC3Test() {
+		GraphBuilder gb = new GraphBuilder();
+		gb.addEdge(1, 0);
+		gb.addEdge(1, 2);
+		gb.addEdge(1, 6);
+		gb.addEdge(2, 3);
+		gb.addEdge(4, 2);
+		gb.addEdge(4, 5);
+		gb.addEdge(4, 6);
+		gb.addEdge(6, 7);
+		BlockCutTree g = new BlockCutTree(gb.g);
+		g.BCC();
+		assertEquals(g.count, 5);
+	}
+
+	public static void main(String[] args) {
+//		new GraphAlgorithms().BlockCutTreeTest();
+		
+		// increase stack size
+		new Thread(null, new Runnable() {
+            public void run() {
+            	new GraphAlgorithms().BlockCutTreePerfTest();
+            }
+        }, "1", 1 << 26).start();
+		
 	}
 }
