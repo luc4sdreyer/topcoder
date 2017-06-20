@@ -1,3 +1,4 @@
+package gen;
 import static org.junit.Assert.*;
 
 import java.util.*;
@@ -1237,16 +1238,85 @@ public class GraphAlgorithms {
 
 			return parent[p];
 		}
+		
+		/**
+		 * Return the inclusive length of the path from p to q. 
+		 */
+		public int pathLength(int p, int q) {
+			int lca = query(p, q);
+			// (p - LCA) + (q - LCA) + 1 to count the LCA, only once.
+			return level[p] + level[q] - 2*level[lca] + 1;
+		}
+		
+		private int pathLength(int p, int q, int lca) {
+			return level[p] + level[q] - 2*level[lca] + 1;
+		}
+		
+		/**
+		 * Return the (zero based) n'th node on the path from p to q.
+		 * nodeAtPosition(p, q, 0) == p and nodeAtPosition(p, q, pathLength-1) == q.
+		 * 
+		 * A similar technique can be used to check if node x is on the path, by checking the node at x's depth. 
+		 */
+		public int nodeAtPosition(int p, int q, int n) {
+			int tmp, log, i;
+			
+			int lca = query(p, q);
+			if (n >= pathLength(p, q, lca)) {
+				return -1;
+			}
+			
+			// Determine if n is on the path from p -> lca or lca.child -> q
+			if (pathLength(p, lca, lca) < n) {
+				q = lca;
+			} else {
+				p = lca;
+			}
+			return -1;
+		}
+		
+		public int nthAncestor(int p, int n) {
+			int tmp, log, i;
+			
+			if (n > level[p]) {
+				return -1;
+			}
+			// We compute the value of [log(L[p)]
+			for (log = 1; 1 << log <= level[p]; log++);
+			log--;
+
+			// We find the ancestor of node p situated on the same level,
+			// with q using the values in P.
+			for (i = log; i >= 0; i--) {
+				if (level[p] - (1 << i) >= level[q]) {
+					p = ancestor[p][i];
+				}
+			}
+
+			if (p == q) {
+				return p;
+			}
+
+			// We compute LCA(p, q) using the values in P
+			for (i = log; i >= 0; i--) {
+				if (ancestor[p][i] != -1 && ancestor[p][i] != ancestor[q][i]) {
+					p = ancestor[p][i];
+					q = ancestor[q][i];
+				}
+			}
+
+			return parent[p];
+		}
 	}
 	
 	/*******************************************************************************************************************************
 	 * General use Tree class
 	 */
 	public static class Tree {
-		Tree parent;
-		ArrayList<Tree> children;
-		int id;
-		int level;
+		public Tree parent;
+		public ArrayList<Tree> children;
+		public int id;
+		public int level;
 		
 		public Tree(int id, int level) {
 			children = new ArrayList<>();
@@ -1396,6 +1466,7 @@ public class GraphAlgorithms {
 		boolean[] visited = new boolean[N];
 		int top = 0;
 		Queue<Integer> q = new LinkedList<>();
+		q.add(top);
 		while (!q.isEmpty()) {
 			top = q.poll();
 			if (!visited[top]) {
@@ -1403,6 +1474,7 @@ public class GraphAlgorithms {
 				for (Integer child: g.get(top)) {
 					if (!visited[child]) {
 						roots[child] = roots[top].addChild(child);
+						q.add(child);
 					}
 				}
 			}
@@ -1760,7 +1832,7 @@ public class GraphAlgorithms {
 	
 	@Test
 	public void testLCAPerformance() {
-		int numTests = 5;
+		int numTests = 7;
 		int size = 100000;
 		Random r = new Random(0);
 		for (int test = 0; test < numTests; test++) {
@@ -1861,10 +1933,10 @@ public class GraphAlgorithms {
 			for (int q = 0; q < N; q++) {
 				int a = rand.nextInt(N);
 				int b = rand.nextInt(N);
+				int c = rand.nextInt(N);
 				while (a == b) {
 					b = rand.nextInt(N);
 				}
-				int c = rand.nextInt(N);
 				while (a == c || b == c) {
 					c = rand.nextInt(N);
 				}

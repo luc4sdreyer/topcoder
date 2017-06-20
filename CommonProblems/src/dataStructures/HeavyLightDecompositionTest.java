@@ -2,26 +2,15 @@ package dataStructures;
 
 import static org.junit.Assert.*;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Random;
-import java.util.Stack;
-import java.util.StringTokenizer;
+import java.io.*;
+import java.util.*;
 
 import org.junit.Test;
 
-import com.sun.xml.internal.bind.v2.model.core.ID;
+import gen.GraphAlgorithms;
+import gen.GraphAlgorithms.BlockCutTree;
+import gen.GraphAlgorithms.LCA;
+import gen.GraphAlgorithms.Tree;
 
 
 
@@ -666,7 +655,6 @@ public class HeavyLightDecompositionTest {
 		int log2N;
 		int root;
 		int maxDepth = 0;
-		ArrayList<ArrayList<Integer>> cost;
 		
 		// With respect to a node
 		int[] depth;
@@ -683,18 +671,17 @@ public class HeavyLightDecompositionTest {
 		int[] getChainLength;
 		SegmentTree[] tree;
 		
-		public HLD2(ArrayList<ArrayList<Integer>> g, ArrayList<ArrayList<Integer>> cost, int inRoot) {
+		public HLD2(ArrayList<ArrayList<Integer>> g, int[] cost, int inRoot) {
 			N = g.size();
 			log2N =  32 - Integer.numberOfLeadingZeros(N - 1);
 			this.g = g;
-			this.cost = cost;
+			this.nodeCost = cost;
 			this.parent = new int[N]; 	// -1 for root
 			this.depth = new int[N];	// 0 for root node
 			this.subtreeSize = new int[N];
 			this.leaf = new boolean[N];
 			this.chainId = new int[N];
 			this.chainPosition = new int[N];
-			this.nodeCost = new int[N];
 			this.getChainHead = new int[N];
 			this.getChainLength = new int[N];
 			this.ancestor = new int[N][log2N];
@@ -736,12 +723,10 @@ public class HeavyLightDecompositionTest {
 			while (!queue.isEmpty()) {
 				int top = queue.poll();
 				ArrayList<Integer> children = g.get(top);
-				ArrayList<Integer> costs = cost.get(top);
 				for (int i = 0; i < children.size(); i++) {
 					int childIdx = children.get(i);
 					if (depth[childIdx] == -1) {
 						parent[childIdx] = top;
-						nodeCost[childIdx] = costs.get(i);
 						ancestor[childIdx][0] = top;
 						depth[childIdx] = depth[top]+1;
 						maxDepth = Math.max(maxDepth, depth[childIdx]);
@@ -876,30 +861,29 @@ public class HeavyLightDecompositionTest {
 		}
 		
 		/**
-		 * Each edge has a cost, but this data structure requires vertex costs. So each vertex is given the cost of the 
-		 * edge towards its parent. This works because this is a tree, not a general graph with cycles.  
+		 * Query on [u, lca) + [v, lca) + lca 
 		 */
-		public int query(int u, int v, int searchValue) {
+		public int query(int u, int v) {
 			int lca = LCA(u, v);
 			int costU = tree[0].IDENTITY;
 			if (lca != u) {
-				costU = queryUp(u, lca, searchValue);
+				costU = queryUp(u, lca);
 			}
 			int costV = tree[0].IDENTITY;
 			if (lca != v) {
-				costV = queryUp(v, lca, searchValue);
+				costV = queryUp(v, lca);
 			}
-			return tree[0].function(costU, costV);
+			return tree[0].function(nodeCost[lca], tree[0].function(costU, costV));
 		}
 		
-		public int queryUp(int child, int ansc, int searchValue) {
+		public int queryUp(int child, int ansc) {
 			int res = tree[0].IDENTITY;
 			while (true) {
 				if (chainId[child] != chainId[ansc]) {
-					res = tree[0].function(res, tree[chainId[child]].get(0, chainPosition[child], searchValue));
+					res = tree[0].function(res, tree[chainId[child]].get(0, chainPosition[child]));
 					child = parent[getChainHead[chainId[child]]];
 				} else {
-					res = tree[0].function(res, tree[chainId[child]].get(chainPosition[ansc]+1, chainPosition[child], searchValue));
+					res = tree[0].function(res, tree[chainId[child]].get(chainPosition[ansc]+1, chainPosition[child]));
 					break;
 				}
 			}
@@ -926,17 +910,13 @@ public class HeavyLightDecompositionTest {
 		 * This function can be any associative binary function. For example sum, min, max, bitwise and, gcd. 
 		 */
 		protected int function(int a, int b) {
-			if (a == searchValue || b == searchValue) {
-				return searchValue;
-			}
-			return -1;
+			return a+b;
 		}
 
 		/**
 		 * The value of IDENTITY should be such that f(IDENTITY, x) = x, e.g. 0 for sum, +infinity for min, -infinity for max, and 0 for gcd.
 		 */
-		protected int IDENTITY = -1;
-		private int searchValue = IDENTITY;
+		protected int IDENTITY = 0;
 
 		public SegmentTree(int[] b) {
 			n = (int) (Math.log10(b.length)/Math.log10(2))+1;
@@ -970,8 +950,7 @@ public class HeavyLightDecompositionTest {
 		/**
 		 * Get the function over the interval [a, b]. Time: O(log n)
 		 */
-		public int get(int i, int j, int searchValue) {
-			this.searchValue = searchValue;
+		public int get(int i, int j) {
 			int res = IDENTITY, height = 0; j++;
 			while (i+(1<<height) <= j) {
 				while ((i&((1<<(height+1))-1)) == 0 && i+(1<<(height+1)) <= j) height++;
@@ -1018,6 +997,14 @@ public class HeavyLightDecompositionTest {
 	public static PrintWriter out;
 	
 	public static void HLD() {
+		InputStream inputStream = null;
+//		inputStream = System.in;
+		inputStream = new ByteArrayInputStream(intputString.getBytes());
+		OutputStream outputStream = System.out;
+		in = new InputReader(inputStream);
+		out = new PrintWriter(outputStream, true);
+//		out = new PrintWriter(outputStream, false); // enable this for ludicrous speed
+		
 		Random ra = new Random(0); 
 				
 		int tests = in.nextInt();
@@ -1045,6 +1032,8 @@ public class HeavyLightDecompositionTest {
 			}
 			
 		}
+
+		out.close();
 	}
 
 	static String intputString = 
@@ -1075,17 +1064,7 @@ public class HeavyLightDecompositionTest {
 			;
 	
 	public static void main(String[] args) {
-		InputStream inputStream = null;
-//		inputStream = System.in;
-		inputStream = new ByteArrayInputStream(intputString.getBytes());
-		OutputStream outputStream = System.out;
-		in = new InputReader(inputStream);
-		out = new PrintWriter(outputStream, true);
-//		out = new PrintWriter(outputStream, false); // enable this for ludicrous speed
-
-		HLD();
-		
-		out.close();
+		new HeavyLightDecompositionTest().testQueriesHLD2();
 	}
 
 	public static class InputReader {
@@ -1298,7 +1277,7 @@ public class HeavyLightDecompositionTest {
 		for (int i = 0; i < N; i++) {
 			g.add(new ArrayList<Integer>());
 		}
-		for (int i = 1; i < N-1; i++) {
+		for (int i = 1; i < N; i++) {
 			int oldNode = ra.nextInt(i);
 			int newNode = i;
 			g.get(oldNode).add(newNode);
@@ -1306,82 +1285,74 @@ public class HeavyLightDecompositionTest {
 		}
 	}
 		
-//	@Test
-//	public void testQueriesHLD2() {
-//		/**
-//		 * Is C on the path from A to B?
-//		 */
-//		
-//		Random rand = new Random(0);
-//		int maxSize = 10;
-//		int numTests = 10000;
-//		
-//		for (int test = 0; test < numTests; test++) {
-//			ArrayList<ArrayList<Integer>> g = new ArrayList<>();
-//			int N = rand.nextInt(maxSize) +1;
-//			generateTree(rand, N, g);
-//			
-//			Tree[] tree = adjacencyListToTree(g);
-//			HLD2 hld = new HLD2(g, g, -1);
-//
-//			for (int q = 0; q < N; q++) {
-//				int a = rand.nextInt(N);
-//				int b = rand.nextInt(N);
-//				int c = rand.nextInt(N);
-//								
-//				
-//			}
-//			for (int i = 0; i < N; i++) {
-//				boolean query = rand.nextBoolean();
-//				if (query) {
-//					for (int start = 0; start < size; start++) {
-//						for (int end = 0; end < size; end++) {
-//							Stack<int[]> s = new Stack<>();
-//							int[] top = {start, 0};
-//							s.add(top);
-//							BitSet visited = new BitSet();
-//							int totalCost = -1;
-//							while (!s.isEmpty()) {
-//								top = s.pop();
-//								if (visited.get(top[0])) {
-//									continue;
-//								}
-//								if (top[0] == end) {
-//									totalCost = top[1];
-//									break;
-//								}
-//								visited.set(top[0]);
-//								ArrayList<Integer> children = g.get(top[0]); 
-//								for (int j = 0; j < children.size(); j++) {
-//									s.add(new int[]{children.get(j), top[1] + cost.get(top[0]).get(j)});
-//								}
-//							}
-//							if (hld.query(start, end) != totalCost) {
-//								hld.query(start, end);
-//							}
-//							assertEquals(hld.query(start, end), totalCost);
-//						}
-//					}
-//				} else {
-//					// update random cost
-//					int a = rand.nextInt(size);
-//					int bIdx = rand.nextInt(g.get(a).size());
-//					int c = rand.nextInt(100);
-//					cost.get(a).set(bIdx, c);
-//					boolean done = false;
-//					int b = g.get(a).get(bIdx);
-//					for (int j = 0; j < g.get(b).size(); j++) {
-//						if (g.get(b).get(j) == a) {
-//							cost.get(b).set(j, c);
-//							done = true;
-//							break;
-//						}
-//					}
-//					assertTrue(done);
-//					
-//					hld.set_tree(a, b, c);
-//				}
-//			}
-//		}
-//	}
+	@Test
+	public void testQueriesHLD2() {
+		/**
+		 * What is the sum of nodes on path a->b?
+		 */
+		
+		Random rand = new Random(0);
+		int maxSize = 100;
+		int numTests = 50000;
+		
+		for (int test = 0; test < numTests; test++) {
+			ArrayList<ArrayList<Integer>> g = new ArrayList<>();
+			int N = rand.nextInt(maxSize) +4;
+			generateTree(rand, N, g);
+			
+			Tree[] tree = GraphAlgorithms.adjacencyListToTree(g);
+			LCA lca = new LCA(N, tree);
+			int[] costList = new int[N];
+			for (int i = 0; i < costList.length; i++) {
+				costList[i] = i;
+			}
+			
+			HLD2 hld = new HLD2(g, costList, -1);
+
+			for (int q = 0; q < N/10 +1; q++) {
+				int a = rand.nextInt(N);
+				int b = rand.nextInt(N);
+				
+				int correct = uniquePaths(tree, lca, a, b, costList);
+				int actual = hld.query(a, b);
+				
+				if (actual != correct) {
+			        
+					System.out.println();
+					for (int i = 0; i < g.size(); i++) {
+						System.out.println(i);
+					}
+					for (int i = 0; i < g.size(); i++) {
+						for (Integer j: g.get(i)) {
+							if (j > i) {
+								System.out.println(i + " " + j);
+							}
+						}
+					}
+					uniquePaths(tree, lca, a, b, costList);
+					hld.query(a, b);
+				}
+				
+				assertEquals(correct, actual);
+			}
+		}
+	}
+
+	private int uniquePaths(Tree[] tree, LCA lca, int a, int b, int[] cost) {
+		int sum = 0;
+		int ancestor = lca.query(a, b);
+		int current = a;
+		while (current != ancestor) {
+			sum += cost[current];
+			current = tree[current].parent.id;
+		}
+		
+		current = b;
+		while (current != ancestor) {
+			sum += cost[current];
+			current = tree[current].parent.id;
+		}
+		sum += cost[ancestor];
+		return sum;
+	}
 }

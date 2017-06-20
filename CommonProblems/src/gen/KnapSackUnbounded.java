@@ -1,3 +1,4 @@
+package gen;
 class Knapsack {
 	public static void main(String[] args) {
 		int[][] boxes = new int[1000][2];
