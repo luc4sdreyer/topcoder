@@ -1240,72 +1240,63 @@ public class GraphAlgorithms {
 		}
 		
 		/**
-		 * Return the inclusive length of the path from p to q. 
+		 * Return the length of the path from p to q.
+		 * len(p, p) == 0
+		 * len(p, q) == number of steps, or number of nodes between p and q, +1  
 		 */
 		public int pathLength(int p, int q) {
 			int lca = query(p, q);
-			// (p - LCA) + (q - LCA) + 1 to count the LCA, only once.
-			return level[p] + level[q] - 2*level[lca] + 1;
+			// (p - LCA) + (q - LCA)
+			return level[p] + level[q] - 2*level[lca];
 		}
 		
 		private int pathLength(int p, int q, int lca) {
-			return level[p] + level[q] - 2*level[lca] + 1;
+			return level[p] + level[q] - 2*level[lca];
 		}
 		
 		/**
 		 * Return the (zero based) n'th node on the path from p to q.
-		 * nodeAtPosition(p, q, 0) == p and nodeAtPosition(p, q, pathLength-1) == q.
+		 * nodeAtPosition(p, q, 0) == p and nodeAtPosition(p, q, pathLength(p, q)) == q.
 		 * 
 		 * A similar technique can be used to check if node x is on the path, by checking the node at x's depth. 
 		 */
 		public int nodeAtPosition(int p, int q, int n) {
-			int tmp, log, i;
-			
 			int lca = query(p, q);
-			if (n >= pathLength(p, q, lca)) {
+			if (n > pathLength(p, q, lca)) {
 				return -1;
 			}
 			
 			// Determine if n is on the path from p -> lca or lca.child -> q
-			if (pathLength(p, lca, lca) < n) {
-				q = lca;
+			if (n <= pathLength(p, lca, lca)) {
+				return nthAncestor(p, n);
 			} else {
-				p = lca;
+				n = pathLength(lca, q, lca) - (n - (level[p] - level[lca]));
+				return nthAncestor(q, n);
 			}
-			return -1;
 		}
 		
+		/**
+		 * Return the (zero based) n'th ancestor of p. nthAncestor(p, 0) == p. 
+		 */
 		public int nthAncestor(int p, int n) {
-			int tmp, log, i;
+			int log, i;
 			
 			if (n > level[p]) {
 				return -1;
 			}
+			int targetLevel = level[p] - n; 
+			
 			// We compute the value of [log(L[p)]
-			for (log = 1; 1 << log <= level[p]; log++);
+			for (log = 1; 1 << log <= level[p]; log++);			
 			log--;
 
-			// We find the ancestor of node p situated on the same level,
-			// with q using the values in P.
+			// We find the ancestor of node p situated the target level.
 			for (i = log; i >= 0; i--) {
-				if (level[p] - (1 << i) >= level[q]) {
+				if (level[p] - (1 << i) >= targetLevel) {
 					p = ancestor[p][i];
 				}
 			}
-
-			if (p == q) {
-				return p;
-			}
-
-			// We compute LCA(p, q) using the values in P
-			for (i = log; i >= 0; i--) {
-				if (ancestor[p][i] != -1 && ancestor[p][i] != ancestor[q][i]) {
-					p = ancestor[p][i];
-					q = ancestor[q][i];
-				}
-			}
-
-			return parent[p];
+			return p;
 		}
 	}
 	
@@ -1343,6 +1334,32 @@ public class GraphAlgorithms {
 				first = false;
 			}
 			return me + ")";
+		}
+	}
+	
+	public static void printTree(ArrayList<ArrayList<Integer>> g) {
+		for (int i = 0; i < g.size(); i++) {
+			System.out.println(i);
+		}
+		for (int i = 0; i < g.size(); i++) {
+			for (Integer j: g.get(i)) {
+				if (j > i) {
+					System.out.println(i + " " + j);
+				}
+			}
+		}
+	}
+	
+	public static void printTree(Tree[] g) {
+		for (int i = 0; i < g.length; i++) {
+			System.out.println(g[i].id);
+		}
+		for (int i = 0; i < g.length; i++) {
+			for (Tree j: g[i].children) {
+				if (j.id > g[i].id) {
+					System.out.println(g[i].id + " " + j.id);
+				}
+			}
 		}
 	}
 	
@@ -1829,6 +1846,83 @@ public class GraphAlgorithms {
 			}
 		}
 	}
+
+	@Test
+	public void testLCAnthAncestor() {
+		int numTests = 1000;
+		int maxSize = 1000;
+		Random r = new Random(0);
+		for (int test = 0; test < numTests; test++) {
+			int N = r.nextInt(maxSize) + 1;
+			Tree[] tree = generateTree(r, N);
+			LCA lca = new LCA(N, tree);
+			for (int query = 0; query < numTests; query++) {
+				int a = r.nextInt(N);
+				int n = r.nextInt(lca.level[a] + 1);
+				int actual = lca.nthAncestor(a, n);
+				
+				Tree pa = tree[a];
+				for (int i = 0; i < n; i++) {
+					pa = pa.parent;
+				}
+				int expected = pa.id;
+				assertEquals(expected, actual);
+			}
+		}
+	}
+
+	@Test
+	public void testLCAnthNodeOnPath() {
+		int numTests = 1000;
+		int maxSize = 1000;
+		Random r = new Random(0);
+		for (int test = 0; test < numTests; test++) {
+			int N = r.nextInt(maxSize) + 1;
+			Tree[] tree = generateTree(r, N);
+			
+			LCA lca = new LCA(N, tree);
+			for (int query = 0; query < numTests; query++) {
+				int a = r.nextInt(N);
+				int b = r.nextInt(N);
+				int n = lca.pathLength(a, b);
+				
+				// cheat a bit here (LCA is tested elsewhere)
+				int ancestor = lca.query(a, b);
+				
+				int[] nodes = new int[n+1];
+				Tree pa = tree[a];
+				int count = 0;
+				nodes[count] = pa.id;
+				while (pa.id != ancestor && count < n) {
+					pa = pa.parent;
+					count++;
+					if (count < n) {
+						nodes[count] = pa.id;
+					}
+				}
+				
+				int back = n;
+				pa = tree[b];
+				nodes[back] = pa.id;
+				while (pa.id != ancestor && back > count) {
+					nodes[back] = pa.id;
+					pa = pa.parent;
+					back--;
+					nodes[back] = pa.id;
+				}
+				
+				for (int i = 0; i <= n; i++) {
+					int actual = lca.nodeAtPosition(a, b, i);
+					int expected = nodes[i];
+					if (actual != expected) {
+						printTree(tree);
+						lca.nodeAtPosition(a, b, i);
+					}
+					assertEquals(expected, actual);
+				}
+			}
+		}
+	}
 	
 	@Test
 	public void testLCAPerformance() {
@@ -1854,7 +1948,7 @@ public class GraphAlgorithms {
 	@Test
 	public void BlockCutTreeTest() {
 		// Given distinct vertices a, b, c: can you go from a -> c and b -> c without visiting any node except c more than once?
-		int numTests = 10000;
+		int numTests = 100;
 		int maxSize = 9;
 		Random rand = new Random(0);
 		for (int test = 0; test < numTests; test++) {
@@ -1901,7 +1995,7 @@ public class GraphAlgorithms {
 	@Test
 	public void BlockCutTreePerfTest() {
 		// Given distinct vertices a, b, c: can you go from a -> c and b -> c without visiting any node except c more than once?
-		int numTests = 10;
+		int numTests = 5;
 		int maxSize = 100000;
 		Random rand = new Random(0);
 
@@ -2156,7 +2250,6 @@ public class GraphAlgorithms {
 		graph.get(5).add(1);	graph.get(1).add(5);
 		
 		CutVertices cv = new CutVertices(graph);
-		System.out.println();
 	}
 
 	@Test
@@ -2240,7 +2333,7 @@ public class GraphAlgorithms {
 		// increase stack size
 		new Thread(null, new Runnable() {
             public void run() {
-            	new GraphAlgorithms().BlockCutTreePerfTest();
+            	new GraphAlgorithms().testLCAnthNodeOnPath();
             }
         }, "1", 1 << 26).start();
 		
