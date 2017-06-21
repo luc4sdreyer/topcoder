@@ -77,17 +77,59 @@ public class Solution {
 			int a = q[i][0];
 			int b = q[i][1];
 			int c = q[i][2];
-			boolean unique = uniquePaths(g, a, b, c, bc, lca[bc.cv.component[a]], bc.trees[bc.cv.component[a]]);
-			if (unique) {
-				ret[i] = "YES";
+			if (bc.cv.component[a] == bc.cv.component[b] && bc.cv.component[b] == bc.cv.component[c]) {
+				boolean unique = uniquePaths(g, a, b, c, bc, lca[bc.cv.component[a]], bc.trees[bc.cv.component[a]]);
+				if (unique) {
+					ret[i] = "YES";
+				} else {
+					ret[i] = "NO";
+				}
 			} else {
 				ret[i] = "NO";
 			}
 		}
 		return ret;
     }
+	
+	public static boolean isInSubTree(int p, int newRoot, LCA lca) {
+		return lca.query(p, newRoot) == newRoot; 
+	}
     
-	public static boolean uniquePaths(ArrayList<ArrayList<Integer>> g, int a, int b, int c, BlockCutTree bcTree, LCA lca, Tree[] tree) {
+	public static boolean uniquePaths(ArrayList<ArrayList<Integer>> g, int a, int b, int c, BlockCutTree bcTree, LCA lca, BlockCutTree.BCTree[] tree) {
+		int treeNodeA = bcTree.vertexToTreeNode.get(a);
+		int treeNodeB = bcTree.vertexToTreeNode.get(b);
+		int treeNodeC = bcTree.vertexToTreeNode.get(c);
+		return uniquePathsTreeNodes(g, treeNodeA, treeNodeB, treeNodeC, bcTree, lca, tree);
+	}
+	
+	public static boolean uniquePathsTreeNodes(ArrayList<ArrayList<Integer>> g, int treeNodeA, int treeNodeB, int treeNodeC,
+			BlockCutTree bcTree, LCA lca, BlockCutTree.BCTree[] tree) {
+		
+		boolean result = false;
+		if (isInSubTree(treeNodeA, treeNodeC, lca)) {
+			if (treeNodeA == treeNodeC) {
+				result = true;
+			} else {
+				int childOfCtoA = lca.nodeAtPosition(treeNodeC, treeNodeA, 1);
+				result = !isInSubTree(treeNodeB, childOfCtoA, lca);
+			}
+		} else {
+			result = isInSubTree(treeNodeB, treeNodeC, lca);
+		}
+		if (!result) {
+			// special case: C is a CV on the edge of a block and A and B can get in via other routes
+			if (tree[treeNodeC].cv) {
+				int childOfCtoA = lca.nodeAtPosition(treeNodeC, treeNodeA, 1);
+				int childOfCtoB = lca.nodeAtPosition(treeNodeC, treeNodeB, 1);
+				if (childOfCtoA == childOfCtoB) {
+					result = uniquePathsTreeNodes(g, treeNodeA, treeNodeB, childOfCtoA, bcTree, lca, tree);
+				}
+			}
+		}
+		return result;
+	}
+    
+	public static boolean uniquePathsOld(ArrayList<ArrayList<Integer>> g, int a, int b, int c, BlockCutTree bcTree, LCA lca, Tree[] tree) {
 		HashSet<Integer> cvsA = getCvsOnPath(g, a, c, bcTree, lca, tree);
 		HashSet<Integer> cvsB = getCvsOnPath(g, b, c, bcTree, lca, tree);
 		cvsA.retainAll(cvsB);
@@ -126,18 +168,11 @@ public class Solution {
 		return cvs;
 	}
 
-	/*******************************************************************************************************************************
-	 * Lowest common ancestor in O(log(N)) time. O(N) preprocessing.
-	 * 
-	 * Takes 0-based array of Tree nodes as input.
-	 * 
-	 * Based on https://www.topcoder.com/community/data-science/data-science-tutorials/range-minimum-query-and-lowest-common-ancestor/
-	 */
 	public static class LCA {
 		int N;
 		int log2N;
-		int[] parent;
-		int[] level;
+		public int[] parent;
+		public int[] level;
 		int[][] ancestor;
 
 		public LCA(int N, Tree[] tree) {
@@ -223,7 +258,68 @@ public class Solution {
 
 			return parent[p];
 		}
+		
+		/**
+		 * Return the length of the path from p to q.
+		 * len(p, p) == 0
+		 * len(p, q) == number of steps, or number of nodes between p and q, +1  
+		 */
+		public int pathLength(int p, int q) {
+			int lca = query(p, q);
+			// (p - LCA) + (q - LCA)
+			return level[p] + level[q] - 2*level[lca];
+		}
+		
+		private int pathLength(int p, int q, int lca) {
+			return level[p] + level[q] - 2*level[lca];
+		}
+		
+		/**
+		 * Return the (zero based) n'th node on the path from p to q.
+		 * nodeAtPosition(p, q, 0) == p and nodeAtPosition(p, q, pathLength(p, q)) == q.
+		 * 
+		 * A similar technique can be used to check if node x is on the path, by checking the node at x's depth. 
+		 */
+		public int nodeAtPosition(int p, int q, int n) {
+			int lca = query(p, q);
+			if (n > pathLength(p, q, lca)) {
+				return -1;
+			}
+			
+			// Determine if n is on the path from p -> lca or lca.child -> q
+			if (n <= pathLength(p, lca, lca)) {
+				return nthAncestor(p, n);
+			} else {
+				n = pathLength(lca, q, lca) - (n - (level[p] - level[lca]));
+				return nthAncestor(q, n);
+			}
+		}
+		
+		/**
+		 * Return the (zero based) n'th ancestor of p. nthAncestor(p, 0) == p. 
+		 */
+		public int nthAncestor(int p, int n) {
+			int log, i;
+			
+			if (n > level[p]) {
+				return -1;
+			}
+			int targetLevel = level[p] - n; 
+			
+			// We compute the value of [log(L[p)]
+			for (log = 1; 1 << log <= level[p]; log++);			
+			log--;
+
+			// We find the ancestor of node p situated the target level.
+			for (i = log; i >= 0; i--) {
+				if (level[p] - (1 << i) >= targetLevel) {
+					p = ancestor[p][i];
+				}
+			}
+			return p;
+		}
 	}
+
 
 	/*******************************************************************************************************************************
 	 * Finding cut vertices, O(|E| + |V|)

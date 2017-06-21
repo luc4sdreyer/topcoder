@@ -5,6 +5,8 @@ import java.util.*;
 
 import org.junit.Test;
 
+import gen.GraphAlgorithms.BlockCutTree.BCTree;
+
 public class GraphAlgorithms {
 
 	/*******************************************************************************************************************************
@@ -1151,8 +1153,8 @@ public class GraphAlgorithms {
 	public static class LCA {
 		int N;
 		int log2N;
-		int[] parent;
-		int[] level;
+		public int[] parent;
+		public int[] level;
 		int[][] ancestor;
 
 		public LCA(int N, Tree[] tree) {
@@ -1948,8 +1950,10 @@ public class GraphAlgorithms {
 	@Test
 	public void BlockCutTreeTest() {
 		// Given distinct vertices a, b, c: can you go from a -> c and b -> c without visiting any node except c more than once?
-		int numTests = 100;
-		int maxSize = 9;
+		// uses a very slow method to verify (iterating through all permutations)
+		
+		int numTests = 50;
+		int maxSize = 8;
 		Random rand = new Random(0);
 		for (int test = 0; test < numTests; test++) {
 			int N = rand.nextInt(maxSize) +2;
@@ -1971,20 +1975,56 @@ public class GraphAlgorithms {
 				for (int b = 0; b < N; b++) {
 					for (int c = 0; c < N; c++) {
 						if (bc.cv.component[a] == bc.cv.component[b]
+								&& bc.cv.component[a] == bc.cv.component[c]
+								&& a != b && a != c && b != c){
+							boolean correct = uniquePaths(g, a, b, c, bc.cv);
+							boolean mine = uniquePaths(g, a, b, c, bc, lca[bc.cv.component[a]], bc.trees[bc.cv.component[a]]);
+							assertEquals(correct, mine);
+							if (correct != mine) {
+								BlockCutTree.print = true;
+								bc = new BlockCutTree(g);
+								bc.BCC();
+								uniquePathsOld(g, a, b, c, bc, lca[bc.cv.component[a]], bc.trees[bc.cv.component[a]]);
+								uniquePaths(g, a, b, c, bc, lca[bc.cv.component[a]], bc.trees[bc.cv.component[a]]);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	@Test
+	public void BlockCutTreeTestFast() {
+		// Given distinct vertices a, b, c: can you go from a -> c and b -> c without visiting any node except c more than once?
+		int numTests = 100;
+		int maxSize = 40;
+		Random rand = new Random(0);
+		for (int test = 0; test < numTests; test++) {
+			int N = rand.nextInt(maxSize) +2;
+			int M = rand.nextInt(N*(N-1)/2) +1;
+			
+			ArrayList<ArrayList<Integer>> g = new ArrayList<>();
+			ArrayList<HashSet<Integer>> gset = new ArrayList<>();
+			ArrayList<ArrayList<Integer>> cost = new ArrayList<>();
+			generateGraph(rand, N, M, 1, g, gset, cost);
+			
+			BlockCutTree bc = new BlockCutTree(g);
+			bc.BCC();
+			LCA[] lca = new LCA[bc.trees.length];
+			for (int i = 0; i < lca.length; i++) {
+				lca[i] = new LCA(bc.trees[i].length, bc.trees[i]);
+			}
+			for (int a = 0; a < N; a++) {
+				for (int b = 0; b < N; b++) {
+					for (int c = 0; c < N; c++) {
+						if (bc.cv.component[a] == bc.cv.component[b]
 							&& bc.cv.component[a] == bc.cv.component[c] 
 							&& a != b && a != c && b != c
 							){
-							//System.out.println();
-							boolean correct = uniquePaths(g, a, b, c, bc.cv);
+							boolean correct = uniquePathsOld(g, a, b, c, bc, lca[bc.cv.component[a]], bc.trees[bc.cv.component[a]]);
 							boolean mine = uniquePaths(g, a, b, c, bc, lca[bc.cv.component[a]], bc.trees[bc.cv.component[a]]);
-							if (correct != mine) {
-								BlockCutTree.print = true;
-								System.out.println("fail2");
-								bc = new BlockCutTree(g);
-								bc.BCC();
-								uniquePaths(g, a, b, c, bc.cv);
-								uniquePaths(g, a, b, c, bc, lca[bc.cv.component[a]], bc.trees[bc.cv.component[a]]);
-							}
+							assertEquals(correct, mine);
 						}
 					}
 				}
@@ -2003,7 +2043,7 @@ public class GraphAlgorithms {
 		for (int test = 0; test < numTests; test++) {
 			long time = System.currentTimeMillis();
 			int N = maxSize;
-			int M = 100000;
+			int M = 200000;
 			
 			ArrayList<ArrayList<Integer>> g = new ArrayList<>();
 			generateFastGraph(rand, N, M, g);
@@ -2084,7 +2124,45 @@ public class GraphAlgorithms {
 		return cvs;
 	}
 	
-	public boolean uniquePaths(ArrayList<ArrayList<Integer>> g, int a, int b, int c, BlockCutTree bcTree, LCA lca, Tree[] tree) {
+	public boolean isInSubTree(int p, int newRoot, LCA lca) {
+		return lca.query(p, newRoot) == newRoot; 
+	}
+	
+	public boolean uniquePaths(ArrayList<ArrayList<Integer>> g, int a, int b, int c, BlockCutTree bcTree, LCA lca, BCTree[] tree) {
+		int treeNodeA = bcTree.vertexToTreeNode.get(a);
+		int treeNodeB = bcTree.vertexToTreeNode.get(b);
+		int treeNodeC = bcTree.vertexToTreeNode.get(c);
+		return uniquePathsTreeNodes(g, treeNodeA, treeNodeB, treeNodeC, bcTree, lca, tree);
+	}
+	
+	public boolean uniquePathsTreeNodes(ArrayList<ArrayList<Integer>> g, int treeNodeA, int treeNodeB, int treeNodeC,
+			BlockCutTree bcTree, LCA lca, BCTree[] tree) {
+		
+		boolean result = false;
+		if (isInSubTree(treeNodeA, treeNodeC, lca)) {
+			if (treeNodeA == treeNodeC) {
+				result = true;
+			} else {
+				int childOfCtoA = lca.nodeAtPosition(treeNodeC, treeNodeA, 1);
+				result = !isInSubTree(treeNodeB, childOfCtoA, lca);
+			}
+		} else {
+			result = isInSubTree(treeNodeB, treeNodeC, lca);
+		}
+		if (!result) {
+			// special case: C is a CV on the edge of a block and A and B can get in via other routes
+			if (tree[treeNodeC].cv) {
+				int childOfCtoA = lca.nodeAtPosition(treeNodeC, treeNodeA, 1);
+				int childOfCtoB = lca.nodeAtPosition(treeNodeC, treeNodeB, 1);
+				if (childOfCtoA == childOfCtoB) {
+					result = uniquePathsTreeNodes(g, treeNodeA, treeNodeB, childOfCtoA, bcTree, lca, tree);
+				}
+			}
+		}
+		return result;
+	}
+	
+	public boolean uniquePathsOld(ArrayList<ArrayList<Integer>> g, int a, int b, int c, BlockCutTree bcTree, LCA lca, Tree[] tree) {
 		HashSet<Integer> cvsA = getCvsOnPath(g, a, c, bcTree, lca, tree);
 		HashSet<Integer> cvsB = getCvsOnPath(g, b, c, bcTree, lca, tree);
 		cvsA.retainAll(cvsB);
@@ -2333,7 +2411,7 @@ public class GraphAlgorithms {
 		// increase stack size
 		new Thread(null, new Runnable() {
             public void run() {
-            	new GraphAlgorithms().testLCAnthNodeOnPath();
+            	new GraphAlgorithms().BlockCutTreePerfTest();
             }
         }, "1", 1 << 26).start();
 		
